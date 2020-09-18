@@ -1,0 +1,10 @@
+FLANN 
+SIFT paper
+Ratio test by SIFT. 
+KDTree
+QuadTree 
+ORB paper 
+Homography DLT 
+Fundamental DLT 
+Chi-sqaured test, compute DoF 
+
