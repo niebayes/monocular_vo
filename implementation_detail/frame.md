@@ -4,7 +4,7 @@
 ## Logic 
 1. Frame wraps the original image object along with the objects related to it: e.g. **camera**, **features**. Hence, there's no need to additionally implement the two classes. 
 2. Viewed as an image, these characteristics should be contained: 
-   1. *image_id* to identify the image. 
+   1. *id* to identify the image (frame).
    2. *image_bounds*.
    3. *keypoints*. 
    4. *descriptors*. Through 1-4, the original image object can be described in an abstract and high-level way.
@@ -12,7 +12,7 @@
    6. *matches_kpt_mpt* to associate keypoints and map points. This should reveal whether a keypoint has associated with a map point or not.
    7. *bow_vector* for image indexing. 
    8. *feature_vector* for fast matching. 
-   9. *infos_of_scales* used when requesting scale infos.
+   9. *scale_infos* used when requesting scale infos.
 3. Viewed as a camera, these characteristics should be contained: 
    1. *camera_pose* along with the corresponding *rotation*, *translation* and *camera_center* for convenience.
    2. *camera_instrinsics*: *distortion_coefficients*, *calibration_matrix* and *fx*, *fy*, *cx*, *cy* for convenience. These values shall be read from setting file and won't be changed throughout the program.
@@ -26,3 +26,6 @@
   2. Methods related to camera: 
      1. *SetPose* to set pose and update the *rotation*, *translation*, *camera_center*. Note there's no need to make this thread safe because **frame** class is only a wrapper which is used to construct **keyframe**.
 5. Constructor: the **frame** constructor should take as inputs original image object, vocabulary and given camera intrinsics. During the construction, the data members should be set accordingly.
+
+## Additional data members 
+1. *outliers* vector of boolean values to mark corresponding keypoints that are outliers (i.e. not survived from some optimization schemes).
