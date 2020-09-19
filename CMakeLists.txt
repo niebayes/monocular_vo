@@ -44,11 +44,11 @@ else()
 endif()
 
 # g2o 
-find_package(g2o REQUIRED)
-if (g2o_FOUND)
-    message("Found g2o")
+find_package(G2O REQUIRED)
+if (G2O_FOUND)
+    message("Found G2O")
 else()
-    message("Not Found g2o")
+    message("Not Found G2O")
 endif()
 
 # DBoW3 
@@ -58,6 +58,7 @@ if (DBoW3_FOUND)
 else()
     message("Not Found DBoW3")
 endif()
+# set(DBoW3_LIBRARIES "/usr/local/lib/libDBoW3.dylib")
 
 # glog
 find_package(Glog REQUIRED)
@@ -96,7 +97,7 @@ include_directories(BEFORE
     ${EIGEN3_INCLUDE_DIRS}
     ${CERES_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
-    ${g2o_INCLUDE_DIRS}
+    ${G2O_INCLUDE_DIR}
     ${DBoW3_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
 ) # path relative to this CMakeLists.txt

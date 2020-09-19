@@ -7,6 +7,7 @@ target_link_libraries(main
   ${GlOG_LIBRARIES}
   ${ARMADILLO_LIBRARIES}
   ${PCL_LIBRARIES}
-  ${g2o_LIBRARIES}
   ${DBoW3_LIBRARIES}
+  ${G2O_CORE_LIBRARY}
+  ${G2O_STUFF_LIBRARY}
 )
