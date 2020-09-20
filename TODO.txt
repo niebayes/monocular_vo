@@ -7,4 +7,6 @@ ORB paper
 Homography DLT 
 Fundamental DLT 
 Chi-sqaured test, compute DoF 
+smart pointer 
+
 

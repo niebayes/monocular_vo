@@ -19,7 +19,12 @@
    2. Methods: 
       1. constructor to hold the *init_frame*. 
       2. *initialize* main method calling methods below to compute initial pose, triangulate initial map points, and create initial map. 
-      3. *GetFundamental* to compute the fundamental matrix and obtain the *inlier_mask* of RANSAC. 
+      3. *GetFundamentalNormalized8Point* to compute the fundamental matrix and obtain the *inlier_mask* of RANSAC. 
       4. *GetStructureAndMotion* to compute the relative pose and triangulate the 3D scene points. 
       5. *CreateInitialMap* to link keyframes, map points, and map. The global BA and linking of other stuff between initializer and tracker are also performed in this function.
 9. Since the initialization may fail, care has to be taken when resetting the initialzer (i.e. delete the old initializer object and call the destructors of objects it contained, and then redirect the initializer member of tracker to nullptr, and finally create a new initializer properly).
+
+## Algorithms 
+1. *GetFundamentalNormalized8Point*: 
+   1. [in] px1, px2, homogeneous 2D image points. 
+   2. [out] 
