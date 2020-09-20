@@ -43,6 +43,14 @@ else()
     message("Not Found Eigen3")
 endif()
 
+# manif 
+find_package(manif REQUIRED) 
+if (manif_FOUND)
+    message("Found manif")
+else()
+    message("Not Found manif")
+endif()
+
 # g2o 
 find_package(G2O REQUIRED)
 if (G2O_FOUND)
@@ -95,11 +103,14 @@ include_directories(BEFORE
     ${ARMADILLO_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIRS}
+    ${manif_INCLUDE_DIRS}
     ${CERES_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
     ${G2O_INCLUDE_DIR}
     ${DBoW3_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
+    ${Glog_INCLUDE_DIRS} 
+    ${GFLAGS_INCLUDE_DIRS}
 ) # path relative to this CMakeLists.txt
 
 add_subdirectory(src)

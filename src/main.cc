@@ -1,15 +1,38 @@
-#include <iostream>
-#include <vector>
+#include "my_slam/back_end_local_mapping.h"
+#include "my_slam/common_include.h"
+#include "my_slam/front_end_tracking.h"
+#include "my_slam/keyframe_database.h"
 
-#include "DBoW3/DBoW3.h"
-#include "g2o/core/block_solver.h"
-#include "g2o/core/optimization_algorithm_levenberg.h"
-#include "g2o/core/robust_kernel.h"
-#include "g2o/solvers/dense/linear_solver_dense.h"
-#include "g2o/solvers/eigen/linear_solver_eigen.h"
-#include "g2o/types/sba/types_six_dof_expmap.h"
-#include "g2o/types/sim3/types_seven_dof_expmap.h"
-#include "g2o/types/slam3d/g2o_types_slam3d_api.h"
+class Tracking;
+class LocalMapping;
+class KeyframeDB;
+
+class SLAMSystem {
+ public:
+  SLAMSystem(const std::string& vocabulary_file,
+             const std::string& config_file) {
+    if (InitSystem(vocabulary_file, config_file))
+      LOG(ERROR) << "Failed to initialize SLAM system";
+  }
+
+  bool InitSystem(const std::string& vocabulary_file,
+                  const std::string& config_file) {
+    voc_ = DBoW3::Vocabulary(vocabulary_file);
+    if (voc_.empty()) return false;
+    cv::FileStorage f_config(config_file, cv::FileStorage::READ);
+    if (!f_config.isOpened()) return false;
+
+    tracker_ = Tracking::Ptr(new Tracking);
+
+    return true;
+  }
+
+ private:
+  Tracking::Ptr tracker_ = nullptr;
+  LocalMapping::Ptr local_mapper_ = nullptr;
+  DBoW3::Vocabulary voc_;
+  KeyframeDB::Ptr keyframe_db = nullptr;
+};
 
 int main(int argc, char** argv) {
   // CLI arguments:
