@@ -12,6 +12,7 @@ class Tracking {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = std::shared_ptr<Tracking>;
+  // weark2shared
 
   Tracking() {}
 

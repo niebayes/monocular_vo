@@ -1,6 +1,6 @@
 #include "my_slam/config.h"
 
-static bool Config::SetConfigFile(const std::string& config_file) {
+bool Config::SetConfigFile(const std::string& config_file) {
   if (config_ == nullptr) config_ = sptr<Config>(new Config);
   config_->file_ = cv::FileStorage(config_file, cv::FileStorage::READ);
   if (!config_->file_.isOpened()) {
@@ -16,7 +16,7 @@ Config::~Config() {
 }
 
 template <typename T>
-static T Config::Get(const std::string& key) {
+T Config::Get(const std::string& key) {
   return T(Config::config_->file_[key]);
 }
 
