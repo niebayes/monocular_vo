@@ -1,7 +1,7 @@
-#ifndef MY_CONFIG_H_
-#define MY_CONFIG_H_
+#ifndef MONO_SLAM_CONFIG_H_
+#define MONO_SLAM_CONFIG_H_
 
-#include "my_slam/common_include.h"
+#include "mono_slam/common_include.h"
 
 class Config {
  private:
@@ -20,9 +20,9 @@ class Config {
   // Read a configuration file.
   static bool ReadConfigFile(const std::string& config_file);
 
-  // Access the settings.
+  // Access the settings: get setting by key.
   template <typename T>
   static T Get(const std::string& key);
 };
 
-#endif MY_CONFIG_H_
+#endif  // MONO_SLAM_CONFIG_H_

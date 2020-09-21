@@ -1,6 +1,7 @@
-#ifndef MY_COMMON_INCLUDE_H_
-#define MY_COMMON_INCLUDE_H_
+#ifndef MONO_SLAM_COMMON_INCLUDE_H_
+#define MONO_SLAM_COMMON_INCLUDE_H_
 
+// Standard libraries
 #include <algorithm>
 #include <iostream>
 #include <iterator>
@@ -11,8 +12,9 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
-// multi-threading stuff
+// multi-threading related
 #include <atomic>
 #include <condition_variable>  // std::condition_variable
 #include <mutex>               // std::mutex, std::unique_lock
@@ -130,4 +132,4 @@ typedef Eigen::Matrix<float, 9, 1> Vec9f;
 typedef Eigen::Matrix<float, Eigen::Dynamic, 1> VecXf;
 typedef Eigen::Matrix<float, 14, 1> Vec14f;
 
-#endif  // MY_COMMON_INCLUDE_H_
+#endif  // MONO_SLAM_COMMON_INCLUDE_H_

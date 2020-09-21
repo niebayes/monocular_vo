@@ -1,9 +1,11 @@
-#ifndef MY_FRONT_END_TRACKING_H_
-#define MY_FRONT_END_TRACKING_H_
+#ifndef MONO_SLAM_FRONT_END_TRACKING_H_
+#define MONO_SLAM_FRONT_END_TRACKING_H_
 
-#include "my_slam/back_end_local_mapping.h"
-#include "my_slam/common_include.h"
-#include "my_slam/slam_system.h"
+#include "mono_slam/back_end_local_mapping.h"
+#include "mono_slam/common_include.h"
+#include "mono_slam/slam_system.h"
+
+namespace mono_slam {
 
 class LocalMapping;
 class System;
@@ -11,7 +13,7 @@ class System;
 class Tracking {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using Ptr = std::shared_ptr<Tracking>;
+  using Ptr = sptr<Tracking>;
   // weark2shared
 
   Tracking() {}
@@ -23,5 +25,7 @@ class Tracking {
  private:
   sptr<LocalMapping> local_mapper_;
 };
+
+}  // namespace mono_slam
 
 #endif  // MY_FRONT_END_TRACKING
