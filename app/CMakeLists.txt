@@ -1,0 +1,13 @@
+project(APP)
+
+add_executable(mono_kitti mono_kitti.cc)
+target_compile_options(mono_kitti PRIVATE -O3 -march=native)
+target_link_libraries(mono_kitti my_slam)
+
+add_executable(mono_malaga mono_malaga.cc)
+target_compile_options(mono_malaga PRIVATE -O3 -march=native)
+target_link_libraries(mono_malaga my_slam)
+
+add_executable(mono_parking mono_parking.cc)
+target_compile_options(mono_parking PRIVATE -O3 -march=native)
+target_link_libraries(mono_parking my_slam)
