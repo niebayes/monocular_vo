@@ -10,8 +10,12 @@ class Map {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Map>;
 
+  void Clear();
+
  private:
 };
+
+void Map::Clear() {}
 
 }  // namespace mono_slam
 

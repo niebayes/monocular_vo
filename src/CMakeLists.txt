@@ -11,9 +11,7 @@ list(APPEND SOURCE_FILES
     feature.cc 
     camera.cc
     map_point.cc 
-    orb.cc
-    orb/detector.cc 
-    orb/matcher.cc 
+    matcher.cc
     geometry_solver.cc 
     # src/geometry_solver/
     g2o_optimizer.cc 
@@ -27,8 +25,12 @@ list(APPEND SOURCE_FILES
 
 # add_library(my_slam SHARED ${SOURCE_FILES})
 # target_compile_options(my_slam PRIVATE -O3 -march=native)
-# target_link_libraries(my_slam ${LINK_LIBS})
+# target_link_libraries(my_slam ${LINK_LIBRARIES})
 
-add_executable(test my_test.cc)
+add_executable(test test.cc)
 target_compile_options(test PRIVATE -O0 -march=native)
 target_link_libraries(test ${LINK_LIBRARIES})
+
+# add_executable(test1 test1.cc)
+# target_compile_options(test1 PRIVATE -O0 -march=native)
+# target_link_libraries(test1 ${LINK_LIBRARIES})

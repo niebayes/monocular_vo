@@ -1,4 +1,4 @@
-#include "mono_slam/slam_system.h"
+#include "mono_slam/system.h"
 
 namespace mono_slam {
 

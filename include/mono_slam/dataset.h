@@ -3,12 +3,10 @@
 
 #include "mono_slam/camera.h"
 #include "mono_slam/common_include.h"
-#include "mono_slam/feature_manager.h"
 
 namespace mono_slam {
 
 class Camera;
-class FeatureManager;
 
 class Dataset {
  public:

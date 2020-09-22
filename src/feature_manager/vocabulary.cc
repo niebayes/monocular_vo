@@ -1,1 +1,0 @@
-#include "my_slam/orb/vocabulary.h"

@@ -23,6 +23,7 @@
 
 #include "DBoW3/DBoW3.h"
 #include "Eigen/Dense"
+#include "armadillo"
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 #include "manif/manif.h"
@@ -33,6 +34,7 @@
 // using declarations.
 using namespace std;
 using namespace Eigen;
+using namespace DBoW3;
 using SE3 = Sophus::SE3d;
 using SO3 = Sophus::SO3d;
 
