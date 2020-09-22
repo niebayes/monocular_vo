@@ -31,6 +31,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(manif REQUIRED) 
+find_package(Sophus REQUIRED)
 find_package(G2O REQUIRED)
 find_package(DBoW3 REQUIRED)
 find_package(Glog REQUIRED)
@@ -51,6 +52,7 @@ include_directories(BEFORE
     ${OpenCV_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIRS}
     ${manif_INCLUDE_DIRS}
+    ${Sophus_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
     ${G2O_INCLUDE_DIR}
     ${DBoW3_INCLUDE_DIRS}
@@ -60,9 +62,10 @@ include_directories(BEFORE
 ) # path relative to this CMakeLists.txt
 
 # Set link libraries
-list(APPEND LINK_LIBS
+list(APPEND LINK_LIBRARIES
     ${OpenCV_LIBRARIES}
     ${ARMADILLO_LIBRARIES}
+    Sophus::Sophus
     ${PCL_LIBRARIES}
     ${DBoW3_LIBRARIES}
     ${G2O_CORE_LIBRARY}

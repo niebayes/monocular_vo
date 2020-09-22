@@ -128,7 +128,7 @@ public:
   static int solveQuartic(const Eigen::Matrix<double, 5, 1> & factors, Eigen::Matrix<double, 4, 1> & real_roots);
 };
 
-#include "ransac/kneip_p3p.hpp"
+#include "mono_slam/geometry_solver/kneip_p3p.hpp"
 
 #endif  // UZH_RANSAC_KNEIP_P3P_H_
 

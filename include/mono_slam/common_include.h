@@ -3,6 +3,7 @@
 
 // Standard libraries
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <iterator>
 #include <list>
@@ -15,7 +16,7 @@
 #include <unordered_set>
 #include <vector>
 // multi-threading related
-#include <atomic>
+#include <atomic>              // std::atomic
 #include <condition_variable>  // std::condition_variable
 #include <mutex>               // std::mutex, std::unique_lock
 #include <thread>              // std::thread
@@ -26,30 +27,39 @@
 #include "glog/logging.h"
 #include "manif/manif.h"
 #include "opencv2/opencv.hpp"
-// g2o stuff
-#include "g2o/core/block_solver.h"
-#include "g2o/core/optimization_algorithm_levenberg.h"
-#include "g2o/core/robust_kernel.h"
-#include "g2o/solvers/dense/linear_solver_dense.h"
-#include "g2o/solvers/eigen/linear_solver_eigen.h"
-#include "g2o/types/sba/types_six_dof_expmap.h"
-#include "g2o/types/sim3/types_seven_dof_expmap.h"
-#include "g2o/types/slam3d/g2o_types_slam3d_api.h"
+#include "sophus/se3.hpp"
+#include "sophus/so3.hpp"
 
 // using declarations.
-using cv::Mat;
-using manif::SE3;
-using manif::SO3;
+using namespace std;
+using namespace Eigen;
+using SE3 = Sophus::SE3d;
+using SO3 = Sophus::SO3d;
 
-// typedefs (alias templates) for smart pointers.
-template <typename Object>
-using uptr = std::unique_ptr<Object>;
+// alias templates for smart pointers.
+// TODO(bayes) Use C++20 features: atomic<smart_pointer>
+template <typename T>
+using uptr = std::unique_ptr<T>;
 
-template <typename Object>
-using sptr = std::shared_ptr<Object>;
+template <typename T>
+using const_uptr = std::unique_ptr<T const>;
 
-template <typename Object>
-using wptr = std::weak_ptr<Object>;
+template <typename T>
+using sptr = std::shared_ptr<T>;
+
+template <typename T>
+using const_sptr = std::shared_ptr<T const>;
+
+template <typename T>
+using wptr = std::weak_ptr<T>;
+
+template <typename T>
+using const_wptr = std::weak_ptr<T const>;
+
+template <typename T>
+std::shared_ptr<T> to_sptr(std::weak_ptr<T> wptr) {
+  return wptr.lock();
+}
 
 // typedefs for multi-threading
 using u_lock = std::unique_lock<std::mutex>;

@@ -1,0 +1,32 @@
+%YAML:1.0
+# Camera intrinsics.
+## Calibration matrix 
+fx: 718.856
+fy: 718.856
+cx: 607.1928
+cy: 185.2157
+## Distortion coefficients
+k1: 0.0
+k2: 0.0
+p1: 0.0
+p2: 0.0
+## Frame per second (fps)
+fps: 10.0
+
+# Feature related parameters  
+## When tracking is good:
+desired_num_features: 100
+min_num_features: 60
+## When tracker is initialzing:
+min_num_features_init: 200
+min_num_matched_features: 160
+min_num_inlier_matches: 120
+
+# Files
+## Dataset path 
+dataset_path: data/dataset/KITTI/seq_00/
+## Vocabulary file name
+vocabulary_file: data/vocabulary/orbvoc.dbow3
+## Timestamp file
+timestamp_file: None  # KITTI dataset does not provide timestamps
+

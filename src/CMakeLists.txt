@@ -29,6 +29,6 @@ list(APPEND SOURCE_FILES
 # target_compile_options(my_slam PRIVATE -O3 -march=native)
 # target_link_libraries(my_slam ${LINK_LIBS})
 
-add_executable(test _test.cc)
+add_executable(test my_test.cc)
 target_compile_options(test PRIVATE -O0 -march=native)
-target_link_libraries(test)
+target_link_libraries(test ${LINK_LIBRARIES})

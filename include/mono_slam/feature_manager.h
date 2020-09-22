@@ -12,7 +12,9 @@ class FeatureManager {
  public:
   using Ptr = sptr<FeatureManager>;
 
+
  private:
+ 
 };
 
 }  // namespace mono_slam
