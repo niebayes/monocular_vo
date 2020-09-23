@@ -2,7 +2,6 @@
 #define MONO_SLAM_DATASET_H_
 
 #include "mono_slam/common_include.h"
-#include "mono_slam/frame.h"
 
 namespace mono_slam {
 

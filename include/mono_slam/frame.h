@@ -4,7 +4,6 @@
 #include "mono_slam/camera.h"
 #include "mono_slam/common_include.h"
 #include "mono_slam/feature.h"
-#include "mono_slam/map_point.h"
 
 namespace mono_slam {
 

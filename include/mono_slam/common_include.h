@@ -4,6 +4,7 @@
 // Standard libraries
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <iostream>
 #include <iterator>
 #include <list>
@@ -23,6 +24,7 @@
 
 #include "DBoW3/DBoW3.h"
 #include "Eigen/Dense"
+#define ARMA_ALLOW_FAKE_CLANG
 #include "armadillo"
 #include "boost/format.hpp"
 #include "gflags/gflags.h"

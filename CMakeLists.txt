@@ -34,7 +34,7 @@ find_package(manif REQUIRED)
 find_package(Sophus REQUIRED)
 find_package(G2O REQUIRED)
 find_package(DBoW3 REQUIRED)
-find_package(Glog REQUIRED)
+find_package(GLOG REQUIRED)
 find_package(GFLAGS REQUIRED)
 find_package(Boost REQUIRED)
 find_package(PCL 1.11 REQUIRED COMPONENTS common io visualization)
@@ -57,7 +57,7 @@ include_directories(BEFORE
     ${G2O_INCLUDE_DIR}
     ${DBoW3_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
-    ${Glog_INCLUDE_DIRS} 
+    ${GLOG_INCLUDE_DIRS} 
     ${GFLAGS_INCLUDE_DIRS}
 ) # path relative to this CMakeLists.txt
 
@@ -70,7 +70,7 @@ list(APPEND LINK_LIBRARIES
     ${DBoW3_LIBRARIES}
     ${G2O_CORE_LIBRARY}
     ${G2O_STUFF_LIBRARY}
-    ${Glog_LIBRARIES}
+    ${GLOG_LIBRARIES}
     ${GFLAGS_LIBRARIES}
 )
 

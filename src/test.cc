@@ -4,7 +4,8 @@
 using namespace mono_slam;
 
 int main() {
-  System system("w");
+  std::string a{"kanade"};
+  std::cout << a << '\n';
 
   return EXIT_SUCCESS;
 }
