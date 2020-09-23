@@ -29,7 +29,7 @@ class Tracking {
 
   Tracking() {}
 
-  bool TrackOneFrame(Frame::Ptr frame);
+  void AddImage(const cv::Mat& img);
 
   // Setters.
   void SetSystem(sptr<System> system);
@@ -45,6 +45,8 @@ class Tracking {
  private:
   // Extract features.
   void ExtractFeatures(const cv::Mat& img);
+
+  bool TrackOneFrame(Frame::Ptr frame);
 
  public:
   // Tracking state.
@@ -68,6 +70,10 @@ class Tracking {
   sptr<Vocabulary> voc_ = nullptr;
   KeyframeDB::Ptr keyframe_db_ = nullptr;  // Keyframe database.
 };
+
+void Tracking::AddImage(const cv::Mat& img) {
+  // 
+}
 
 bool Tracking::TrackOneFrame(Frame::Ptr frame) {
   //

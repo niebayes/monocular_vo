@@ -25,8 +25,12 @@ min_num_inlier_matches: 120
 # Files
 ## Dataset path 
 dataset_path: data/dataset/KITTI/seq_00/
+image_file_name_format: %06d
 ## Vocabulary file name
 vocabulary_file: data/vocabulary/orbvoc.dbow3
 ## Timestamp file
-timestamp_file: None  # KITTI dataset does not provide timestamps
+timestamp_file: ""  # KITTI dataset does not provide timestamps
+
+# Image resize factor. A bigger speeds up tracking.
+resize_factor: 1.0
 

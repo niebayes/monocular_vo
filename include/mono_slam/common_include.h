@@ -24,9 +24,11 @@
 #include "DBoW3/DBoW3.h"
 #include "Eigen/Dense"
 #include "armadillo"
+#include "boost/format.hpp"
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 #include "manif/manif.h"
+#include "opencv2/core/eigen.hpp"
 #include "opencv2/opencv.hpp"
 #include "sophus/se3.hpp"
 #include "sophus/so3.hpp"
@@ -39,7 +41,8 @@ using SE3 = Sophus::SE3d;
 using SO3 = Sophus::SO3d;
 
 // alias templates for smart pointers.
-// TODO(bayes) Use C++20 features: atomic<smart_pointer>
+// TODO(bayes) Use C++20 feature std::atomic_shared_ptr to achieve real thread
+// safe.
 template <typename T>
 using uptr = std::unique_ptr<T>;
 

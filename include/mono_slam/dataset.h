@@ -1,33 +1,31 @@
 #ifndef MONO_SLAM_DATASET_H_
 #define MONO_SLAM_DATASET_H_
 
-#include "mono_slam/camera.h"
 #include "mono_slam/common_include.h"
+#include "mono_slam/frame.h"
 
 namespace mono_slam {
 
-class Camera;
+class Frame;
 
 class Dataset {
  public:
-  using Ptr = sptr<Dataset>;
+  using Ptr = uptr<Dataset>;
 
-  Dataset(const std::string& dataset_path);
+  Dataset(const string& dataset_path, const string& image_file_name_fmt);
 
-  bool Init();
+  const cv::Mat& NextImage();
 
  private:
- 
+  // Current image index.
+  int img_idx_;
   // Dataset path.
-  std::string dataset_path_;
+  const string dataset_path_;
+  // Image file name format.
+  const string image_file_name_fmt_;
+  // Image resize factor. A bigger one speeds up tracking.
+  const double resize_factor_;
 };
-
-Dataset::Dataset(const std::string& dataset_path)
-    : dataset_path_(dataset_path) {}
-
-bool Dataset::Init() {
-  //
-}
 
 }  // namespace mono_slam
 

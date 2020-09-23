@@ -8,7 +8,9 @@ namespace mono_slam {
 class Camera {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using Ptr = sptr<Camera>;
+  using Ptr = uptr<Camera>;
+
+  Camera() {}
 
   Camera(const SE3& T_c_w) : T_c_w_(T_c_w) {}
 
@@ -28,7 +30,7 @@ class Camera {
   // Getters.
   inline SE3 pose() const { return T_c_w_; }
   inline Mat33 K() const { return K_; }
-  inline Vec4 D() const { return dist_coeffs_; }
+  inline Vec4 DistCoeffs() const { return dist_coeffs_; }
 
   // Transformation utilites.
   // Transform map point in world frame to camera frame.

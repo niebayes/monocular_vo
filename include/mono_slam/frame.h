@@ -17,11 +17,9 @@ class Frame {
   using Ptr = sptr<Frame>;
   using Features = std::vector<sptr<Feature>>;
 
-  Frame();
+  Frame(const cv::Mat& img);
 
-  static inline void CreateFrame();
-
-  inline int NumFeatures() { return feats_.size(); }
+  inline int NumFeatures() const { return feats_.size(); }
 
  public:
   // Global frame counter, starting from 0.
@@ -34,7 +32,7 @@ class Frame {
   // Features extracted in the image.
   Features feats_;
   // Linked Camera.
-  Camera::Ptr cam_;
+  Camera::Ptr cam_ = nullptr;
 
   // Image bounds.
   static double x_min_;
@@ -43,6 +41,10 @@ class Frame {
   static double y_max_;
 };
 
+namespace frame_utils {
+void ComputeImageBounds(const cv::Mat& img, const cv::Mat& K,
+                        const cv::Mat& DistCoeffs, cv::Mat& corners);
+}  // namespace frame_utils
 }  // namespace mono_slam
 
 #endif  // MONO_SLAM_FRAME_H_
