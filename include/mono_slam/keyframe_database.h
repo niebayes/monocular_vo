@@ -2,8 +2,11 @@
 #define MONO_SLAM_KEYFRAME_DATABASE_H_
 
 #include "mono_slam/common_include.h"
+#include "mono_slam/frame.h"
 
 namespace mono_slam {
+
+class Frame;
 
 class KeyframeDB {
  public:

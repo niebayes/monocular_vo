@@ -10,9 +10,9 @@ bool System::Init() {
   if (!Config::SetConfigFile(config_file_)) return false;
 
   // Initialize dataset.
-  dataset_ = make_shared<Dataset>(Config::Get<string>("dataset_path"),
-                                  Config::Get<string>("image_file_name_fmt"));
-  if (!dataset_->Init()) return false;
+  dataset_ = make_unique<Dataset>(Config::Get<string>("dataset_path"),
+                                  Config::Get<string>("image_file_name_fmt"),
+                                  Config::Get<double>("resize_factor"));
 
   // Initialize camera.
   const double& fx = Config::Get<double>("fx");
@@ -24,7 +24,7 @@ bool System::Init() {
   const double& p1 = Config::Get<double>("p1");
   const double& p2 = Config::Get<double>("p2");
   const Vec4 dist_coeffs{k1, k2, p1, p2};
-  cam_ = make_shared<Camera>(fx, fy, cx, cy, dist_coeffs);
+  cam_ = make_unique<Camera>(fx, fy, cx, cy, dist_coeffs);
 
   // Initialize initializer.
   initializer_ =
@@ -73,10 +73,10 @@ bool System::Init() {
 
 void System::Run() {
   LOG(INFO) << "System is running ...";
-  if (timestamp_.empty())
+  if (timestamps_.empty())
     for (;;) tracker_->AddImage(dataset_->NextImage());
   else {
-    const int num_images = timestamp_.size();
+    const int num_images = timestamps_.size();
     // Simply discard the last image.
     for (int i = 0; i < num_images - 1; ++i) {
       const steady_clock::time_point t1 = steady_clock::now();
@@ -89,9 +89,9 @@ void System::Run() {
           duration_cast<duration<double>>(t2 - t1).count();
 
       // (Only) pause the tracking thread to align the time.
-      const double delta_t = timestamp_[i + 1] - timestamp_[i];
+      const double delta_t = timestamps_[i + 1] - timestamps_[i];
       if (consumed_time < delta_t)
-        std::this_thread::sleep_for(delta_t - consumed_time);
+        std::this_thread::sleep_for(duration<double>(delta_t - consumed_time));
     }
   }
   LOG(INFO) << "Exit system.";

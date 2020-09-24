@@ -11,9 +11,10 @@ class Dataset {
  public:
   using Ptr = uptr<Dataset>;
 
-  Dataset(const string& dataset_path, const string& image_file_name_fmt);
+  Dataset(const string& dataset_path, const string& image_file_name_fmt,
+          const double resize_factor);
 
-  const cv::Mat& NextImage();
+  cv::Mat NextImage();
 
  private:
   // Current image index.

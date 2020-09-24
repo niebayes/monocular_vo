@@ -1,11 +1,13 @@
 #include "gflags/gflags.h"
 #include "glog/logging.h"
-#include "my_slam/slam_system.h"
+#include "mono_slam/system.h"
+
+using namespace mono_slam;
 
 DEFINE_string(config_file, "app/config_kitti.yaml", "Configuration file.");
 
 int main(int argc, char** argv) {
-  GOOGLE_NAMESPACE::ParseCommandLineFlags(&argc, &argv, true);
+  GFLAGS_NAMESPACE::ParseCommandLineFlags(&argc, &argv, true);
   if (argc != 1) {
     LOG(INFO) << "Usage: mono_kitti -c=<config_file>";
     LOG(WARNING) << "Use default configuration.";

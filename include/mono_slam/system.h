@@ -27,7 +27,7 @@ class System {
  public:
   using Ptr = sptr<System>;
 
-  System(const std::string& config_file);
+  System(const string& config_file);
 
   // Init the system: load user-provided settings and link system components.
   bool Init();

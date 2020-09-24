@@ -2,7 +2,8 @@
 #define MONO_SLAM_CONFIG_H_
 
 #include "mono_slam/common_include.h"
-#include <string>
+
+namespace mono_slam {
 
 // Implement the Singleton design pattern to allow global access and to ensure
 // that only one instance exists.
@@ -27,5 +28,7 @@ class Config {
   static sptr<Config> config_;
   cv::FileStorage file_;
 };
+
+}  // namespace mono_slam
 
 #endif  // MONO_SLAM_CONFIG_H_
