@@ -27,7 +27,7 @@ class Tracking {
 
   enum class State { NOT_INITIALIZED_YET, GOOD, LOST };
 
-  Tracking() {}
+  Tracking();
 
   void AddImage(const cv::Mat& img);
 
@@ -61,22 +61,31 @@ class Tracking {
   SE3 const_velocity_;
 
  private:
+  // Feature detector.
+  cv::Ptr<cv::ORB> orb_detector_;
+
   // Linked components.
   sptr<System> system_ = nullptr;              // System.
   sptr<LocalMapping> local_mapper_ = nullptr;  // Local mapper.
   Map::Ptr map_ = nullptr;                     // Map.
   sptr<Viewer> viewer_ = nullptr;              // Viewer.
-  Initializer::Ptr initializer_ = nullptr;      // Initializer.
+  Initializer::Ptr initializer_ = nullptr;     // Initializer.
   sptr<Vocabulary> voc_ = nullptr;
   KeyframeDB::Ptr keyframe_db_ = nullptr;  // Keyframe database.
 };
 
+Tracking::Tracking() : state_(Tracking::State::NOT_INITIALIZED_YET) {}
+
 void Tracking::AddImage(const cv::Mat& img) {
-  // 
+  //
 }
 
 bool Tracking::TrackOneFrame(Frame::Ptr frame) {
   //
+}
+
+void Tracking::ExtractFeatures(const cv::Mat& img) {
+  
 }
 
 void Tracking::SetSystem(sptr<System> system) { system_ = system; }
@@ -89,6 +98,8 @@ void Tracking::SetInitializer(Initializer::Ptr initializer) {
   initializer_ = initializer;
 }
 void Tracking::SetVocabulary(const sptr<Vocabulary>& voc) { voc_ = voc; }
+
+namespace tracking_utils {}  // namespace tracking_utils
 
 }  // namespace mono_slam
 

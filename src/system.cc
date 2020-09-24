@@ -6,46 +6,44 @@ System::System(const string& config_file) : config_file_(config_file) {}
 
 bool System::Init() {
   LOG(INFO) << "System is initializing ...";
-  {
-    //   // Read settings from configuration file.
-    //   if (!Config::SetConfigFile(config_file_)) return false;
+  // Read settings from configuration file.
+  if (!Config::SetConfigFile(config_file_)) return false;
 
-    //   // Initialize dataset.
-    // dataset_ = make_shared<Dataset>(Config::Get<string>("dataset_path"),
-    // Config::Get<string>("image_file_name_fmt")); if (!dataset_->Init())
-    // return false;
+  // Initialize dataset.
+  dataset_ = make_shared<Dataset>(Config::Get<string>("dataset_path"),
+                                  Config::Get<string>("image_file_name_fmt"));
+  if (!dataset_->Init()) return false;
 
-    //   // Initialize camera.
-    //   const double& fx = Config::Get<double>("fx");
-    //   const double& fy = Config::Get<double>("fy");
-    //   const double& cx = Config::Get<double>("cx");
-    //   const double& cy = Config::Get<double>("cy");
-    //   const double& k1 = Config::Get<double>("k1");
-    //   const double& k2 = Config::Get<double>("k2");
-    //   const double& p1 = Config::Get<double>("p1");
-    //   const double& p2 = Config::Get<double>("p2");
-    //   const Vec4 dist_coeffs{k1, k2, p1, p2};
-    //   cam_ = make_shared<Camera>(fx, fy, cx, cy, dist_coeffs);
+  // Initialize camera.
+  const double& fx = Config::Get<double>("fx");
+  const double& fy = Config::Get<double>("fy");
+  const double& cx = Config::Get<double>("cx");
+  const double& cy = Config::Get<double>("cy");
+  const double& k1 = Config::Get<double>("k1");
+  const double& k2 = Config::Get<double>("k2");
+  const double& p1 = Config::Get<double>("p1");
+  const double& p2 = Config::Get<double>("p2");
+  const Vec4 dist_coeffs{k1, k2, p1, p2};
+  cam_ = make_shared<Camera>(fx, fy, cx, cy, dist_coeffs);
 
-    //   // Initialize initializer.
-    //   initializer_ =
-    //       make_shared<Initializer>(Config::Get<int>("min_num_features_init"),
-    //                                Config::Get<int>("min_num_matched_features"),
-    //                                Config::Get<int>("min_num_inlier_matches"));
+  // Initialize initializer.
+  initializer_ =
+      make_shared<Initializer>(Config::Get<int>("min_num_features_init"),
+                               Config::Get<int>("min_num_matched_features"),
+                               Config::Get<int>("min_num_inlier_matches"));
 
-    //   // Load vocabulary.
-    //   voc_ = make_shared<Vocabulary>(Config::Get<string>("vocabulary_file"));
+  // Load vocabulary.
+  voc_ = make_shared<Vocabulary>(Config::Get<string>("vocabulary_file"));
 
-    //   // Load timestamps.
-    //   const string& timestamp_file = Config::Get<string>("timestamp_file");
-    //   arma::mat timestamps_mat;
-    //   if (timestamp_file.empty())
-    //     LOG(WARNING) << "No timestamp file.";
-    //   else
-    //     timestamps_mat.load(Config::Get<string>("timestamp_file"),
-    //                         arma::file_type::auto_detect, true);
-    //   timestamps_ = arma::conv_to<vector<double>>::from(timestamps_mat);
-  }
+  // Load timestamps.
+  const string& timestamp_file = Config::Get<string>("timestamp_file");
+  arma::mat timestamps_mat;
+  if (timestamp_file.empty())
+    LOG(WARNING) << "No timestamp file.";
+  else
+    timestamps_mat.load(Config::Get<string>("timestamp_file"),
+                        arma::file_type::auto_detect, true);
+  timestamps_ = arma::conv_to<vector<double>>::from(timestamps_mat);
 
   // Prepare and link components.
   tracker_ = make_shared<Tracking>();
