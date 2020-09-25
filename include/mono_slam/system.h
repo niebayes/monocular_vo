@@ -45,13 +45,9 @@ class System {
   Map::Ptr map_ = nullptr;
   sptr<Viewer> viewer_ = nullptr;
 
-  // Objects waiting settings.
+  // User-specified objects.
   Dataset::Ptr dataset_ = nullptr;
-  Camera::Ptr cam_ = nullptr;
-  Initializer::Ptr initializer_ = nullptr;
-  sptr<Vocabulary> voc_ = nullptr;
   vector<double> timestamps_;
-
   const string config_file_;
 };
 

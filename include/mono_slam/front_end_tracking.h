@@ -35,18 +35,30 @@ class Tracking {
   void SetSystem(sptr<System> system);
   void SetLocalMapper(sptr<LocalMapping> local_mapper);
   void SetMap(Map::Ptr map);
+  void SetKeyframeDB(KeyframeDB::Ptr keyframe_db);
   void SetViewer(sptr<Viewer> viewer);
   void SetInitializer(Initializer::Ptr initializer);
   void SetVocabulary(const sptr<Vocabulary>& voc);
-  void SetKeyframeDB(KeyframeDB::Ptr keyframe_db);
+  void SetCamera(const Camera::Ptr& cam);
+  void SetFeatureDetector(const cv::Ptr<FeatureDetector>& detector);
 
   void Reset();
 
  private:
-  // Extract features.
-  void ExtractFeatures(const cv::Mat& img);
+  // Track current frame.
+  void TrackCurrentFrame();
 
-  bool TrackOneFrame(Frame::Ptr frame);
+  // Initialize tracking: collect two consecutive frames and try initialization.
+  bool Initialize();
+
+  // Track current frame from last frame assuming contant velocity model.
+  bool TrackWithConstantVelocityModel();
+
+  // True if the criteria of inserting new keyframe are satisfied.
+  bool NeedNewKeyframe();
+
+  // Relocalize if tracking is lost.
+  bool Relocalization();
 
  public:
   // Tracking state.
@@ -55,50 +67,94 @@ class Tracking {
   // Tracker only maintains two frames at one moment.
   Frame::Ptr last_frame_ = nullptr;
   Frame::Ptr curr_frame_ = nullptr;
+  // Matches of last frame and current frame such that
+  // last_frame_[i] <-> curr_frame_[matches[i]].
+  vector<int> matches_;
 
   // The transformation from last frame to current frame assuming constant
   // velocity.
   SE3 const_velocity_;
 
  private:
-  // Feature detector.
-  cv::Ptr<cv::ORB> orb_detector_;
-
   // Linked components.
   sptr<System> system_ = nullptr;              // System.
   sptr<LocalMapping> local_mapper_ = nullptr;  // Local mapper.
   Map::Ptr map_ = nullptr;                     // Map.
+  KeyframeDB::Ptr keyframe_db_ = nullptr;      // Keyframe database.
   sptr<Viewer> viewer_ = nullptr;              // Viewer.
-  Initializer::Ptr initializer_ = nullptr;     // Initializer.
-  sptr<Vocabulary> voc_ = nullptr;
-  KeyframeDB::Ptr keyframe_db_ = nullptr;  // Keyframe database.
+
+  // User specified objects.
+  Initializer::Ptr initializer_ = nullptr;           // Initializer.
+  sptr<Vocabulary> voc_ = nullptr;                   // Vocabulary.
+  Camera::Ptr cam_ = nullptr;                        // Camera.
+  cv::Ptr<cv::FeatureDetector> detector_ = nullptr;  // Feature detector.
 };
 
 Tracking::Tracking() : state_(Tracking::State::NOT_INITIALIZED_YET) {}
 
 void Tracking::AddImage(const cv::Mat& img) {
+  curr_frame_ = make_shared<Frame>(img, cam_, voc_, detector_);
+  TrackCurrentFrame();
+}
+
+void Tracking::TrackCurrentFrame() {
+  switch (state_) {
+    case Tracking::State::NOT_INITIALIZED_YET:
+      if (Initialize()) {
+        last_frame_->SetKeyframe();
+        curr_frame_->SetKeyframe();
+        local_mapper_->InsertKeyframe(last_frame_);
+        local_mapper_->InsertKeyframe(curr_frame_);
+        state_ = Tracking::State::GOOD;
+      }
+      break;
+
+    case Tracking::State::GOOD:
+      if (TrackWithConstantVelocityModel()) {
+        TrackLocalMap();  // Track local map making the tracking more robust.
+        if (NeedNewKeyframe()) {
+          curr_frame_->SetKeyframe();
+          local_mapper_->InsertKeyframe(curr_frame_);
+        }
+      } else
+        state_ = Tracking::State::LOST;
+      break;
+
+    case Tracking::State::LOST:
+      if (Relocalization()) {
+        curr_frame_->SetKeyframe();
+        local_mapper_->InsertKeyframe(curr_frame_);
+        state_ = Tracking::State::GOOD;
+      } else
+        Reset();
+      break;
+  }
+
+  // Update last frame.
+  last_frame_ = curr_frame_;
+  // FIXME Need resetting?
+  curr_frame_.reset();
+}
+
+bool Tracking::Initialize() {
+  if (initializer_->stage_ == Initializer::Stage::NO_FRAME_YET)
+    initializer_->AddReferenceFrame(curr_frame_);
+  else
+    initializer_->AddCurrentFrame(curr_frame_, matches_);
+  return initializer_->stage_ == Initializer::Stage::SUCCESS;
+}
+
+bool Tracking::TrackWithConstantVelocityModel() {
   //
 }
 
-bool Tracking::TrackOneFrame(Frame::Ptr frame) {
+bool Tracking::NeedNewKeyframe() {
   //
 }
 
-void Tracking::ExtractFeatures(const cv::Mat& img) {
-  
+bool Tracking::Relocalization() {
+  //
 }
-
-void Tracking::SetSystem(sptr<System> system) { system_ = system; }
-void Tracking::SetLocalMapper(sptr<LocalMapping> local_mapper) {
-  local_mapper_ = local_mapper;
-}
-void Tracking::SetMap(Map::Ptr map) { map_ = map; }
-void Tracking::SetViewer(sptr<Viewer> viewer) { viewer_ = viewer; }
-void Tracking::SetInitializer(Initializer::Ptr initializer) {
-  initializer_ = initializer;
-}
-void Tracking::SetVocabulary(const sptr<Vocabulary>& voc) { voc_ = voc; }
-
 namespace tracking_utils {}  // namespace tracking_utils
 
 }  // namespace mono_slam

@@ -15,38 +15,37 @@ class Initializer {
  public:
   using Ptr = sptr<Initializer>;
 
+  enum class Stage { NO_FRAME_YET, HAS_REFERENCE_FRAME, SUCCESS };
+
   Initializer(const int min_num_features_init,
               const int min_num_matched_features,
               const int min_num_inlier_matches);
 
-  bool AddReferenceFrame(const Frame::Ptr& ref_frame);
+  void AddReferenceFrame(const Frame::Ptr& ref_frame);
 
-  bool AddCurrentFrame(const Frame::Ptr& curr_frame,
+  void AddCurrentFrame(const Frame::Ptr& curr_frame,
                        const std::vector<int>& matches_ref_curr);
 
-  bool NormalizedFundamental8PointInit();
-
-  inline void GetInitResult(Frame::Ptr last_frame, Frame::Ptr curr_frame,
-                            std::vector<Vec3>& points) {
-    SE3 identity;
-    last_frame->cam_->SetPose(identity);
-    curr_frame->cam_->SetPose(T_curr_ref_);
-    points = points_;
-  }
+  // Initialize using normalized eight-point algorithm. 
+  // Return number of inliers.
+  int NormalizedFundamental8PointInit();
 
   inline void Reset() {
-    ref_frame_ = nullptr;
-    curr_frame_ = nullptr;
+    stage_ = Stage::NO_FRAME_YET;
+    ref_frame_.reset();
+    curr_frame_.reset();
   }
 
  private:
-  Frame::Ptr ref_frame_ = nullptr;
-  Frame::Ptr curr_frame_ = nullptr;
+  Stage stage_;  // Initialization stage.
+
+  Frame::Ptr ref_frame_ = nullptr;   // Reference frame.
+  Frame::Ptr curr_frame_ = nullptr;  // Current frame.
 
   // Relative pose from reference frame to current frame.
   SE3 T_curr_ref_;
-  // Triangulated points during
-  std::vector<Vec3> points_;
+  // Triangulated points.
+  vector<Vec3> points_;
 
   // Configuration parameters.
   const int min_num_features_init_;
@@ -57,32 +56,33 @@ class Initializer {
 Initializer::Initializer(const int min_num_features_init,
                          const int min_num_matched_features,
                          const int min_num_inlier_matches)
-    : min_num_features_init_(min_num_features_init),
+    : state_(Stage::NO_FRAME_YET),
+      min_num_features_init_(min_num_features_init),
       min_num_matched_features_(min_num_matched_features),
       min_num_inlier_matches_(min_num_inlier_matches) {}
 
-bool Initializer::AddReferenceFrame(const Frame::Ptr& ref_frame) {
+void Initializer::AddReferenceFrame(const Frame::Ptr& ref_frame) {
   Reset();
-  if (ref_frame->NumFeatures() < min_num_features_init_) return false;
-
+  if (ref_frame->NumObservations() < min_num_features_init_) return false;
   ref_frame_ = ref_frame;
+  stage_ = Stage::HAS_REFERENCE_FRAME;
+  return true;
 }
 
-bool Initializer::AddCurrentFrame(const Frame::Ptr& curr_frame,
+void Initializer::AddCurrentFrame(const Frame::Ptr& curr_frame,
                                   const std::vector<int>& matches_ref_curr) {
-  if (!ref_frame_) {
+  if (stage_ != Stage::HAS_REFERENCE_FRAME) {
     LOG(ERROR) << "No reference frame yet.";
-    return false;
+    return;
   }
-  if (curr_frame->NumFeatures() < min_num_features_init_) return false;
-  if (matches_ref_curr.size() < min_num_matched_features_) return false;
-
+  if (curr_frame->NumObservations() < min_num_features_init_) return;
+  if (matches_ref_curr.size() < min_num_matched_features_) return;
   curr_frame_ = curr_frame;
-
-  if (!NormalizedFundamental8PointInit()) return false;
+  if (!NormalizedFundamental8PointInit()) return;
+  stage_ = Stage::SUCCESS;
 }
 
-bool Initializer::NormalizedFundamental8PointInit() {}
+int Initializer::NormalizedFundamental8PointInit() {}
 
 }  // namespace mono_slam
 

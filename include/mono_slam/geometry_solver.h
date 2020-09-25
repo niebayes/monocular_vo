@@ -11,7 +11,7 @@ class GeometrySolver {
   using Ptr = sptr<GeometrySolver>;
 };
 
-#include "mono_slam/geometry_solver/fundamental_8point_normalized.h"
+#include "mono_slam/geometry_solver/normalized_fundamental_8point.h"
 #include "mono_slam/geometry_solver/kneip_p3p.h"
 #include "mono_slam/geometry_solver/linear_triangulation.h"
 #include "mono_slam/geometry_solver/points_to_epipolar_line_distance.h"

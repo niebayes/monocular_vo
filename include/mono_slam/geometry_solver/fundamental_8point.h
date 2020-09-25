@@ -11,7 +11,7 @@ void Fundamental8Point(const MatXX& pts_1, const MatXX& pts_2, Mat33& F) {
   MatXX A(num_pts, 9);
   // Vectorization trick: AXB = C -> (B' kron A) * vec(X) = vec(C);
   for (int i = 0; i < num_pts; ++i) {
-    A.row(i) = KroneckerProduct<Vec3, Vec3>(pts_1.col(i), pts_2.col(i))
+    A.row(i) = Eigen::kroneckerProduct<Vec3, Vec3>(pts_1.col(i), pts_2.col(i))
                    .transpose()
                    .eval();
   }

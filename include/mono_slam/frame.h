@@ -16,22 +16,34 @@ class Frame {
   using Ptr = sptr<Frame>;
   using Features = std::vector<sptr<Feature>>;
 
-  Frame(const cv::Mat& img);
+  Frame(const cv::Mat& img, const Camera::Ptr& cam, const sptr<Vocabulary>& voc,
+        const cv::Ptr<cv::FeatureDetector>& detector);
 
-  inline int NumFeatures() const { return feats_.size(); }
+  inline SE3 pose() const { return cam_->pose(); }
+
+  void SetPose(const SE3& T_c_w) { cam_->SetPose(T_c_w); }
+
+  void SetKeyframe() {is_keyframe_ = true;}
+
+  inline int NumObservations() const { return feats_.size(); }
+
+  // Extract features.
+  void ExtractFeatures(const cv::Mat& img,
+                       const cv::Ptr<cv::FeatureDetector>& detector);
+
+  // Compute bag of words representation.
+  void ComputeBoW(const sptr<Vocabulary>& voc);
 
  public:
-  // Global frame counter, starting from 0.
-  static int frame_cnt_;
-  // Frame identity.
-  int id_;
-  // Is this frame a keyframe?
-  bool is_keyframe_;
+  static int frame_cnt_;  // Global frame counter, starting from 0.
+  const int id_;          // Unique frame identity.
+  bool is_keyframe_;      // Is this frame a keyframe?
 
-  // Features extracted in the image.
-  Features feats_;
-  // Linked Camera.
-  Camera::Ptr cam_ = nullptr;
+  // Frame characteristics.
+  const Features feats_;                 // Features extracted in this frame.
+  Camera::Ptr cam_ = nullptr;            // Linked camera.
+  const DBoW3::BowVector bow_vec_;       // Bag of words vector.
+  const DBoW3::FeatureVector feat_vec_;  // Feature vector.
 
   // Image bounds.
   static double x_min_;
@@ -40,10 +52,6 @@ class Frame {
   static double y_max_;
 };
 
-namespace frame_utils {
-void ComputeImageBounds(const cv::Mat& img, const cv::Mat& K,
-                        const cv::Mat& DistCoeffs, cv::Mat& corners);
-}  // namespace frame_utils
 }  // namespace mono_slam
 
 #endif  // MONO_SLAM_FRAME_H_

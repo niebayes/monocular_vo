@@ -10,12 +10,13 @@ class Camera {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = uptr<Camera>;
 
+  // Empty constructor used only when setting camera parameters.
   Camera() {}
 
   Camera(const SE3& T_c_w) : T_c_w_(T_c_w) {}
 
-  Camera(const double fx, const double fy, const double cx, const double cy,
-         const Vec4& dist_coeffs) {
+  void Init(const double fx, const double fy, const double cx, const double cy,
+            const Vec4& dist_coeffs) {
     fx_ = fx;
     fy_ = fy;
     cx_ = cx;
@@ -59,6 +60,10 @@ class Camera {
   inline Vec3 pixel2world(const Vec2& pt, const double depth) const {
     CHECK_GE(depth, 0.);
     return camera2world(pixel2camera(pt, depth));
+  }
+
+  inline Vec3 pixel2bear(const Vec2& pt) const {
+    //TODO(bayes)
   }
 
  private:
