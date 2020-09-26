@@ -7,15 +7,37 @@ namespace mono_slam {
 
 class GeometrySolver {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using Ptr = sptr<GeometrySolver>;
+  // Find fundamental matrix using eight-point algorithm in a RANSAC scheme.
+  static void FindFundamentalRansac(const Frame::Ptr& frame_1,
+                                    const Frame::Ptr& frame_2,
+                                    const vector<int>& matches, Mat33& F,
+                                    unordered_map<int, int>& inlier_matches,
+                                    const int max_num_iterations = 200,
+                                    const bool adaptive_iterations = true);
+
+  // Evaluate the score of Fundamental matrix by computing reprojection error.
+  static double EvaluateFundamentalScore(const Mat33& F,
+                                         vector<bool>& inlier_mask,
+                                         const double sigma = 1.0);
+
+  static void ExtractRelativePoseRansac(const Mat33& F);
+
+  static double EvaluatePoseScore();
+
+  static void Triangulate();
+
+  static void P3PRansac();
+
+  static double PointsToEpipolarLineDistance();
 };
 
-#include "mono_slam/geometry_solver/normalized_fundamental_8point.h"
-#include "mono_slam/geometry_solver/kneip_p3p.h"
-#include "mono_slam/geometry_solver/linear_triangulation.h"
-#include "mono_slam/geometry_solver/points_to_epipolar_line_distance.h"
 
+namespace init_utils {
+
+// Generate uniformly distributed random integer number in range [low, high].
+int uniform_random_int(const int low, const int high);
+
+}  // namespace init_utils
 }  // namespace mono_slam
 
 #endif  // MONO_SLAM_GEOMETRY_SOLVER_H_

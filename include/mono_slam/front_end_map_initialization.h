@@ -25,9 +25,14 @@ class Initializer {
 
   void AddCurrentFrame(const Frame::Ptr& curr_frame);
 
-  // Initialize using normalized eight-point algorithm.
-  // Return number of inliers.
-  int NormalizedFundamental8PointInit();
+ private:
+  // Compute relative pose from reference frame to current frame and fix
+  // reference frame as world frame.
+  // Return inlier matches.
+  vector<int> ComputeInitRelativePose(const vector<int>& matches);
+
+  // Build initial map (i.e. triangulate 3D points).
+  void BuildInitMap(const vector<int>& inlier_matches);
 
   inline void Reset() {
     stage_ = Stage::NO_FRAME_YET;
@@ -35,7 +40,6 @@ class Initializer {
     curr_frame_.reset();
   }
 
- private:
   Stage stage_;  // Initialization stage.
 
   Frame::Ptr ref_frame_ = nullptr;   // Reference frame.
@@ -50,44 +54,6 @@ class Initializer {
   const int min_num_matched_features_;
   const int min_num_inlier_matches_;
 };
-
-Initializer::Initializer(const int min_num_features_init,
-                         const int min_num_matched_features,
-                         const int min_num_inlier_matches)
-    : state_(Stage::NO_FRAME_YET),
-      min_num_features_init_(min_num_features_init),
-      min_num_matched_features_(min_num_matched_features),
-      min_num_inlier_matches_(min_num_inlier_matches) {}
-
-void Initializer::AddReferenceFrame(const Frame::Ptr& ref_frame) {
-  Reset();
-  if (ref_frame->NumObservations() < min_num_features_init_) {
-    ref_frame_ = ref_frame;
-    stage_ = Stage::HAS_REFERENCE_FRAME;
-  }
-}
-
-void Initializer::AddCurrentFrame(const Frame::Ptr& curr_frame, ) {
-  if (stage_ != Stage::HAS_REFERENCE_FRAME) {
-    LOG(ERROR) << "No reference frame yet.";
-    return;
-  }
-  if (curr_frame->NumObservations() < min_num_features_init_) return;
-  curr_frame_ = curr_frame;
-  // Matches between reference frame and current frame such that:
-  // last_frame_[i] = curr_frame_[matches[i]].
-  vector<int> matches;
-  const int num_matches =
-      Matcher::SearchForInitialization(last_frame_, curr_frame_, matches);
-  if (num_matches < min_num_matched_features_) return;
-  const int num_inlier_matches = NormalizedFundamental8PointInit();
-  if (num_inlier_matches < min_num_inlier_matches_) return;
-
-  // If all criteria are satisfied, initialization is successful.
-  stage_ = Stage::SUCCESS;
-}
-
-int Initializer::NormalizedFundamental8PointInit() {}
 
 }  // namespace mono_slam
 

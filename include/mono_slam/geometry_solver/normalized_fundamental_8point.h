@@ -4,6 +4,9 @@
 
 namespace geometry {
 
+//@param pts_1 [3 x n] homogeneous 2D image points.
+//@param pts_2 [3 x n] homogeneous 2D image points.
+//@param F     [3 x 3] fundamental matrix.
 void NormalizedFundamental8Point(const MatXX& pts_1, const MatXX& pts_2,
                                  Mat33& F) {
   CHECK_EQ(pts_1.cols(), pts_2.cols());
