@@ -1,0 +1,12 @@
+#ifndef MONO_SLAM_GEOMETRY_SOLVER_COMPUTE_REPROJECTION_ERROR_
+#define MONO_SLAM_GEOMETRY_SOLVER_COMPUTE_REPROJECTION_ERROR_
+
+namespace geometry {
+
+double ComputeReprojectionError() {
+  //
+}
+
+}  // namespace geometry
+
+#endif  // MONO_SLAM_GEOMETRY_SOLVER_COMPUTE_REPROJECTION_ERROR_

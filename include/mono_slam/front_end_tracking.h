@@ -49,8 +49,8 @@ class Tracking {
   // Track current frame.
   void TrackCurrentFrame();
 
-  // Initialize tracking: collect two consecutive frames and try initialization.
-  bool Initialize();
+  // Initialize map: collect two consecutive frames and try initialization.
+  bool InitMap();
 
   // Track current frame from last frame assuming contant velocity model.
   bool TrackWithConstantVelocityModel();
@@ -85,7 +85,7 @@ class Tracking {
   sptr<Viewer> viewer_ = nullptr;              // Viewer.
 
   // User specified objects.
-  Initializer::Ptr initializer_ = nullptr;           // Initializer.
+  sptr<Initializer> initializer_ = nullptr;           // Initializer.
   sptr<Vocabulary> voc_ = nullptr;                   // Vocabulary.
   Camera::Ptr cam_ = nullptr;                        // Camera.
   cv::Ptr<cv::FeatureDetector> detector_ = nullptr;  // Feature detector.
@@ -136,7 +136,7 @@ void Tracking::TrackCurrentFrame() {
   }
 }
 
-bool Tracking::Initialize() {
+bool Tracking::InitMap() {
   if (initializer_->stage_ == Initializer::Stage::NO_FRAME_YET)
     initializer_->AddReferenceFrame(curr_frame_);
   else

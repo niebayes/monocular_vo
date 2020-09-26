@@ -20,6 +20,8 @@ class Initializer {
   Initializer(const int min_num_features_init,
               const int min_num_matched_features,
               const int min_num_inlier_matches);
+  
+  void SetTracker(const sptr<Tracking>& tracker);
 
   void AddReferenceFrame(const Frame::Ptr& ref_frame);
 
@@ -29,10 +31,10 @@ class Initializer {
   // Compute relative pose from reference frame to current frame and fix
   // reference frame as world frame.
   // Return inlier matches.
-  vector<int> ComputeInitRelativePose(const vector<int>& matches);
+  bool Initialize(const vector<int>& matches);
 
-  // Build initial map (i.e. triangulate 3D points).
-  void BuildInitMap(const vector<int>& inlier_matches);
+  // Build initial map.
+  bool BuildInitMap();
 
   inline void Reset() {
     stage_ = Stage::NO_FRAME_YET;
@@ -40,12 +42,13 @@ class Initializer {
     curr_frame_.reset();
   }
 
+  sptr<Tracking> tracker_ = nullptr;
+
   Stage stage_;  // Initialization stage.
 
   Frame::Ptr ref_frame_ = nullptr;   // Reference frame.
   Frame::Ptr curr_frame_ = nullptr;  // Current frame.
 
-  vector<int> inlier_matches_;  // Inlier matches survived after initialization.
   SE3 T_curr_ref_;       // Relative pose from reference frame to current frame.
   vector<Vec3> points_;  // Triangulated points in world frame.
 
