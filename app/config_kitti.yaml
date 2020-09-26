@@ -22,6 +22,10 @@ min_num_features_init: 200
 min_num_matched_features: 160
 min_num_inlier_matches: 120
 
+# Matching parameters.
+distance_ratio_test_threshold: 0.8 # Above which the match will be rejected.
+matching_threshold: 50 # Above which the match will be rejected.
+
 # Files
 ## Dataset path 
 dataset_path: data/dataset/KITTI/seq_00/

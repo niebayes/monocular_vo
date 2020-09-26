@@ -29,6 +29,7 @@ class Tracking {
 
   Tracking();
 
+  // Entry function.
   void AddImage(const cv::Mat& img);
 
   // Setters.
@@ -95,6 +96,10 @@ Tracking::Tracking() : state_(Tracking::State::NOT_INITIALIZED_YET) {}
 void Tracking::AddImage(const cv::Mat& img) {
   curr_frame_ = make_shared<Frame>(img, cam_, voc_, detector_);
   TrackCurrentFrame();
+  // Update last frame.
+  last_frame_ = curr_frame_;
+  // FIXME Need resetting?
+  curr_frame_.reset();
 }
 
 void Tracking::TrackCurrentFrame() {
@@ -129,11 +134,6 @@ void Tracking::TrackCurrentFrame() {
         Reset();
       break;
   }
-
-  // Update last frame.
-  last_frame_ = curr_frame_;
-  // FIXME Need resetting?
-  curr_frame_.reset();
 }
 
 bool Tracking::Initialize() {

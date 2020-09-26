@@ -29,9 +29,9 @@ class Camera {
   void SetPose(const SE3& T_c_w);
 
   // Getters.
-  inline SE3 pose() const { return T_c_w_; }
-  inline Mat33 K() const { return K_; }
-  inline Vec4 DistCoeffs() const { return dist_coeffs_; }
+  inline const SE3& pose() const { return T_c_w_; }
+  inline const Mat33& K() const { return K_; }
+  inline const Vec4& DistCoeffs() const { return dist_coeffs_; }
 
   // Transformation utilites.
   // Transform map point in world frame to camera frame.

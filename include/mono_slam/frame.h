@@ -23,9 +23,10 @@ class Frame {
 
   void SetPose(const SE3& T_c_w) { cam_->SetPose(T_c_w); }
 
-  void SetKeyframe() {is_keyframe_ = true;}
-
-  inline int NumObservations() const { return feats_.size(); }
+  void SetKeyframe() { is_keyframe_ = true; }
+ 
+  // Number of observations (i.e. number of features observed in this frame).
+  inline int NumObs() const { return feats_.size(); }
 
   // Extract features.
   void ExtractFeatures(const cv::Mat& img,
@@ -33,6 +34,10 @@ class Frame {
 
   // Compute bag of words representation.
   void ComputeBoW(const sptr<Vocabulary>& voc);
+
+  // Search features given searching radius and image pyramid level range.
+  vector<int> SearchFeatures(const Vec2& pt, const int radius,
+                             const int level_low, const int level_high);
 
  public:
   static int frame_cnt_;  // Global frame counter, starting from 0.
@@ -51,6 +56,14 @@ class Frame {
   static double y_min_;
   static double y_max_;
 };
+
+namespace frame_utils {
+
+void UndistortKeypoints(std::vector<cv::KeyPoint>& kpts);
+
+void ComputeImageBounds(const cv::Mat& img, const cv::Mat& K,
+                        const cv::Mat& DistCoeffs, cv::Mat& corners);
+}  // namespace frame_utils
 
 }  // namespace mono_slam
 

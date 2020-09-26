@@ -23,10 +23,9 @@ class Initializer {
 
   void AddReferenceFrame(const Frame::Ptr& ref_frame);
 
-  void AddCurrentFrame(const Frame::Ptr& curr_frame,
-                       const std::vector<int>& matches_ref_curr);
+  void AddCurrentFrame(const Frame::Ptr& curr_frame);
 
-  // Initialize using normalized eight-point algorithm. 
+  // Initialize using normalized eight-point algorithm.
   // Return number of inliers.
   int NormalizedFundamental8PointInit();
 
@@ -42,10 +41,9 @@ class Initializer {
   Frame::Ptr ref_frame_ = nullptr;   // Reference frame.
   Frame::Ptr curr_frame_ = nullptr;  // Current frame.
 
-  // Relative pose from reference frame to current frame.
-  SE3 T_curr_ref_;
-  // Triangulated points.
-  vector<Vec3> points_;
+  vector<int> inlier_matches_;  // Inlier matches survived after initialization.
+  SE3 T_curr_ref_;       // Relative pose from reference frame to current frame.
+  vector<Vec3> points_;  // Triangulated points in world frame.
 
   // Configuration parameters.
   const int min_num_features_init_;
@@ -63,22 +61,29 @@ Initializer::Initializer(const int min_num_features_init,
 
 void Initializer::AddReferenceFrame(const Frame::Ptr& ref_frame) {
   Reset();
-  if (ref_frame->NumObservations() < min_num_features_init_) return false;
-  ref_frame_ = ref_frame;
-  stage_ = Stage::HAS_REFERENCE_FRAME;
-  return true;
+  if (ref_frame->NumObservations() < min_num_features_init_) {
+    ref_frame_ = ref_frame;
+    stage_ = Stage::HAS_REFERENCE_FRAME;
+  }
 }
 
-void Initializer::AddCurrentFrame(const Frame::Ptr& curr_frame,
-                                  const std::vector<int>& matches_ref_curr) {
+void Initializer::AddCurrentFrame(const Frame::Ptr& curr_frame, ) {
   if (stage_ != Stage::HAS_REFERENCE_FRAME) {
     LOG(ERROR) << "No reference frame yet.";
     return;
   }
   if (curr_frame->NumObservations() < min_num_features_init_) return;
-  if (matches_ref_curr.size() < min_num_matched_features_) return;
   curr_frame_ = curr_frame;
-  if (!NormalizedFundamental8PointInit()) return;
+  // Matches between reference frame and current frame such that:
+  // last_frame_[i] = curr_frame_[matches[i]].
+  vector<int> matches;
+  const int num_matches =
+      Matcher::SearchForInitialization(last_frame_, curr_frame_, matches);
+  if (num_matches < min_num_matched_features_) return;
+  const int num_inlier_matches = NormalizedFundamental8PointInit();
+  if (num_inlier_matches < min_num_inlier_matches_) return;
+
+  // If all criteria are satisfied, initialization is successful.
   stage_ = Stage::SUCCESS;
 }
 
