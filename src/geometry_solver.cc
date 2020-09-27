@@ -1,8 +1,8 @@
 #include "mono_slam/geometry_solver.h"
 
 #include "mono_slam/camera.h"
+#include "mono_slam/geometry_solver/compute_reprojection_error.h"
 #include "mono_slam/geometry_solver/decompose_essential_matrix.h"
-#include "mono_slam/geometry_solver/disambiguate_poses.h"
 #include "mono_slam/geometry_solver/kneip_p3p.h"
 #include "mono_slam/geometry_solver/linear_triangulation.h"
 #include "mono_slam/geometry_solver/normalized_fundamental_8point.h"

@@ -1,3 +1,6 @@
+#ifndef MONO_SLAM_GEOMETRY_SOLVER_VEC2SKEW_H_
+#define MONO_SLAM_GEOMETRY_SOLVER_VEC2SKEW_H_
+
 #include "mono_slam/common_include.h"
 
 namespace geometry {
@@ -9,3 +12,5 @@ inline Mat33 to_skew(const Vec3& vec) {
 }
 
 }  // namespace geometry
+
+#endif  // MONO_SLAM_GEOMETRY_SOLVER_VEC2SKEW_H_

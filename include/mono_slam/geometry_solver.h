@@ -2,6 +2,7 @@
 #define MONO_SLAM_GEOMETRY_SOLVER_H_
 
 #include "mono_slam/common_include.h"
+#include "mono_slam/frame.h"
 
 namespace mono_slam {
 
@@ -11,7 +12,7 @@ class GeometrySolver {
   static void FindFundamentalRansac(const Frame::Ptr& frame_1,
                                     const Frame::Ptr& frame_2,
                                     const vector<int>& matches, Mat33& F,
-                                    unordered_map<int, int>& inlier_matches,
+                                    vector<pair<int, int>>& inlier_matches,
                                     const double noise_sigma = 1.0,
                                     const int max_num_iterations = 200,
                                     const bool adaptive_iterations = true);
@@ -28,7 +29,7 @@ class GeometrySolver {
   // scheme.
   static bool FindRelativePoseRansac(
       const Frame::Ptr& frame_1, const Frame::Ptr& frame_2, const Mat33& F,
-      const unordered_map<int, int>& inlier_matches, SE3& relative_pose,
+      const vector<pair<int, int>>& inlier_matches, SE3& relative_pose,
       vector<Vec3>& points, const double noise_sigma = 1.0,
       const int min_num_triangulated = 50, const double min_parallax = 1.0);
 
@@ -36,7 +37,7 @@ class GeometrySolver {
   static int EvaluatePoseScore(const Mat33& R, const Vec3& t,
                                const Frame::Features& feats_1,
                                const Frame::Features& feats_2,
-                               const unordered_map<int, int>& inlier_matches,
+                               const vector<pair<int, int>>& inlier_matches,
                                const Mat33& K, vector<Vec3>& points,
                                double& median_parallax,
                                const double reproj_tolerance2,

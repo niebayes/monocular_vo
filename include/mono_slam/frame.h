@@ -58,7 +58,7 @@ class Frame {
                              const int level_low, const int level_high);
 
   // Check if the given map point is Observable by this frame.
-  bool IsObservable(const MapPoint::Ptr& point) const;
+  bool IsObservable(const sptr<MapPoint>& point) const;
 
  private:
   // Image bounds.

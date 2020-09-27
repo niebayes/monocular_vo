@@ -29,8 +29,7 @@ class Map {
   inline list<Keyframe::Ptr> GetAllKeyframes {
     u_lock take(ownership_);
     list<Keyframe::Ptr> keyframes;
-    keyframes.reserve(keyframes_.size());
-    for (auto& id_kf : keyframes_) keyframes.push_front(id_kf.second);
+    for (auto& id_kf : keyframes_) keyframes.push_back(id_kf.second);
     return keyframes;
   }
 
@@ -62,7 +61,7 @@ class Map {
   Keyframes keyframes_;  // Maintained keyframes.
   MapPoints points_;     // Maintained map points.
 
-  std::mutex ownership_;
+  mutable std::mutex ownership_;
 };
 }  // namespace mono_slam
 

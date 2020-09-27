@@ -1,8 +1,6 @@
 #ifndef MONO_SLAM_GEOMETRY_SOLVER_POINTS_TO_EPIPOLAR_LINE_DISTANCE_H_
 #define MONO_SLAM_GEOMETRY_SOLVER_POINTS_TO_EPIPOLAR_LINE_DISTANCE_H_
 
-#include <cmath>
-
 #include "mono_slam/common_include.h"
 
 namespace geometry {

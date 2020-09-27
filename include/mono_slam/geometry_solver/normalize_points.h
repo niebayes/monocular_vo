@@ -1,5 +1,7 @@
-#include "Eigen/Core"
-#include "glog/logging.h"
+#ifndef MONO_SLAM_GEOMETRY_SOLVER_NORMALIZE_POINTS_H_
+#define MONO_SLAM_GEOMETRY_SOLVER_NORMALIZE_POINTS_H_
+
+#include "mono_slam/common_include.h"
 
 using namespace Eigen;
 
@@ -23,3 +25,5 @@ void NormalizePoints(const MatXX& pts, MatXX& normalized_pts, Mat33& T) {
 }
 
 }  // namespace geometry
+
+#endif  // MONO_SLAM_GEOMETRY_SOLVER_NORMALIZE_POINTS_H_

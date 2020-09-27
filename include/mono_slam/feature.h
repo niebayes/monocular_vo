@@ -14,9 +14,13 @@ struct Feature {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Feature>;
 
-  Feature(const wptr<Frame>& frame, const Vec2& pt, const cv::Mat& descriptor,
+  Feature(const sptr<Frame>& frame, const Vec2& pt, const cv::Mat& descriptor,
           const int level)
-      : frame_(frame), pt_(pt), descriptor_(descriptor), level_(level), bear_vec_(frame_->cam_->pixel2bear(pt_)  {}
+      : frame_(frame),
+        pt_(pt),
+        descriptor_(descriptor),
+        level_(level),
+        bear_vec_(frame->cam_->pixel2bear(pt_)) {}
 
  public:
   // Linked 3D map point expressed in world frame.

@@ -7,19 +7,32 @@
 
 namespace mono_slam {
 
-class Feature;
 class Frame;
+class Feature;
 class MapPoint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<MapPoint>;
   using Keyframe = Frame;
 
+  // Observations.
+  list<wptr<Feature>> observations_;
+
+  // Map point characteristics.
+  static int point_cnt_;     // Global map point counter, starting from 0.
+  const int id_;             // Unique map point identity.
+  Vec3 pos_;                 // Position in world frame.
+  wptr<Feature> best_feat_;  // Best feature in that its descriptor has the
+                             // least median distance among all observations.
+  Vec3 mean_view_dir_;       // Mean viewing direction.
+  bool is_outlier_;  // Is this map point an outlier marked in optimization?
+
   MapPoint(const Vec3& pos);
-  MapPoint(const Vec3& pos, const wptr<Feature>& feat);
+
+  MapPoint(const Vec3& pos, const sptr<Feature>& feat);
 
   inline const Vec3& Pos() const {
-    u_lock take(ownership_);
+    u_lock lock(ownership_);
     return pos_;
   }
 
@@ -36,18 +49,20 @@ class MapPoint {
   }
 
   // Add an observation.
-  void AddObservation(const wptr<Feature>& feat);
+  void AddObservation(const sptr<Feature>& feat);
 
   // Erase an observation.
-  void EraseObservation(const wptr<Feature>& feat);
+  void EraseObservation(const sptr<Feature>& feat);
 
-  inline const list<Feature::Ptr>& GetAllObservations() const {
-    u_lock take(ownsership_);
-    return observations_;
+  inline list<sptr<Feature>> GetAllObservations() const {
+    u_lock take(ownership_);
+    list<sptr<Feature>> observations;
+    for (auto feat : observations_) observations.push_back(feat.lock());
+    return observations;
   }
 
-  inline int NumObservations() const {
-    u_lock take(ownsership_);
+  inline int NumObs() const {
+    u_lock take(ownership_);
     return observations_.size();
   }
 
@@ -56,71 +71,19 @@ class MapPoint {
   void UpdateMeanViewingDirection();
 
   // Check if this map point is observed by the given keyframe.
-  inline bool IsObservedBy(const sptr<Keyframe>& keyframe) const;
-
- public:
-  // Observations.
-  list<wptr<Feature>> observations_;
-
-  // Map point characteristics.
-  static int point_cnt_;  // Global map point counter, starting from 0.
-  const int id_;          // Unique map point identity.
-  Vec3 pos_;              // Position in world frame.
-  wptr<Feature> best_feat_ =
-      nullptr;  // Best feature in that its descriptor has the least median
-                // distance among all observations.
-  Vec3 mean_view_dir_;  // Mean viewing direction.
-  bool is_outlier_;     // Is this map point an outlier marked in optimization?
+  inline bool IsObservedBy(const sptr<Keyframe>& keyframe) const {
+    CHECK_EQ(keyframe->IsKeyframe(), true);
+    u_lock take(ownership_);
+    for (auto it = observations_.cbegin(), it_end = observations_.cend();
+         it != it_end; ++it)
+      // FIXME Is this equal operation valid? Should I overload a "==" operator?
+      if (it->lock()->frame_ == keyframe) return true;
+    return false;
+  }
 
  private:
-  std::mutex ownership_;
+  mutable std::mutex ownership_;
 };
-
-MapPoint::MapPoint(const Vec3& pos)
-    : id_(point_cnt_++), pos_(pos), is_outlier_(false) {}
-
-// TODO(bayes) Compute mean_view_dirs_.
-MapPoint::MapPoint(const Vec3& pos, const wptr<Feature>& feat)
-    : id_(point_cnt_++),
-      pos_(pos),
-      best_feat_(feat),
-      mean_view_dir_(Vec3{}),
-      is_outlier_(false) {
-  observations_.push_front(feat);
-}
-
-void SetPos(const Vec3& pos) {
-  u_lock take(ownership_);
-  pos_ = pos;
-}
-
-void MapPoint::AddObservation(const wptr<Feature>& feat) {
-  u_lock take(ownership_);
-  observations_.insert(feat);
-}
-
-void MapPoint::EraseObservation(const wptr<Feature>& feat) {
-  u_lock take(ownership_);
-  observations_.erase(feat);
-}
-
-void MapPoint::UpdateBestDescriptor() {
-  //
-}
-
-void MapPoint::UpdateMeanViewingDirection() {
-  //
-}
-
-inline bool IsObservedBy(const sptr<Keyframe>& keyframe) const {
-  CHECK_EQ(keyframe->IsKeyframe(), true);
-  u_lock take(ownership_);
-  for (auto it = observations_.cbegin(), it_end = observations_.cend();
-       it != it_end; ++it)
-    // FIXME Is this equal operation valid? Should I overload a "==" operator?
-    if ((*it)->frame_ == keyframe) return true;
-  return false;
-}
 
 }  // namespace mono_slam
 
