@@ -63,7 +63,15 @@ class Camera {
   }
 
   inline Vec3 pixel2bear(const Vec2& pt) const {
-    //TODO(bayes)
+    // TODO(bayes)
+  }
+
+  static inline Mat34 to_cam_mat(const Mat33& K, const Mat33& R,
+                                 const Vec3& t) {
+    Mat34 Rt;
+    Rt.leftCols(3) = R;
+    Rt.rightCols(1) = t;
+    return K * Rt;
   }
 
  private:

@@ -16,10 +16,9 @@ Initializer::SetTracker(const sptr<Tracking>& tracker) { tracker_ = tracker; }
 
 void Initializer::AddReferenceFrame(const Frame::Ptr& ref_frame) {
   Reset();
-  if (ref_frame->NumObs() < min_num_features_init_) {
-    ref_frame_ = ref_frame;
-    stage_ = Stage::HAS_REFERENCE_FRAME;
-  }
+  if (ref_frame->NumObs() < min_num_features_init_) return;
+  ref_frame_ = ref_frame;
+  stage_ = Stage::HAS_REFERENCE_FRAME;
 }
 
 void Initializer::AddCurrentFrame(const Frame::Ptr& curr_frame) {
@@ -43,17 +42,11 @@ void Initializer::AddCurrentFrame(const Frame::Ptr& curr_frame) {
 
 bool Initialize(const vector<int>& matches) {
   Mat33 F;
-  unordered_map<int, int> inlier_matches;
   GeometrySolver::FindFundamentalRansac(ref_frame_, curr_frame_, matches, F,
-                                        inlier_matches);
-  if (inlier_matches.size() < min_num_inlier_matches) return false;
-  // Mark which point correspondence produce good triangulation.
-  vector<bool> triangulate_mask;
-  GeometrySolver::FindRelativePoseRansac(ref_frame_, curr_frame_, F,
-                                         inlier_matches, T_curr_ref_, points_,
-                                         triangulate_mask);
-  
-  return true;
+                                        inlier_matches_);
+  if (inlier_matches_.size() < min_num_inlier_matches) return false;
+  return GeometrySolver::FindRelativePoseRansac(
+      ref_frame_, curr_frame_, F, inlier_matches_, T_curr_ref_, points_);
 }
 
 bool BuildInitMap() {

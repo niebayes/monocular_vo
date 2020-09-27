@@ -105,7 +105,7 @@ void Tracking::AddImage(const cv::Mat& img) {
 void Tracking::TrackCurrentFrame() {
   switch (state_) {
     case Tracking::State::NOT_INITIALIZED_YET:
-      if (Initialize()) {
+      if (InitMap()) {
         last_frame_->SetKeyframe();
         curr_frame_->SetKeyframe();
         local_mapper_->InsertKeyframe(last_frame_);
