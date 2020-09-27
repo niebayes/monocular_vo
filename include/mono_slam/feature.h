@@ -20,6 +20,7 @@ struct Feature {
 
  public:
   // Linked 3D map point expressed in world frame.
+  //! A feature links only one map point and will not change any more.
   wptr<MapPoint> point_;
 
   // Feature characteristics.

@@ -3,15 +3,19 @@
 
 #include "mono_slam/common_include.h"
 #include "mono_slam/feature.h"
+#include "mono_slam/frame.h"
 
 namespace mono_slam {
 
 class Feature;
+class Frame;
 class MapPoint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<MapPoint>;
+  using Keyframe = Frame;
 
+  MapPoint(const Vec3& pos);
   MapPoint(const Vec3& pos, const wptr<Feature>& feat);
 
   inline const Vec3& Pos() const {
@@ -20,6 +24,16 @@ class MapPoint {
   }
 
   void SetPos(const Vec3& pos);
+
+  inline bool IsOutlier() const {
+    u_lock take(ownership_);
+    return is_outlier_;
+  }
+
+  void SetOutlier() {
+    u_lock take(ownership_);
+    is_outlier_ = true;
+  }
 
   // Add an observation.
   void AddObservation(const wptr<Feature>& feat);
@@ -36,6 +50,13 @@ class MapPoint {
     u_lock take(ownsership_);
     return observations_.size();
   }
+
+  void UpdateBestDescriptor();
+
+  void UpdateMeanViewingDirection();
+
+  // Check if this map point is observed by the given keyframe.
+  inline bool IsObservedBy(const sptr<Keyframe>& keyframe) const;
 
  public:
   // Observations.
@@ -54,6 +75,9 @@ class MapPoint {
  private:
   std::mutex ownership_;
 };
+
+MapPoint::MapPoint(const Vec3& pos)
+    : id_(point_cnt_++), pos_(pos), is_outlier_(false) {}
 
 // TODO(bayes) Compute mean_view_dirs_.
 MapPoint::MapPoint(const Vec3& pos, const wptr<Feature>& feat)
@@ -78,6 +102,24 @@ void MapPoint::AddObservation(const wptr<Feature>& feat) {
 void MapPoint::EraseObservation(const wptr<Feature>& feat) {
   u_lock take(ownership_);
   observations_.erase(feat);
+}
+
+void MapPoint::UpdateBestDescriptor() {
+  //
+}
+
+void MapPoint::UpdateMeanViewingDirection() {
+  //
+}
+
+inline bool IsObservedBy(const sptr<Keyframe>& keyframe) const {
+  CHECK_EQ(keyframe->IsKeyframe(), true);
+  u_lock take(ownership_);
+  for (auto it = observations_.cbegin(), it_end = observations_.cend();
+       it != it_end; ++it)
+    // FIXME Is this equal operation valid? Should I overload a "==" operator?
+    if ((*it)->frame_ == keyframe) return true;
+  return false;
 }
 
 }  // namespace mono_slam

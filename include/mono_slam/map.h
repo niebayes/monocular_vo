@@ -18,65 +18,52 @@ class Map {
   using Keyframes = std::unordered_map<int, Keyframe::Ptr>;
   using MapPoints = std::unordered_map<int, MapPoint::Ptr>;
 
-  void InsertKeyframe(Keyframe::Ptr keyframe);
+  void InsertKeyframe(const Keyframe::Ptr& keyframe);
 
-  void InsertMapPoint(MapPoint::Ptr point);
+  void InsertMapPoint(const MapPoint::Ptr& point);
 
   void EraseKeyframeById(const int id);
 
   void EraseMapPointById(const int id);
 
-  inline const Keyframes& GetAllKeyframes const {
+  inline list<Keyframe::Ptr> GetAllKeyframes {
+    u_lock take(ownership_);
+    list<Keyframe::Ptr> keyframes;
+    keyframes.reserve(keyframes_.size());
+    for (auto& id_kf : keyframes_) keyframes.push_front(id_kf.second);
+    return keyframes;
+  }
+
+  inline list<MapPoint::Ptr> GetAllMapPoints {
+    u_lock take(ownership_);
+    list<MapPoint::Ptr> points;
+    points.reserve(points_.size());
+    for (auto& id_point : points_) points.push_front(id_point.second);
+    return points;
+  }
+
+  inline Keyframes GetAllKeyframesWithId {
     u_lock take(ownership_);
     return keyframes_;
   }
 
-  inline const MapPoints& GetAllMapPoints const {
+  inline MapPoints GetAllMapPointsWithId {
     u_lock take(ownership_);
     return points_;
   }
 
-  void Clear();
+  inline void Clear() {
+    u_lock take(ownership_);
+    keyframes_.clear();
+    points_.clear();
+  }
 
  private:
-  Keyframes keyframes;  // Maintained keyframes.
-  MapPoints points;     // Maintained map points.
+  Keyframes keyframes_;  // Maintained keyframes.
+  MapPoints points_;     // Maintained map points.
 
   std::mutex ownership_;
 };
-
-void InsertKeyframe(Keyframe::Ptr keyframe) {
-  u_lock take(ownership_);
-  if (keyframes.count(keyframe->id_))
-    return;
-  else
-    keyframes.insert(make_pair(keyframe->id_, keyframe));
-}
-
-void InsertMapPoint(MapPoint::Ptr point) {
-  u_lock take(ownsership_);
-  if (points.count(point->id_)) 
-    return; 
-  else 
-    points.insert(make_pair(point->id_), point);
-}
-
-void EraseKeyframeById(const int id) {
-  u_lock take(ownership_);
-  keyframes.erase(id);
-}
-
-void EraseMapPointById(const int id) {
-  u_lock take(ownership_);
-  points.erase(id);
-}
-
-void Map::Clear() {
-  u_lock take(ownership_);
-  keyframes.clear();
-  points.clear();
-}
-
 }  // namespace mono_slam
 
 #endif  // MONO_SLAM_MAP_H_

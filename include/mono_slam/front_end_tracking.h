@@ -85,7 +85,7 @@ class Tracking {
   sptr<Viewer> viewer_ = nullptr;              // Viewer.
 
   // User specified objects.
-  sptr<Initializer> initializer_ = nullptr;           // Initializer.
+  sptr<Initializer> initializer_ = nullptr;          // Initializer.
   sptr<Vocabulary> voc_ = nullptr;                   // Vocabulary.
   Camera::Ptr cam_ = nullptr;                        // Camera.
   cv::Ptr<cv::FeatureDetector> detector_ = nullptr;  // Feature detector.
@@ -105,13 +105,7 @@ void Tracking::AddImage(const cv::Mat& img) {
 void Tracking::TrackCurrentFrame() {
   switch (state_) {
     case Tracking::State::NOT_INITIALIZED_YET:
-      if (InitMap()) {
-        last_frame_->SetKeyframe();
-        curr_frame_->SetKeyframe();
-        local_mapper_->InsertKeyframe(last_frame_);
-        local_mapper_->InsertKeyframe(curr_frame_);
-        state_ = Tracking::State::GOOD;
-      }
+      if (InitMap()) state_ = Tracking::State::GOOD;
       break;
 
     case Tracking::State::GOOD:

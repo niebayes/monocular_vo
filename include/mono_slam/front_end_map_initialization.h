@@ -3,9 +3,6 @@
 
 #include "mono_slam/common_include.h"
 #include "mono_slam/frame.h"
-#include "mono_slam/g2o_optimizer.h"
-#include "mono_slam/geometry_solver.h"
-#include "mono_slam/matcher.h"
 
 namespace mono_slam {
 

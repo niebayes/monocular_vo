@@ -35,11 +35,11 @@ class LocalMapping {
   void SetVocabulary(const sptr<Vocabulary>& voc);
   void SetKeyframeDB(KeyframeDB::Ptr keyframe_db);
 
-  public: 
+ public:
   Keyframes keyframes_;
 
  private:
-  std::mutex ownership_;  
+  std::mutex ownership_;
 
   sptr<System> system_ = nullptr;
   sptr<Tracking> tracker_ = nullptr;
@@ -49,14 +49,14 @@ class LocalMapping {
 };
 
 void InsertKeyframe(const Keyframe::Ptr& keyframe) {
+  CHECK_EQ(Keyframe->IsKeyframe(), true);
   u_lock take(ownership_);
   keyframes_.push(keyframe);
 }
 
 void LocalMapping::Reset() {
   u_lock take(ownership_);
-  while (!keyframes_.empty())
-    keyframes_.pop();
+  while (!keyframes_.empty()) keyframes_.pop();
 }
 
 }  // namespace mono_slam
