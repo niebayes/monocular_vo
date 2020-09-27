@@ -26,27 +26,26 @@ class Map {
 
   void EraseMapPointById(const int id);
 
-  inline list<Keyframe::Ptr> GetAllKeyframes {
+  inline list<Keyframe::Ptr> GetAllKeyframes() {
     u_lock take(ownership_);
     list<Keyframe::Ptr> keyframes;
     for (auto& id_kf : keyframes_) keyframes.push_back(id_kf.second);
     return keyframes;
   }
 
-  inline list<MapPoint::Ptr> GetAllMapPoints {
+  inline list<MapPoint::Ptr> GetAllMapPoints() {
     u_lock take(ownership_);
     list<MapPoint::Ptr> points;
-    points.reserve(points_.size());
     for (auto& id_point : points_) points.push_front(id_point.second);
     return points;
   }
 
-  inline Keyframes GetAllKeyframesWithId {
+  inline Keyframes GetAllKeyframesWithId() {
     u_lock take(ownership_);
     return keyframes_;
   }
 
-  inline MapPoints GetAllMapPointsWithId {
+  inline MapPoints GetAllMapPointsWithId() {
     u_lock take(ownership_);
     return points_;
   }

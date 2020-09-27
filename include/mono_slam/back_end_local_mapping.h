@@ -35,11 +35,9 @@ class LocalMapping {
   void SetVocabulary(const sptr<Vocabulary>& voc);
   void SetKeyframeDB(KeyframeDB::Ptr keyframe_db);
 
- public:
-  Keyframes keyframes_;
-
  private:
-  std::mutex ownership_;
+  Keyframes keyframes_;
+  mutable std::mutex ownership_;
 
   sptr<System> system_ = nullptr;
   sptr<Tracking> tracker_ = nullptr;
@@ -48,8 +46,8 @@ class LocalMapping {
   sptr<Vocabulary> voc_ = nullptr;
 };
 
-void InsertKeyframe(const Keyframe::Ptr& keyframe) {
-  CHECK_EQ(Keyframe->IsKeyframe(), true);
+void LocalMapping::InsertKeyframe(const Keyframe::Ptr& keyframe) {
+  CHECK_EQ(keyframe->IsKeyframe(), true);
   u_lock take(ownership_);
   keyframes_.push(keyframe);
 }

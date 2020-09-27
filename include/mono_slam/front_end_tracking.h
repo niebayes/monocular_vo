@@ -52,7 +52,7 @@ class Tracking {
   void SetInitializer(Initializer::Ptr initializer);
   void SetVocabulary(const sptr<Vocabulary>& voc);
   void SetCamera(const Camera::Ptr& cam);
-  void SetFeatureDetector(const cv::Ptr<FeatureDetector>& detector);
+  void SetFeatureDetector(const cv::Ptr<cv::FeatureDetector>& detector);
 
   void Reset();
 
