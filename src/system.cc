@@ -49,8 +49,7 @@ bool System::Init() {
 
   // Set feature detector parameters.
   const int& desired_num_features = Config::Get<int>("desired_num_features");
-  cv::Ptr<cv::FeatureDetector> detector =
-      cv::ORB::create(desired_num_features);
+  cv::Ptr<cv::FeatureDetector> detector = cv::ORB::create(desired_num_features);
 
   // Prepare and link components.
   tracker_ = make_shared<Tracking>();

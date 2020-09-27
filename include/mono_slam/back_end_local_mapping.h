@@ -2,6 +2,7 @@
 #define MONO_SLAM_BACK_END_LOCAL_MAPPING_H_
 
 #include "mono_slam/common_include.h"
+#include "mono_slam/frame.h"
 #include "mono_slam/front_end_tracking.h"
 #include "mono_slam/keyframe_database.h"
 #include "mono_slam/map.h"
@@ -19,12 +20,11 @@ class LocalMapping {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = std::shared_ptr<LocalMapping>;
-  using Keyframe = Frame;
-  using Keyframes = std::queue<Keyframe::Ptr>;
+  using Keyframes = std::queue<Frame::Ptr>;
 
   LocalMapping();
 
-  void InsertKeyframe(const Keyframe::Ptr& keyframe);
+  void InsertKeyframe(const Frame::Ptr& keyframe);
 
   void Reset();
 
@@ -45,17 +45,6 @@ class LocalMapping {
   KeyframeDB::Ptr keyframe_db_ = nullptr;
   sptr<Vocabulary> voc_ = nullptr;
 };
-
-void LocalMapping::InsertKeyframe(const Keyframe::Ptr& keyframe) {
-  CHECK_EQ(keyframe->IsKeyframe(), true);
-  u_lock take(ownership_);
-  keyframes_.push(keyframe);
-}
-
-void LocalMapping::Reset() {
-  u_lock take(ownership_);
-  while (!keyframes_.empty()) keyframes_.pop();
-}
 
 }  // namespace mono_slam
 

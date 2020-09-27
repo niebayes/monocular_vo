@@ -12,26 +12,20 @@ class Map;
 
 class Viewer {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Viewer>;
 
   Viewer();
 
   void Reset();
 
-  // Setters to link components.
   void SetMap(const Map::Ptr& map);
+
   void SetSystem(const sptr<System>& system);
 
  private:
   Map::Ptr map_ = nullptr;
   sptr<System> system_ = nullptr;
 };
-
-void Viewer::Reset() {}
-
-void Viewer::SetMap(const Map::Ptr& map) { map_ = map; }
-void Viewer::SetSystem(const sptr<System>& system) { system_ = system; }
 
 }  // namespace mono_slam
 

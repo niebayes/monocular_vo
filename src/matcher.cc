@@ -1,7 +1,9 @@
 #include "mono_slam/matcher.h"
 
+#include "mono_slam/feature.h"
+
 namespace mono_slam {
-  
+
 Matcher::Matcher(const int matching_threshold,
                  const int distance_ratio_test_threshold)
     : matching_threshold_(matching_threshold),
@@ -29,8 +31,8 @@ int Matcher::SearchForInitialzation(const Frame::Ptr& frame_1,
          it_2 != it_2_end; ++it_2) {
       const int idx_2 = *it_2;
       const Feature::Ptr& feat_2 = frame_2->feats_[idx_2];
-      const int dist =
-          ComputeDescriptorDistance(feat_1->descriptor_, feat_2->descriptor_);
+      const int dist = matcher_utils::ComputeDescriptorDistance(
+          feat_1->descriptor_, feat_2->descriptor_);
       if (dist < min_dist) {
         second_min_dist = min_dist;
         min_dist = dist;
@@ -73,5 +75,6 @@ int ComputeDescriptorDistance(const cv::Mat& desc_1, const cv::Mat& desc_2) {
 
   return dist;
 }
+
 }  // namespace matcher_utils
 }  // namespace mono_slam

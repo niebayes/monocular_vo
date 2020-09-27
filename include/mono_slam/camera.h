@@ -11,19 +11,12 @@ class Camera {
   using Ptr = uptr<Camera>;
 
   // Empty constructor used only when setting camera parameters.
-  Camera() {}
+  Camera();
 
-  Camera(const SE3& T_c_w) : T_c_w_(T_c_w) {}
+  Camera(const SE3& T_c_w);
 
   void Init(const double fx, const double fy, const double cx, const double cy,
-            const Vec4& dist_coeffs) {
-    fx_ = fx;
-    fy_ = fy;
-    cx_ = cx;
-    cy_ = cy;
-    K_ = (Mat33() << fx, 0., cx, 0., fy, cy, 0., 0., 1.).finished();
-    dist_coeffs_ = dist_coeffs;
-  }
+            const Vec4& dist_coeffs);
 
   // Getters.
   inline const SE3& Pose() const { return T_c_w_; }
@@ -32,8 +25,8 @@ class Camera {
   inline const Vec4& DistCoeffs() const { return dist_coeffs_; }
 
   // Setters.
-  void SetPose(const SE3& T_c_w) { T_c_w_ = T_c_w; }
-  void SetPos(const Vec3& pos) { T_c_w_.translation() = pos; }
+  void SetPose(const SE3& T_c_w);
+  void SetPos(const Vec3& pos);
 
   // Transformation utilites.
   // Transform map point in world frame to camera frame.

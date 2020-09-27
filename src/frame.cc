@@ -1,5 +1,7 @@
 #include "mono_slam/frame.h"
 
+#include "mono_slam/feature.h"
+
 namespace mono_slam {
 
 Frame(const cv::Mat& img, const Camera::Ptr& cam, const sptr<Vocabulary>& voc,
@@ -21,6 +23,12 @@ Frame(const cv::Mat& img, const Camera::Ptr& cam, const sptr<Vocabulary>& voc,
     y_max_ = std::max(corners.at<float>(2, 1), corners.at<float>(3, 1));
   }
 }
+
+void Frame::SetPose(const SE3& T_c_w) { cam_->SetPose(T_c_w); }
+
+void Frame::SetPos(const Vec3& pos) { cam_->SetPos(pos); }
+
+void Frame::SetKeyframe() { is_keyframe_ = true; }
 
 void Frame::ExtractFeatures(const cv::Mat& img,
                             const cv::Ptr<cv::FeatureDetector>& detector) {

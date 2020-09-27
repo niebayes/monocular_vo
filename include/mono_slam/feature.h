@@ -9,20 +9,11 @@ namespace mono_slam {
 
 class Frame;
 class MapPoint;
+
 struct Feature {
- public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using Ptr = sptr<Feature>;
+  using Ptr = uptr<Feature>;
 
-  Feature(const sptr<Frame>& frame, const Vec2& pt, const cv::Mat& descriptor,
-          const int level)
-      : frame_(frame),
-        pt_(pt),
-        descriptor_(descriptor),
-        level_(level),
-        bear_vec_(frame->cam_->pixel2bear(pt_)) {}
-
- public:
   // Linked 3D map point expressed in world frame.
   //! A feature links only one map point and will not change any more.
   wptr<MapPoint> point_;
@@ -34,6 +25,14 @@ struct Feature {
   const Vec3 bear_vec_;  // Unit bearing vector (i.e. the ray through the camera
                          // center of frame_ and pt_)
   const int level_;  // Image pyramid level at which the feature is detected.
+
+  Feature(const sptr<Frame>& frame, const Vec2& pt, const cv::Mat& descriptor,
+          const int level)
+      : frame_(frame),
+        pt_(pt),
+        descriptor_(descriptor),
+        level_(level),
+        bear_vec_(frame_.lock()->cam_->pixel2bear(pt_)) {}
 };
 
 }  // namespace mono_slam

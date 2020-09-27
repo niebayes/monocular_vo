@@ -16,8 +16,6 @@ namespace mono_slam {
 
 class Optimizer {
  public:
-  using Ptr = sptr<Optimizer>;
-
   // Global bundle adjustment.
   static void GlobalBundleAdjustment();
 
@@ -26,8 +24,6 @@ class Optimizer {
 
   // Local bundle adjustment.
   static void LocalBundleAdjustment();
-
- private:
 };
 
 }  // namespace mono_slam

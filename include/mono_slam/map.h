@@ -14,11 +14,11 @@ class Map {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Map>;
-  using Keyframe = Frame;
-  using Keyframes = std::unordered_map<int, Keyframe::Ptr>;
+  // FIXME What data type should we use here? List or map?
+  using Keyframes = std::unordered_map<int, Frame::Ptr>;
   using MapPoints = std::unordered_map<int, MapPoint::Ptr>;
 
-  void InsertKeyframe(const Keyframe::Ptr& keyframe);
+  void InsertKeyframe(const Frame::Ptr& keyframe);
 
   void InsertMapPoint(const MapPoint::Ptr& point);
 
@@ -26,9 +26,9 @@ class Map {
 
   void EraseMapPointById(const int id);
 
-  inline list<Keyframe::Ptr> GetAllKeyframes() {
+  inline list<Frame::Ptr> GetAllKeyframes() {
     u_lock take(ownership_);
-    list<Keyframe::Ptr> keyframes;
+    list<Frame::Ptr> keyframes;
     for (auto& id_kf : keyframes_) keyframes.push_back(id_kf.second);
     return keyframes;
   }

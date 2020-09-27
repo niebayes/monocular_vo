@@ -29,8 +29,6 @@ class KeyframeDB {
   vector<list<Frame::Ptr>> inverted_indices_;
 };
 
-KeyframeDB::KeyframeDB(const sptr<Vocabulary>& voc) : voc_(voc) {}
-
 }  // namespace mono_slam
 
 #endif  // MONO_SLAM_KEYFRAME_DATABASE_H_

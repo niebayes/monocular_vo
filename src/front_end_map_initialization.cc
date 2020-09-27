@@ -7,6 +7,7 @@
 #include "mono_slam/map.h"
 #include "mono_slam/map_point.h"
 #include "mono_slam/matcher.h"
+
 namespace mono_slam {
 
 Initializer::Initializer(const int min_num_features_init,

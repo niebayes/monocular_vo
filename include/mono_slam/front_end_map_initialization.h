@@ -12,7 +12,7 @@ class Frame;
 
 class Initializer {
  public:
-  using Ptr = sptr<Initializer>;
+  using Ptr = uptr<Initializer>;
 
   enum class Stage { NO_FRAME_YET, HAS_REFERENCE_FRAME, SUCCESS };
 

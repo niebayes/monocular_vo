@@ -9,11 +9,11 @@ namespace mono_slam {
 
 class Frame;
 class Feature;
+
 class MapPoint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<MapPoint>;
-  using Keyframe = Frame;
 
   // Observations.
   list<wptr<Feature>> observations_;
@@ -71,7 +71,7 @@ class MapPoint {
   void UpdateMeanViewingDirection();
 
   // Check if this map point is observed by the given keyframe.
-  inline bool IsObservedBy(const sptr<Keyframe>& keyframe) const {
+  inline bool IsObservedBy(const sptr<Frame>& keyframe) const {
     CHECK_EQ(keyframe->IsKeyframe(), true);
     u_lock take(ownership_);
     for (auto it = observations_.cbegin(), it_end = observations_.cend();

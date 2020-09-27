@@ -8,15 +8,15 @@
 
 namespace mono_slam {
 
-struct Feature;
 class Camera;
+struct Feature;
 class MapPoint;
 
 class Frame {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Frame>;
-  using Features = std::vector<sptr<Feature>>;
+  using Features = std::vector<uptr<Feature>>;
 
   static int frame_cnt_;  // Global frame counter, starting from 0.
   const int id_;          // Unique frame identity.
@@ -33,15 +33,15 @@ class Frame {
 
   inline const SE3& Pose() const { return cam_->Pose(); }
 
-  void SetPose(const SE3& T_c_w) { cam_->SetPose(T_c_w); }
+  void SetPose(const SE3& T_c_w);
 
   inline const Vec3& Pos() const { return cam_->Pos(); }
 
-  void SetPos(const Vec3& pos) { cam_->SetPos(pos); }
+  void SetPos(const Vec3& pos);
 
   inline bool IsKeyframe() const { return is_keyframe_; }
 
-  void SetKeyframe() { is_keyframe_ = true; }
+  void SetKeyframe();
 
   // Number of observations (i.e. number of features observed in this frame).
   inline int NumObs() const { return feats_.size(); }
