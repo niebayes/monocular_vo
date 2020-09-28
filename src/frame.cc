@@ -50,9 +50,10 @@ void Frame::ComputeBoW(const sptr<Vocabulary>& voc) {
   // Collect descriptors.
   vector<cv::Mat> descriptor_vec;
   descriptor_vec.reserve(this->NumObs());
+  // FIXME Parameter type in lambda?
   std::transform(feats_.begin(), feats_.end(),
                  std::back_inserter(descriptor_vec),
-                 [](sptr<Feature> feat) { return feat->descriptor_; });
+                 [](const sptr<Feature>& feat) { return feat->descriptor_; });
   voc->transform(descriptor_vec, bow_vec_, feat_vec_, 4);
 }
 

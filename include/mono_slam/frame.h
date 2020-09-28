@@ -4,6 +4,7 @@
 #include "mono_slam/camera.h"
 #include "mono_slam/common_include.h"
 #include "mono_slam/feature.h"
+#include "mono_slam/g2o_optimizer/types.h"
 #include "mono_slam/map_point.h"
 
 namespace mono_slam {
@@ -16,17 +17,17 @@ class Frame {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Frame>;
-  using Features = std::vector<sptr<Feature>>;
+  using Features = std::vector<wptr<Feature>>;  // weak_ptr to avoid cyclic ref.
 
-  static int frame_cnt_;  // Global frame counter, starting from 0.
-  const int id_;          // Unique frame identity.
-  bool is_keyframe_;      // Is this frame a keyframe?
-
-  // Frame characteristics.
+  static int frame_cnt_;           // Global frame counter, starting from 0.
+  const int id_;                   // Unique frame identity.
+  bool is_keyframe_;               // Is this frame a keyframe?
   Features feats_;                 // Features extracted in this frame.
   Camera::Ptr cam_ = nullptr;      // Linked camera.
   DBoW3::BowVector bow_vec_;       // Bag of words vector.
   DBoW3::FeatureVector feat_vec_;  // Feature vector.
+  sptr<g2o_types::VertexFrame> v_frame_ =
+      nullptr;  // Temporary g2o keyframe vertex storing the optimized result.
 
   Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
         const cv::Ptr<cv::FeatureDetector>& detector);

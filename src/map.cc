@@ -2,32 +2,19 @@
 
 namespace mono_slam {
 
+// TODO(bayes) Use list data structure.
 void Map::InsertKeyframe(Frame::Ptr keyframe) {
   CHECK_EQ(keyframe->IsKeyframe(), true);
+  CHECK_GE(keyframe->id_, max_frame_id_);
   u_lock take(ownership_);
-  if (keyframes_.count(keyframe->id_))
-    return;
-  else
-    keyframes_.insert(make_pair(keyframe->id_, keyframe));
-}
-
-void Map::InsertMapPoint(MapPoint::Ptr point) {
-  CHECK_NE(point->IsOutlier(), true);
-  u_lock take(ownership_);
-  if (points_.count(point->id_))
-    return;
-  else
-    points_.insert(make_pair(point->id_, point));
+  keyframes_.push_back(keyframe);
 }
 
 void Map::EraseKeyframeById(const int id) {
   u_lock take(ownership_);
-  keyframes_.erase(id);
-}
-
-void Map::EraseMapPointById(const int id) {
-  u_lock take(ownership_);
-  points_.erase(id);
+  // FIXME Efficiency issue? Use for loop and break out once found?
+  keyframes_.remove_if(
+      [](const Frame::Ptr& keyframe) { return keyframe->id_ == id; });
 }
 
 }  // namespace mono_slam

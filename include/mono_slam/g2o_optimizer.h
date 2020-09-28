@@ -12,9 +12,8 @@ class Map;
 class Optimizer {
  public:
   // Global bundle adjustment.
-  static void GlobalBundleAdjustment(const Map::Keyframes& keyframes,
-                                     const Map::MapPoints& points, Map::Ptr& map,
-                                     const int num_iterations);
+  static void GlobalBundleAdjustment(const Map::Ptr& map,
+                                     const int num_iterations = 20);
 
   // Pose graph optimization.
   static void PoseGraphOptimization();

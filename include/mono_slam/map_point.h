@@ -4,6 +4,7 @@
 #include "mono_slam/common_include.h"
 #include "mono_slam/feature.h"
 #include "mono_slam/frame.h"
+#include "mono_slam/g2o_optimizer/types.h"
 
 namespace mono_slam {
 
@@ -25,7 +26,8 @@ class MapPoint {
   wptr<Feature> best_feat_;  // Best feature in that its descriptor has the
                              // least median distance among all observations.
   Vec3 mean_view_dir_;       // Mean viewing direction.
-  bool is_outlier_;  // Is this map point an outlier marked in optimization?
+  sptr<g2o_types::VertexPoint> v_point_ =
+      nullptr;  // Temporary g2o map point vertex storing the optimized result.
 
   MapPoint(const Vec3& pos);
 
@@ -37,16 +39,6 @@ class MapPoint {
   }
 
   void SetPos(const Vec3& pos);
-
-  inline bool IsOutlier() const {
-    u_lock take(ownership_);
-    return is_outlier_;
-  }
-
-  void SetOutlier() {
-    u_lock take(ownership_);
-    is_outlier_ = true;
-  }
 
   // Add an observation.
   void AddObservation(const sptr<Feature>& feat);
@@ -74,6 +66,8 @@ class MapPoint {
   // FIXME Incomplete type & forward declaration error if put definition here.
   // FIXME Does inline still work if definition is not here?
   inline bool IsObservedBy(const sptr<Frame>& keyframe) const;
+
+  // TODO(bayes) Implement delete funtions like svo.
 
  private:
   mutable std::mutex ownership_;
