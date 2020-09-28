@@ -86,7 +86,7 @@ class Tracking {
   // User specified objects.
   uptr<Initializer> initializer_ = nullptr;          // Initializer.
   sptr<Vocabulary> voc_ = nullptr;                   // Vocabulary.
-  sptr<Camera> cam_ = nullptr;                        // Camera.
+  Camera::Ptr cam_ = nullptr;                        // Camera.
   cv::Ptr<cv::FeatureDetector> detector_ = nullptr;  // Feature detector.
 };
 

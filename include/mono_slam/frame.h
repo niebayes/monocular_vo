@@ -16,7 +16,7 @@ class Frame {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Frame>;
-  using Features = std::vector<uptr<Feature>>;
+  using Features = std::vector<sptr<Feature>>;
 
   static int frame_cnt_;  // Global frame counter, starting from 0.
   const int id_;          // Unique frame identity.

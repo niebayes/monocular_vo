@@ -40,7 +40,7 @@ void Frame::ExtractFeatures(const cv::Mat& img,
   const int num_kpts = kpts.size();
   feats_.reserve(num_kpts);
   for (int i = 0; i < num_kpts; ++i) {
-    feats_.push_back(make_unique<Feature>(this,
+    feats_.push_back(make_shared<Feature>(sptr<Frame>(this),
                                           Vec2{kpts[i].pt.x, kpts[i].pt.y},
                                           descriptors.row(i), kpts[i].octave));
   }
@@ -64,7 +64,7 @@ vector<int> Frame::SearchFeatures(const Vec2& pt, const int radius,
   vector<int> feat_indices;
   feat_indices.reserve(num_obs);
   for (int i = 0; i < num_obs; ++i) {
-    const uptr<Feature>& feat = feats_[i];
+    const sptr<Feature>& feat = feats_[i];
     const Vec2 dist = (feat->pt_ - pt).cwiseAbs();
     if (dist.x() <= radius && dist.y() <= radius)
       if (feat->level_ >= level_low && feat->level_ <= level_high)

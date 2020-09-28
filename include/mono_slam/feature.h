@@ -12,7 +12,7 @@ class MapPoint;
 
 struct Feature {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using Ptr = uptr<Feature>;
+  using Ptr = sptr<Feature>;
 
   // Linked 3D map point expressed in world frame.
   //! A feature links only one map point and will not change any more.

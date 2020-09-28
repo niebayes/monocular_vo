@@ -5,7 +5,7 @@ namespace mono_slam {
 Tracking::Tracking() : state_(Tracking::State::NOT_INITIALIZED_YET) {}
 
 void Tracking::AddImage(const cv::Mat& img) {
-  curr_frame_ = make_shared<Frame>(img, cam_, voc_, detector_);
+  curr_frame_ = make_shared<Frame>(img, std::move(cam_), voc_, detector_);
   TrackCurrentFrame();
   // Update last frame.
   last_frame_ = curr_frame_;
