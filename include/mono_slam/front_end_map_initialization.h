@@ -12,22 +12,38 @@ class Frame;
 
 class Initializer {
  public:
-  using Ptr = uptr<Initializer>;
-
   enum class Stage { NO_FRAME_YET, HAS_REFERENCE_FRAME, SUCCESS };
 
+ private:
+  sptr<Tracking> tracker_ = nullptr;
+
+  Stage stage_;  // Initialization stage.
+
+  Frame::Ptr ref_frame_ = nullptr;   // Reference frame.
+  Frame::Ptr curr_frame_ = nullptr;  // Current frame.
+
+  SE3 T_curr_ref_;  // Relative pose from reference frame to current frame.
+  //! points_ and inlier_matches_ are one-to-one correspondent.
+  vector<Vec3> points_;            // Triangulated points in world frame.
+  vector<bool> triangulate_mask_;  // Mark which inlier match produces good
+                                   // triangulated point.
+  vector<pair<int, int>> inlier_matches_;  // Inlier matches.
+
+ public:
   Initializer(const int min_num_features_init,
               const int min_num_matched_features,
               const int min_num_inlier_matches);
 
-  void SetTracker(const sptr<Tracking>& tracker);
+  inline const Stage& stage() const { return stage_; }
 
-  void AddReferenceFrame(const Frame::Ptr& ref_frame);
+  void SetTracker(sptr<Tracking> tracker);
 
-  void AddCurrentFrame(const Frame::Ptr& curr_frame);
+  void AddReferenceFrame(Frame::Ptr ref_frame);
+
+  void AddCurrentFrame(Frame::Ptr curr_frame);
 
  private:
-  // Compute relative pose from ref_frame to curr_frame and triangulate points
+  // Compute relative pose from ref_frame_ to curr_frame_ and triangulate points
   // by the way.
   bool Initialize(const vector<int>& matches);
 
@@ -41,18 +57,7 @@ class Initializer {
     inlier_matches_.clear();
   }
 
-  sptr<Tracking> tracker_ = nullptr;
-
-  Stage stage_;  // Initialization stage.
-
-  Frame::Ptr ref_frame_ = nullptr;   // Reference frame.
-  Frame::Ptr curr_frame_ = nullptr;  // Current frame.
-
-  SE3 T_curr_ref_;  // Relative pose from reference frame to current frame.
-  //! points_ and inlier_matches_ are one-to-one correspondent.
-  vector<Vec3> points_;  // Triangulated points in world frame.
-  vector<pair<int, int>> inlier_matches_;  // Inlier matches.
-
+ private:
   // Configuration parameters.
   const int min_num_features_init_;
   const int min_num_matched_features_;

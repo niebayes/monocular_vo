@@ -22,17 +22,20 @@ struct Feature {
   const wptr<Frame> frame_;   // Frame in which the feature is detected.
   const Vec2 pt_;             // 2D image point expressed in pixels.
   const cv::Mat descriptor_;  // Corresponding descriptor.
+  // FIXME What does this do? Do we need this?
   const Vec3 bear_vec_;  // Unit bearing vector (i.e. the ray through the camera
                          // center of frame_ and pt_)
   const int level_;  // Image pyramid level at which the feature is detected.
 
-  Feature(const sptr<Frame>& frame, const Vec2& pt, const cv::Mat& descriptor,
+  // FIXME Incomplete type and forward declaration error when initializing
+  // bear_vec_ from frame_.lock()->cam_->pixel2bear(pt).
+  Feature(sptr<Frame> frame, const Vec2& pt, const cv::Mat& descriptor,
           const int level)
       : frame_(frame),
         pt_(pt),
         descriptor_(descriptor),
         level_(level),
-        bear_vec_(frame_.lock()->cam_->pixel2bear(pt_)) {}
+        bear_vec_(Vec3{}) {}
 };
 
 }  // namespace mono_slam

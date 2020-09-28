@@ -21,7 +21,7 @@ class GeometrySolver {
   static int EvaluateFundamentalScore(const Frame::Features& feats_1,
                                       const Frame::Features& feats_2,
                                       const Mat33& F,
-                                      const vector<int>& matches,
+                                      const vector<pair<int, int>>& matches,
                                       vector<bool>& inlier_mask,
                                       const double noise_sigma = 1.0);
 
@@ -30,8 +30,9 @@ class GeometrySolver {
   static bool FindRelativePoseRansac(
       const Frame::Ptr& frame_1, const Frame::Ptr& frame_2, const Mat33& F,
       const vector<pair<int, int>>& inlier_matches, SE3& relative_pose,
-      vector<Vec3>& points, const double noise_sigma = 1.0,
-      const int min_num_triangulated = 50, const double min_parallax = 1.0);
+      vector<Vec3>& points, vector<bool>& triangulate_mask,
+      const double noise_sigma = 1.0, const int min_num_triangulated = 50,
+      const double min_parallax = 1.0);
 
   // Evaluate the score of pose by counting number of good triangulated points.
   static int EvaluatePoseScore(const Mat33& R, const Vec3& t,
@@ -39,9 +40,10 @@ class GeometrySolver {
                                const Frame::Features& feats_2,
                                const vector<pair<int, int>>& inlier_matches,
                                const Mat33& K, vector<Vec3>& points,
+                               vector<bool>& triangulate_mask,
                                double& median_parallax,
                                const double reproj_tolerance2,
-                               const double min_parallax);
+                               const double min_parallax = 1.0);
 
   static void P3PRansac();
 };
@@ -58,5 +60,6 @@ double degree2radian(const double degree);
 double radian2degree(const double radian);
 
 }  // namespace init_utils
+}  // namespace mono_slam
 
 #endif  // MONO_SLAM_GEOMETRY_SOLVER_H_

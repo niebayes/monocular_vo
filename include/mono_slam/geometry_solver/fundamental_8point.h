@@ -1,4 +1,3 @@
-#include "eigen3/unsupported/Eigen/KroneckerProduct"
 #include "mono_slam/common_include.h"
 
 namespace geometry {
@@ -12,9 +11,9 @@ void Fundamental8Point(const MatXX& pts_1, const MatXX& pts_2, Mat33& F) {
   // Vectorization trick: AXB = C -> (B' kron A) * vec(X) = vec(C);
   for (int i = 0; i < num_pts; ++i) {
     // FIXME Error in calling this function.
-    A.row(i) = Eigen::kroneckerProduct<Vec3, Vec3>(pts_1.col(i), pts_2.col(i))
-                   .transpose()
-                   .eval();
+    // A.row(i) = Eigen::kroneckerProduct<Vec3, Vec3>(pts_1.col(i), pts_2.col(i))
+    //                .transpose()
+    //                .eval();
   }
   auto svd = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
   const Vec9& F_vec = svd.matrixV().rightCols(1);

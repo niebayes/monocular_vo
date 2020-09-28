@@ -1,29 +1,33 @@
 #include "mono_slam/map.h"
 
-void InsertKeyframe(const Keyframe::Ptr& keyframe) {
-  CHECK_EQ(Keyframe->IsKeyframe(), true);
+namespace mono_slam {
+
+void Map::InsertKeyframe(Frame::Ptr keyframe) {
+  CHECK_EQ(keyframe->IsKeyframe(), true);
   u_lock take(ownership_);
-  if (keyframes.count(keyframe->id_))
+  if (keyframes_.count(keyframe->id_))
     return;
   else
-    keyframes.insert(make_pair(keyframe->id_, keyframe));
+    keyframes_.insert(make_pair(keyframe->id_, keyframe));
 }
 
-void InsertMapPoint(const MapPoint::Ptr& point) {
+void Map::InsertMapPoint(MapPoint::Ptr point) {
   CHECK_NE(point->IsOutlier(), true);
-  u_lock take(ownsership_);
-  if (points.count(point->id_))
+  u_lock take(ownership_);
+  if (points_.count(point->id_))
     return;
   else
-    points.insert(make_pair(point->id_), point);
+    points_.insert(make_pair(point->id_, point));
 }
 
-void EraseKeyframeById(const int id) {
+void Map::EraseKeyframeById(const int id) {
   u_lock take(ownership_);
-  keyframes.erase(id);
+  keyframes_.erase(id);
 }
 
-void EraseMapPointById(const int id) {
+void Map::EraseMapPointById(const int id) {
   u_lock take(ownership_);
-  points.erase(id);
+  points_.erase(id);
 }
+
+}  // namespace mono_slam

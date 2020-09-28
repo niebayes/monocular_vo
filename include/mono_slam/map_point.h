@@ -52,7 +52,7 @@ class MapPoint {
   void AddObservation(const sptr<Feature>& feat);
 
   // Erase an observation.
-  void EraseObservation(const sptr<Feature>& feat);
+  void EraseObservation(sptr<Feature>& feat);
 
   inline list<sptr<Feature>> GetAllObservations() const {
     u_lock take(ownership_);
@@ -71,15 +71,9 @@ class MapPoint {
   void UpdateMeanViewingDirection();
 
   // Check if this map point is observed by the given keyframe.
-  inline bool IsObservedBy(const sptr<Frame>& keyframe) const {
-    CHECK_EQ(keyframe->IsKeyframe(), true);
-    u_lock take(ownership_);
-    for (auto it = observations_.cbegin(), it_end = observations_.cend();
-         it != it_end; ++it)
-      // FIXME Is this equal operation valid? Should I overload a "==" operator?
-      if (it->lock()->frame_ == keyframe) return true;
-    return false;
-  }
+  // FIXME Incomplete type & forward declaration error if put definition here.
+  // FIXME Does inline still work if definition is not here?
+  inline bool IsObservedBy(const sptr<Frame>& keyframe) const;
 
  private:
   mutable std::mutex ownership_;

@@ -38,6 +38,13 @@ class Tracking {
                          // assuming contant velocity.
   int last_keyframe_id_;
 
+  // Linked components.
+  sptr<System> system_ = nullptr;              // System.
+  sptr<LocalMapping> local_mapper_ = nullptr;  // Local mapper.
+  Map::Ptr map_ = nullptr;                     // Map.
+  KeyframeDB::Ptr keyframe_db_ = nullptr;      // Keyframe database.
+  sptr<Viewer> viewer_ = nullptr;              // Viewer.
+
   Tracking();
 
   // Entry function.
@@ -49,9 +56,9 @@ class Tracking {
   void SetMap(Map::Ptr map);
   void SetKeyframeDB(KeyframeDB::Ptr keyframe_db);
   void SetViewer(sptr<Viewer> viewer);
-  void SetInitializer(Initializer::Ptr initializer);
+  void SetInitializer(uptr<Initializer> initializer);
   void SetVocabulary(const sptr<Vocabulary>& voc);
-  void SetCamera(const Camera::Ptr& cam);
+  void SetCamera(Camera::Ptr cam);
   void SetFeatureDetector(const cv::Ptr<cv::FeatureDetector>& detector);
 
   void Reset();
@@ -76,17 +83,10 @@ class Tracking {
   bool Relocalization();
 
  private:
-  // Linked components.
-  sptr<System> system_ = nullptr;              // System.
-  sptr<LocalMapping> local_mapper_ = nullptr;  // Local mapper.
-  Map::Ptr map_ = nullptr;                     // Map.
-  KeyframeDB::Ptr keyframe_db_ = nullptr;      // Keyframe database.
-  sptr<Viewer> viewer_ = nullptr;              // Viewer.
-
   // User specified objects.
-  sptr<Initializer> initializer_ = nullptr;          // Initializer.
+  uptr<Initializer> initializer_ = nullptr;          // Initializer.
   sptr<Vocabulary> voc_ = nullptr;                   // Vocabulary.
-  Camera::Ptr cam_ = nullptr;                        // Camera.
+  sptr<Camera> cam_ = nullptr;                        // Camera.
   cv::Ptr<cv::FeatureDetector> detector_ = nullptr;  // Feature detector.
 };
 

@@ -8,6 +8,9 @@ namespace mono_slam {
 
 class Matcher {
  public:
+  static int matching_threshold_;
+  static int distance_ratio_test_threshold_;
+
   Matcher(const int matching_threshold,
           const int distance_ratio_test_threshold);
 
@@ -16,9 +19,6 @@ class Matcher {
                                      const Frame::Ptr& frame_2,
                                      vector<int>& matches);
 
- private:
-  const int matching_threshold_;
-  const int distance_ratio_test_threshold_;
 };
 
 namespace matcher_utils {

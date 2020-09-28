@@ -4,9 +4,9 @@
 
 namespace mono_slam {
 
-Frame(const cv::Mat& img, const Camera::Ptr& cam, const sptr<Vocabulary>& voc,
-      const cv::Ptr<cv::FeatureDetector>& detector)
-    : id_(frame_cnt_++), is_keyframe_(false), cam_(cam) {
+Frame::Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
+             const cv::Ptr<cv::FeatureDetector>& detector)
+    : id_(frame_cnt_++), is_keyframe_(false), cam_(std::move(cam)) {
   ExtractFeatures(img, detector);
   ComputeBoW(voc);
   // TODO(bayes) Optimize when no distortion.
@@ -35,42 +35,54 @@ void Frame::ExtractFeatures(const cv::Mat& img,
   vector<cv::KeyPoint> kpts;
   cv::Mat descriptors;
   detector->detectAndCompute(img, cv::Mat{}, kpts, descriptors);
-  if (!cam_->DistCoeffs().empty())
+  if (cam_->DistCoeffs()(0) == 0)
     frame_utils::UndistortKeypoints(cam_->K(), cam_->DistCoeffs(), kpts);
   const int num_kpts = kpts.size();
   feats_.reserve(num_kpts);
   for (int i = 0; i < num_kpts; ++i) {
-    feats_.push_back(make_shared<Feature>(this,
+    feats_.push_back(make_unique<Feature>(this,
                                           Vec2{kpts[i].pt.x, kpts[i].pt.y},
-                                          descriptors[i], kpts[i].octave));
+                                          descriptors.row(i), kpts[i].octave));
   }
 }
 
 void Frame::ComputeBoW(const sptr<Vocabulary>& voc) {
   // Collect descriptors.
   vector<cv::Mat> descriptor_vec;
-  descriptor_vec.reserve(this->NumObservations());
-  std::transform(feats_.cbegin(), feats_.cend(),
+  descriptor_vec.reserve(this->NumObs());
+  std::transform(feats_.begin(), feats_.end(),
                  std::back_inserter(descriptor_vec),
                  [](sptr<Feature> feat) { return feat->descriptor_; });
   voc->transform(descriptor_vec, bow_vec_, feat_vec_, 4);
 }
 
 vector<int> Frame::SearchFeatures(const Vec2& pt, const int radius,
-                                  const int level_low, const int level_high) {
+                                  const int level_low,
+                                  const int level_high) const {
   CHECK(level_low >= 0 && level_high >= level_low);
   const int num_obs = this->NumObs();
   vector<int> feat_indices;
   feat_indices.reserve(num_obs);
   for (int i = 0; i < num_obs; ++i) {
-    const sptr<Feature>& feat = feats_[i];
-    const Vec2 dist = (feat->pt_ - pt).abs();
+    const uptr<Feature>& feat = feats_[i];
+    const Vec2 dist = (feat->pt_ - pt).cwiseAbs();
     if (dist.x() <= radius && dist.y() <= radius)
-      if (feat->level >= level_low && feat->level <= level_high)
+      if (feat->level_ >= level_low && feat->level_ <= level_high)
         feat_indices.push_back(i);
   }
   return feat_indices;
 }
+
+void Frame::UpdateConnections() {
+  //
+  return;
+}
+
+double Frame::ComputeSceneMedianDepth() {
+  //
+  return 0;
+}
+
 namespace frame_utils {
 
 void UndistortKeypoints(const Mat33& K, const Vec4& dist_coeffs,
@@ -82,8 +94,8 @@ void UndistortKeypoints(const Mat33& K, const Vec4& dist_coeffs,
     kpts_mat.at<double>(i, 1) = kpts[i].pt.y;
   }
   cv::Mat K_, dist_coeffs_;
-  cv::cv2eigen(K, K_);
-  cv::cv2eigen(dist_coeffs, dist_coeffs_);
+  cv::eigen2cv(K, K_);
+  cv::eigen2cv(dist_coeffs, dist_coeffs_);
   cv::undistortPoints(kpts_mat, kpts_mat, K_, dist_coeffs_, cv::Mat{}, K_);
   for (int i = 0; i < num_kpts; ++i) {
     kpts[i].pt.x = kpts_mat.at<double>(i, 0);
@@ -95,8 +107,8 @@ void ComputeImageBounds(const cv::Mat& img, const Mat33& K,
                         const Vec4& dist_coeffs, cv::Mat& corners) {
   corners = cv::Mat(4, 2, CV_32F);
   cv::Mat K_, dist_coeffs_;
-  cv::cv2eigen(K, K_);
-  cv::cv2eigen(dist_coeffs, dist_coeffs_);
+  cv::eigen2cv(K, K_);
+  cv::eigen2cv(dist_coeffs, dist_coeffs_);
   corners.at<float>(0, 0) = 0.0;
   corners.at<float>(0, 1) = 0.0;
   corners.at<float>(1, 0) = img.cols;

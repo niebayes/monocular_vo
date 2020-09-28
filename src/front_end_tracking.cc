@@ -47,27 +47,31 @@ void Tracking::TrackCurrentFrame() {
 }
 
 bool Tracking::InitMap() {
-  if (initializer_->stage_ == Initializer::Stage::NO_FRAME_YET)
+  if (initializer_->stage() == Initializer::Stage::NO_FRAME_YET)
     initializer_->AddReferenceFrame(curr_frame_);
   else
     initializer_->AddCurrentFrame(curr_frame_);
-  return initializer_->stage_ == Initializer::Stage::SUCCESS;
+  return initializer_->stage() == Initializer::Stage::SUCCESS;
 }
 
 bool Tracking::TrackWithConstantVelocityModel() {
   //
+  return true;
 }
 
 void Tracking::TrackLocalMap() {
   // TODO(bayes) Implement this.
+  return;
 }
 
 bool Tracking::NeedNewKeyframe() {
   //
+  return true;
 }
 
 bool Tracking::Relocalization() {
   //
+  return true;
 }
 
 void Tracking::SetSystem(sptr<System> system) { system_ = system; }
@@ -79,14 +83,14 @@ void Tracking::SetKeyframeDB(KeyframeDB::Ptr keyframe_db) {
   keyframe_db_ = keyframe_db;
 }
 void Tracking::SetViewer(sptr<Viewer> viewer) { viewer_ = viewer; }
-void Tracking::SetInitializer(Initializer::Ptr initializer) {
-  initializer_ = initializer;
+void Tracking::SetInitializer(uptr<Initializer> initializer) {
+  initializer_ = std::move(initializer);
 }
 void Tracking::SetVocabulary(const sptr<Vocabulary>& voc) { voc_ = voc; }
-void Tracking::SetCamera(const Camera::Ptr& cam) { cam_ = cam; }
+void Tracking::SetCamera(Camera::Ptr cam) { cam_ = std::move(cam); }
 void Tracking::SetFeatureDetector(
-    const cv::Ptr<cv::FeatureDetector>& feat_detector) {
-  feat_detector_ = feat_detector;
+    const cv::Ptr<cv::FeatureDetector>& detector) {
+  detector_ = detector;
 }
 
 }  // namespace mono_slam

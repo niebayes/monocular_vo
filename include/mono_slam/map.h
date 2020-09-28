@@ -18,14 +18,15 @@ class Map {
   using Keyframes = std::unordered_map<int, Frame::Ptr>;
   using MapPoints = std::unordered_map<int, MapPoint::Ptr>;
 
-  void InsertKeyframe(const Frame::Ptr& keyframe);
+  void InsertKeyframe(Frame::Ptr keyframe);
 
-  void InsertMapPoint(const MapPoint::Ptr& point);
+  void InsertMapPoint(MapPoint::Ptr point);
 
   void EraseKeyframeById(const int id);
 
   void EraseMapPointById(const int id);
 
+  // FIXME Return copy or const reference?
   inline list<Frame::Ptr> GetAllKeyframes() {
     u_lock take(ownership_);
     list<Frame::Ptr> keyframes;

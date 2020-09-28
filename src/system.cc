@@ -30,8 +30,8 @@ bool System::Init() {
       make_shared<Vocabulary>(Config::Get<string>("vocabulary_file"));
 
   // Set initializer parameters.
-  Initializer::Ptr =
-      make_shared<Initializer>(Config::Get<int>("min_num_features_init"),
+  uptr<Initializer> initializer =
+      make_unique<Initializer>(Config::Get<int>("min_num_features_init"),
                                Config::Get<int>("min_num_matched_features"),
                                Config::Get<int>("min_num_inlier_matches"));
 
@@ -45,7 +45,8 @@ bool System::Init() {
   const double& p1 = Config::Get<double>("p1");
   const double& p2 = Config::Get<double>("p2");
   const Vec4 dist_coeffs{k1, k2, p1, p2};
-  Camera::Ptr cam = make_unique<Camera>(fx, fy, cx, cy, dist_coeffs);
+  Camera::Ptr cam = make_unique<Camera>();
+  cam->Init(fx, fy, cx, cy, dist_coeffs);
 
   // Set feature detector parameters.
   const int& desired_num_features = Config::Get<int>("desired_num_features");
@@ -63,15 +64,15 @@ bool System::Init() {
   tracker_->SetLocalMapper(local_mapper_);
   tracker_->SetMap(map_);
   tracker_->SetViewer(viewer_);
-  tracker_->SetInitializer(initializer);
+  tracker_->SetInitializer(std::move(initializer));
   tracker_->SetVocabulary(voc);
-  tracker_->SetCamera(cam);
+  tracker_->SetCamera(std::move(cam));
   tracker_->SetFeatureDetector(detector);
 
   local_mapper_->SetSystem(this_system);
   local_mapper_->SetTracker(tracker_);
   local_mapper_->SetMap(map_);
-  local_mapper_->SetVocabulary(voc_);
+  local_mapper_->SetVocabulary(voc);
 
   viewer_->SetSystem(this_system);
   viewer_->SetMap(map_);

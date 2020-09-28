@@ -18,7 +18,7 @@ Config::~Config() {
 }
 
 template <typename T>
-static T Get(const std::string& key) {
+T Config::Get(const std::string& key) {
   return T(Config::config_->file_[key]);
 }
 

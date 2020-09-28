@@ -23,12 +23,12 @@ class Frame {
   bool is_keyframe_;      // Is this frame a keyframe?
 
   // Frame characteristics.
-  const Features feats_;                 // Features extracted in this frame.
-  Camera::Ptr cam_ = nullptr;            // Linked camera.
-  const DBoW3::BowVector bow_vec_;       // Bag of words vector.
-  const DBoW3::FeatureVector feat_vec_;  // Feature vector.
+  Features feats_;                 // Features extracted in this frame.
+  Camera::Ptr cam_ = nullptr;      // Linked camera.
+  DBoW3::BowVector bow_vec_;       // Bag of words vector.
+  DBoW3::FeatureVector feat_vec_;  // Feature vector.
 
-  Frame(const cv::Mat& img, const Camera::Ptr& cam, const sptr<Vocabulary>& voc,
+  Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
         const cv::Ptr<cv::FeatureDetector>& detector);
 
   inline const SE3& Pose() const { return cam_->Pose(); }
@@ -55,10 +55,14 @@ class Frame {
 
   // Search features given searching radius and image pyramid level range.
   vector<int> SearchFeatures(const Vec2& pt, const int radius,
-                             const int level_low, const int level_high);
+                             const int level_low, const int level_high) const;
 
   // Check if the given map point is Observable by this frame.
   bool IsObservable(const sptr<MapPoint>& point) const;
+
+  void UpdateConnections();
+
+  double ComputeSceneMedianDepth();
 
  private:
   // Image bounds.
@@ -70,12 +74,13 @@ class Frame {
 
 namespace frame_utils {
 
-void UndistortKeypoints(std::vector<cv::KeyPoint>& kpts);
+void UndistortKeypoints(const Mat33& K, const Vec4& dist_coeffs,
+                        std::vector<cv::KeyPoint>& kpts);
 
-void ComputeImageBounds(const cv::Mat& img, const cv::Mat& K,
-                        const cv::Mat& DistCoeffs, cv::Mat& corners);
+void ComputeImageBounds(const cv::Mat& img, const Mat33& K,
+                        const Vec4& dist_coeffs, cv::Mat& corners);
+
 }  // namespace frame_utils
-
 }  // namespace mono_slam
 
 #endif  // MONO_SLAM_FRAME_H_

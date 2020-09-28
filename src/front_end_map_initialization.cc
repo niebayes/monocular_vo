@@ -13,21 +13,21 @@ namespace mono_slam {
 Initializer::Initializer(const int min_num_features_init,
                          const int min_num_matched_features,
                          const int min_num_inlier_matches)
-    : state_(Stage::NO_FRAME_YET),
+    : state_(Initializer::Stage::NO_FRAME_YET),
       min_num_features_init_(min_num_features_init),
       min_num_matched_features_(min_num_matched_features),
       min_num_inlier_matches_(min_num_inlier_matches) {}
 
-Initializer::SetTracker(const sptr<Tracking>& tracker) { tracker_ = tracker; }
+Initializer::SetTracker(sptr<Tracking> tracker) { tracker_ = tracker; }
 
-void Initializer::AddReferenceFrame(const Frame::Ptr& ref_frame) {
+void Initializer::AddReferenceFrame(Frame::Ptr ref_frame) {
   Reset();
   if (ref_frame->NumObs() < min_num_features_init_) return;
   ref_frame_ = ref_frame;
   stage_ = Stage::HAS_REFERENCE_FRAME;
 }
 
-void Initializer::AddCurrentFrame(const Frame::Ptr& curr_frame) {
+void Initializer::AddCurrentFrame(Frame::Ptr curr_frame) {
   if (stage_ != Stage::HAS_REFERENCE_FRAME) {
     LOG(ERROR) << "No reference frame yet.";
     return;
@@ -46,15 +46,16 @@ void Initializer::AddCurrentFrame(const Frame::Ptr& curr_frame) {
   }
 }
 
-bool Initialize(const vector<int>& matches) {
+bool Initializer::Initialize(const vector<int>& matches) {
   // Find fundamental matrix F.
   Mat33 F;
   GeometrySolver::FindFundamentalRansac(ref_frame_, curr_frame_, matches, F,
                                         inlier_matches_);
   if (inlier_matches_.size() < min_num_inlier_matches) return false;
   // Find relative pose from ref_frame_ to curr_frame_.
-  if (!GeometrySolver::FindRelativePoseRansac(
-          ref_frame_, curr_frame_, F, inlier_matches_, T_curr_ref_, points_))
+  if (!GeometrySolver::FindRelativePoseRansac(ref_frame_, curr_frame_, F,
+                                              inlier_matches_, T_curr_ref_,
+                                              points_, triangulate_mask_))
     return false;
 
   // Set pose.
@@ -62,7 +63,7 @@ bool Initialize(const vector<int>& matches) {
   curr_frame_->SetPose(T_curr_ref_ * ref_frame_->Pose());
 }
 
-bool BuildInitMap() {
+bool Initializer::BuildInitMap() {
   // Insert initial keyframes.
   ref_frame_->SetKeyframe();
   curr_frame_->SetKeyframe();
@@ -74,7 +75,7 @@ bool BuildInitMap() {
   const Frame::Features& feats_2 = curr_frame_->feats_;
   const int num_inlier_matches = inlier_matches_.size();
   for (int i = 0; i < num_inlier_matches; ++i) {
-    if (points_[i].empty()) continue;
+    if (!triangulate_mask_[i]) continue;
     // Create new map point.
     MapPoint::Ptr point = make_shared<MapPoint>(points_[i]);
     // Add Observations.

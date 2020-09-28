@@ -11,13 +11,18 @@
 #include "g2o/types/slam3d/g2o_types_slam3d_api.h"
 #include "mono_slam/common_include.h"
 #include "mono_slam/g2o_optimizer/types.h"
+#include "mono_slam/map.h"
 
 namespace mono_slam {
+
+class Map;
 
 class Optimizer {
  public:
   // Global bundle adjustment.
-  static void GlobalBundleAdjustment();
+  static void GlobalBundleAdjustment(Map::Keyframes keyframes,
+                                     Map::MapPoints points, Map::Ptr& map,
+                                     const int num_iterations);
 
   // Pose graph optimization.
   static void PoseGraphOptimization();
@@ -28,7 +33,7 @@ class Optimizer {
 
 }  // namespace mono_slam
 
-#include "mono_slam/g2o_optimizer/global_bundle_adjustment.h"
+#include "mono_slam/g2o_optimizer/globle_bundle_adjustment.h"
 #include "mono_slam/g2o_optimizer/local_bundle_adjustment.h"
 #include "mono_slam/g2o_optimizer/pose_graph_optimization.h"
 

@@ -6,7 +6,7 @@
 #include "mono_slam/geometry_solver/kneip_p3p.h"
 #include "mono_slam/geometry_solver/linear_triangulation.h"
 #include "mono_slam/geometry_solver/normalized_fundamental_8point.h"
-#include "mono_slam/geometry_solver/points_to_epipolar_line_distance.h"
+#include "mono_slam/geometry_solver/point_to_epipolar_line_distance.h"
 
 namespace mono_slam {
 
@@ -48,11 +48,11 @@ void FindFundamentalRansac(const Frame::Ptr& frame_1, const Frame::Ptr& frame_2,
     }
 
     // Compute fundamental matrix using normalized eight-point algorithm.
-    geometry::NormalizedFundamental8Point(pts_1.homogeneous(),
-                                          pts_2.homogeneous(), F);
+    geometry::NormalizedFundamental8Point(pts_1.colwise().homogeneous(),
+                                          pts_2.colwise().homogeneous(), F);
     vector<bool> inlier_mask;
-    const int score = EvaluateFundamentalScore(feats_1, feats_2, F,
-                                               valid_matches, inlier_mask);
+    const int score = GeometrySolver::EvaluateFundamentalScore(
+        feats_1, feats_2, F, valid_matches, inlier_mask);
     if (score > best_score) {
       best_score = score;
       best_F = F;
@@ -109,39 +109,41 @@ bool FindRelativePoseRansac(const Frame::Ptr& frame_1,
                             const Frame::Ptr& frame_2, const Mat33& F,
                             const vector<pair<int, int>>& inlier_matches,
                             SE3& relative_pose, vector<Vec3>& points,
+                            vector<bool>& triangulate_mask,
                             const double noise_sigma = 1.0,
                             const int min_num_triangulated = 50,
                             const double min_parallax = 1.0) {
   // Obtain essential matrix.
   const Mat33& K = frame_1->cam_->K();
   const Mat33 E = K.transpose() * F * K;
-  Mat36 Rs;
-  Mat32 ts;
+  vector<Mat33> Rs;
+  vector<Vec3> ts;
   geometry::DecomposeEssential(E, Rs, ts);
 
   // Evaluate all combinations of R and t and select the best one.
 
-  int best_score = 0;        // Number of good triangulated points.
-  Mat33 best_R;              // R corresponding to highest score.
-  Vec3 best_t;               // t corresponding to highest score.
-  vector<Vec3> best_points;  // Points corresponding to highest score.
+  int best_score = 0;                  // Number of good triangulated points.
+  Mat33 best_R;                        // R corresponding to highest score.
+  Vec3 best_t;                         // t corresponding to highest score.
+  vector<Vec3> best_points;            // Points corresponding to highest score.
+  vector<bool> best_triangulate_mask;  // Mark which inlier match produces good
+                                       // triangulated point.
   double best_median_parallax = 0;
-  for (int i = 0; i < 2; ++i) {
-    for (int j = 0; j < 2; ++j) {
-      const Mat33& R = Rs.block<3, 3>(0, 3 * i);
-      const Vec3& t = ts.col(j);
-
+  for (Mat33& R : Rs) {
+    for (Vec3& t : ts) {
       // Evaluate score of the current R and t.
       vector<Vec3> points_;
+      vector<bool> triangulate_mask_;
       double median_parallax;
-      const int score = EvaluatePoseScore(
+      const int score = GeometrySolver::EvaluatePoseScore(
           R, t, frame_1->feats_, frame_2->feats_, inlier_matches, K, points_,
-          median_parallax, 2 * noise_sigma);
+          triangulate_mask_, median_parallax, 2 * noise_sigma);
       if (score > best_score) {
         best_score = score;
         best_R = R;
         best_t = t;
         best_points = points_;
+        best_triangulate_mask = triangulate_mask_;
         best_median_parallax = median_parallax;
       }
     }
@@ -152,6 +154,8 @@ bool FindRelativePoseRansac(const Frame::Ptr& frame_1,
     return false;
   relative_pose = SE3(best_R, best_t);
   points = best_points;
+  triangulate_mask = best_triangulate_mask;
+  return true;
 }
 
 int EvaluatePoseScore(const Mat33& R, const Vec3& t,
@@ -159,23 +163,26 @@ int EvaluatePoseScore(const Mat33& R, const Vec3& t,
                       const Frame::Features& feats_2,
                       const vector<pair<int, int>>& inlier_matches,
                       const Mat33& K, vector<Vec3>& points,
-                      double& median_parallax, const double reproj_tolerance2,
+                      vector<bool>& triangulate_mask, double& median_parallax,
+                      const double reproj_tolerance2,
                       const double min_parallax = 1.0) {
   // Initialize variables.
-  const num_inlier_matches = inlier_matches.size();
+  const int num_inlier_matches = inlier_matches.size();
   points.assign(num_inlier_matches, Vec3{});  // Triangulated points.
-  vector<double> cos_parallaxes;              // Cosine of parallaxes.
+  triangulate_mask.assign(num_inlier_matches, false);
+  vector<double> cos_parallaxes;  // Cosine of parallaxes.
   cos_parallaxes.reserve(num_inlier_matches);
 
   // Obtain camera matices.
   // Left camera frame is fixed as world frame. Hence the world frame of the
   // triangulated points is the left camera frame.
   const Mat34 M_1 = K * Mat34::Identity();
-  const Vec3 C_1 = Vec3::Zeros();  // Left camera center.
+  const Vec3 C_1 = Vec3::Zero();  // Left camera center.
   const Mat34 M_2 = Camera::to_cam_mat(K, R, t);
   const Vec3 C_2 = -R.transpose() * t;  // Right camera center.
 
   // Iterate all inlier matches and accumulate all good points.
+  int num_good_points = 0;
   for (int i = 0; i < num_inlier_matches; ++i) {
     const Feature::Ptr& feat_1 = feats_1[inlier_matches[i].first];
     const Feature::Ptr& feat_2 = feats_2[inlier_matches[i].second];
@@ -184,7 +191,7 @@ int EvaluatePoseScore(const Mat33& R, const Vec3& t,
 
     // Test 1: triangulated point is not infinitely far away as "infinite"
     // points can easily go to negative depth.
-    if (point_1.isInf().any()) continue;
+    if (point_1.array().isInf().any()) continue;
     // Test 2: triangulated point must have positive depth (in both cameras).
     const Vec3 point_2 = R * point_1 + t;
     if (point_1(2) <= 0 || point_2(2) <= 0) continue;
@@ -204,15 +211,13 @@ int EvaluatePoseScore(const Mat33& R, const Vec3& t,
       continue;
 
     // Retain the point only if it passed all tests.
-    points[i] = points_1;  // Retain points_1 since left camera is fixed as the
-                           // world frame.
+    points[i] = point_1;  // Retain points_1 since left camera is fixed as the
+                          // world frame.
+    triangulate_mask[i] = true;
     cos_parallaxes.push_back(cos_parallax);
+    ++num_good_points;
   }
 
-  // Count non-empty points.
-  const int num_good_points =
-      std::count_if(points.cbegin(), points.cend(),
-                    [](Vec3 point) { return !point.empty(); });
   // Obtain the median parallax.
   if (!cos_parallaxes.empty()) {
     std::stable_sort(cos_parallaxes.begin(), cos_parallaxes.end());
