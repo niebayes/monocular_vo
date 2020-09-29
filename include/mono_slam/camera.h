@@ -62,25 +62,17 @@ class Camera {
     return Vec3{};
   }
 
-  static inline Mat34 to_cam_mat(const Mat33& K, const Mat33& R,
-                                 const Vec3& t) {
-    Mat34 Rt;
-    Rt.leftCols(3) = R;
-    Rt.rightCols(1) = t;
-    return K * Rt;
-  }
-
   // Camera center in world frame.
-  inline Vec3 getCameraCenter() const {
+  inline Vec3 getCamCenter() const {
     return -T_c_w_.rotationMatrix().transpose() * T_c_w_.translation();
   }
 
-  inline double getDistanceToCenter(const Vec3& p_w) const {
-    return (p_w - this->getCameraCenter()).norm();
+  inline double getDistToCenter(const Vec3& p_w) const {
+    return (p_w - this->getCamCenter()).norm();
   }
 
   inline Vec3 getUnitBearVec(const Vec3& p_w) const {
-    const Vec3 unit_bear_vec = p_w - this->getCameraCenter();
+    const Vec3 unit_bear_vec = p_w - this->getCamCenter();
     return unit_bear_vec / unit_bear_vec.norm();
   }
 

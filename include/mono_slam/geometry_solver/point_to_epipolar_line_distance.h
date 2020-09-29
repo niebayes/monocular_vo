@@ -9,7 +9,7 @@ namespace geometry {
 //@param pt [2 x 1] image point in the right camera.
 //@param F [3 x 3] fundamental matrix encodes the epipolar geometry from left
 // camera to right camera.
-inline double PointToEpipolarLineDistance(const Vec2& pt, const Mat33& F) {
+inline double pointToEpiLineDist(const Vec2& pt, const Mat33& F) {
   const Vec3 epi_line = F * pt.homogeneous();
   const double &a = epi_line(0), &b = epi_line(1), &c = epi_line(2);
   return (std::abs((a * pt.x() + b * pt.y() + c)) / std::sqrt(a * a + b * b));

@@ -93,6 +93,15 @@ bool Tracking::relocalization() {
   return true;
 }
 
+void reset() {
+  state_ = State::NOT_INITIALIZED_YET;
+  last_frame_.reset();
+  curr_frame_.reset();
+  T_curr_last_.setZero();
+  local_co_kfs_.clear();
+  last_keyframe_id_ = 0;
+}
+
 void Tracking::setSystem(sptr<System> system) { system_ = system; }
 void Tracking::setLocalMapper(sptr<LocalMapping> local_mapper) {
   local_mapper_ = local_mapper;

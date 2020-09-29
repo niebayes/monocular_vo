@@ -25,7 +25,8 @@ class MapPoint {
   Vec3 median_view_dir_;     // Median viewing direction (a unit vector).
   int median_view_scale_;    // Median viewing scale (aka. image pyramid level).
 
-  // Temporary variables used in tracking.
+  // Temporary variables used for searching. These variables are updated as
+  // Frame::isObservable() is called. \sa Frame::isObservable().
   int curr_tracked_frame_id_;  // Temporary marker storing the id of currently
                                // tracked frame to avoid repeat computation.
   double repr_x_;  // x coordinate reprojected on currently tracked frame.

@@ -25,6 +25,13 @@ double degree2radian(const double degree) { return degree * EIGEN_PI / 180.0; }
 
 double radian2degree(const double radian) { return radian * 180.0 / EIGEN_PI; }
 
+inline Mat34 kRt2mat(const Mat33& K, const Mat33& R, const Vec3& t) {
+  Mat34 Rt;
+  Rt.leftCols(3) = R;
+  Rt.rightCols(1) = t;
+  return K * Rt;
+}
+
 // FIXME Should this function "sort" data vector in place?
 template <typename T>
 T get_median(std::vector<T>& data_vec) {

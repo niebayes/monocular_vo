@@ -11,7 +11,7 @@
 
 namespace mono_slam {
 
-void FindFundamentalRansac(const Frame::Ptr& frame_1, const Frame::Ptr& frame_2,
+void findFundamentalRansac(const Frame::Ptr& frame_1, const Frame::Ptr& frame_2,
                            const vector<int>& matches, Mat33& F,
                            vector<pair<int, int>>& inlier_matches,
                            const int max_num_iterations = 200,
@@ -49,10 +49,10 @@ void FindFundamentalRansac(const Frame::Ptr& frame_1, const Frame::Ptr& frame_2,
     }
 
     // Compute fundamental matrix using normalized eight-point algorithm.
-    geometry::NormalizedFundamental8Point(pts_1.colwise().homogeneous(),
+    geometry::normalizedFundamental8Point(pts_1.colwise().homogeneous(),
                                           pts_2.colwise().homogeneous(), F);
     vector<bool> inlier_mask;
-    const int score = GeometrySolver::EvaluateFundamentalScore(
+    const int score = GeometrySolver::evaluateFundamentalScore(
         feats_1, feats_2, F, valid_matches, inlier_mask);
     if (score > best_score) {
       best_score = score;
@@ -83,7 +83,7 @@ void FindFundamentalRansac(const Frame::Ptr& frame_1, const Frame::Ptr& frame_2,
     if (best_inlier_mask[i]) inlier_matches.push_back(valid_matches[i]);
 }
 
-int EvaluateFundamentalScore(const Frame::Features& feats_1,
+int evaluateFundamentalScore(const Frame::Features& feats_1,
                              const Frame::Features& feats_2, const Mat33& F,
                              const vector<pair<int, int>>& valid_matches,
                              vector<bool>& inlier_mask,
@@ -94,8 +94,8 @@ int EvaluateFundamentalScore(const Frame::Features& feats_1,
   for (int i = 0; i < num_valid_matches; ++i) {
     const Feature::Ptr& feat_1 = feats_1[valid_matches[i].first];
     const Feature::Ptr& feat_2 = feats_2[valid_matches[i].second];
-    const double dist_1 = geometry::PointToEpipolarLineDistance(feat_1->pt_, F);
-    const double dist_2 = geometry::PointToEpipolarLineDistance(feat_2->pt_, F);
+    const double dist_1 = geometry::pointToEpiLineDist(feat_1->pt_, F);
+    const double dist_2 = geometry::pointToEpiLineDist(feat_2->pt_, F);
     const double chi2_one_degree = 3.841,
                  inv_sigma2 = 1.0 / (noise_sigma * noise_sigma);
     if (dist_1 * dist_1 * inv_sigma2 > chi2_one_degree ||
@@ -106,7 +106,7 @@ int EvaluateFundamentalScore(const Frame::Features& feats_1,
   return std::count(inlier_mask.cbegin(), inlier_mask.cend(), true);
 }
 
-bool FindRelativePoseRansac(const Frame::Ptr& frame_1,
+bool findRelativePoseRansac(const Frame::Ptr& frame_1,
                             const Frame::Ptr& frame_2, const Mat33& F,
                             const vector<pair<int, int>>& inlier_matches,
                             SE3& relative_pose, vector<Vec3>& points,
@@ -119,7 +119,7 @@ bool FindRelativePoseRansac(const Frame::Ptr& frame_1,
   const Mat33 E = K.transpose() * F * K;
   vector<Mat33> Rs;
   vector<Vec3> ts;
-  geometry::DecomposeEssential(E, Rs, ts);
+  geometry::decomposeEssential(E, Rs, ts);
 
   // Evaluate all combinations of R and t and select the best one.
 
@@ -136,7 +136,7 @@ bool FindRelativePoseRansac(const Frame::Ptr& frame_1,
       vector<Vec3> points_;
       vector<bool> triangulate_mask_;
       double median_parallax;
-      const int score = GeometrySolver::EvaluatePoseScore(
+      const int score = GeometrySolver::evaluatePoseScore(
           R, t, frame_1->feats_, frame_2->feats_, inlier_matches, K, points_,
           triangulate_mask_, median_parallax, 2 * noise_sigma);
       if (score > best_score) {
@@ -159,7 +159,7 @@ bool FindRelativePoseRansac(const Frame::Ptr& frame_1,
   return true;
 }
 
-int EvaluatePoseScore(const Mat33& R, const Vec3& t,
+int evaluatePoseScore(const Mat33& R, const Vec3& t,
                       const Frame::Features& feats_1,
                       const Frame::Features& feats_2,
                       const vector<pair<int, int>>& inlier_matches,
@@ -179,7 +179,7 @@ int EvaluatePoseScore(const Mat33& R, const Vec3& t,
   // triangulated points is the left camera frame.
   const Mat34 M_1 = K * Mat34::Identity();
   const Vec3 C_1 = Vec3::Zero();  // Left camera center.
-  const Mat34 M_2 = Camera::to_cam_mat(K, R, t);
+  const Mat34 M_2 = math_utils::kRt2mat(K, R, t);
   const Vec3 C_2 = -R.transpose() * t;  // Right camera center.
 
   // Iterate all inlier matches and accumulate all good points.
@@ -188,7 +188,7 @@ int EvaluatePoseScore(const Mat33& R, const Vec3& t,
     const Feature::Ptr& feat_1 = feats_1[inlier_matches[i].first];
     const Feature::Ptr& feat_2 = feats_2[inlier_matches[i].second];
     Vec3 point_1;
-    geometry::LinearTriangulation(feat_1->pt_, feat_2->pt_, M_1, M_2, point_1);
+    geometry::triangulateLin(feat_1->pt_, feat_2->pt_, M_1, M_2, point_1);
 
     // Test 1: triangulated point is not infinitely far away as "infinite"
     // points can easily go to negative depth.
@@ -203,10 +203,10 @@ int EvaluatePoseScore(const Mat33& R, const Vec3& t,
     if (cos_parallax < std::cos(math_utils::degree2radian(min_parallax)))
       continue;
     // Test 4: the reprojection error must below the tolerance.
-    const double reproj_error_1 = geometry::ComputeReprojectionError(
-                     point_1, feat_1->pt_, K),
-                 reproj_error_2 = geometry::ComputeReprojectionError(
-                     point_2, feat_2->pt_, K);
+    const double reproj_error_1 =
+                     geometry::computeReprojErr(point_1, feat_1->pt_, K),
+                 reproj_error_2 =
+                     geometry::computeReprojErr(point_2, feat_2->pt_, K);
     if (reproj_error_1 > reproj_tolerance2 ||
         reproj_error_2 > reproj_tolerance2)
       continue;

@@ -4,34 +4,25 @@
 
 namespace mono_slam {
 
-Matcher::Matcher(const int matching_threshold,
-                 const int distance_ratio_test_threshold) {
-  matching_threshold_ = matching_threshold;
-  distance_ratio_test_threshold_ = distance_ratio_test_threshold;
-}
-
-int Matcher::searchForInitialization(const Frame::Ptr& frame_1,
-                                     const Frame::Ptr& frame_2,
+int Matcher::searchForInitialization(const Frame::Ptr& ref_frame,
+                                     const Frame::Ptr& curr_frame,
                                      vector<int>& matches) {
-  const int num_obs_1 = frame_1->NumObs(), num_obs_2 = frame_2->NumObs();
+  const int num_obs_1 = ref_frame->NumObs(), num_obs_2 = curr_frame->NumObs();
   matches.assign(num_obs_1, -1);
   vector<int> matches_reverse(num_obs_2, -1);
 
   int num_matches = 0;
   for (int idx_1 = 0; idx_1 < num_obs_1; ++idx_1) {
-    const Feature::Ptr& feat_1 = frame_1->feats_[idx_1];
+    const Feature::Ptr& feat_1 = ref_frame->feats_[idx_1];
     const int level = feat_1->level_;
     if (level > 0) continue;  // Only consider the finest level.
-    const vector<int>& feats_indices_2 =
-        frame_2->searchFeatures(feat_1->pt_, 100, level, level);
-    if (feats_indices_2.empty()) continue;
+    const vector<int> feat_indices_2 =
+        curr_frame->searchFeatures(feat_1->pt_, 100, level, level);
+    if (feat_indices_2.empty()) continue;
 
     int min_dist = 256, second_min_dist = 256, best_match_idx_2 = -1;
-    for (auto it_2 = feats_indices_2.cbegin(),
-              it_2_end = feats_indices_2.cend();
-         it_2 != it_2_end; ++it_2) {
-      const int idx_2 = *it_2;
-      const Feature::Ptr& feat_2 = frame_2->feats_[idx_2];
+    for (int idx_2 : feat_indices_2) {
+      const Feature::Ptr& feat_2 = curr_frame->feats_[idx_2];
       const int dist = matcher_utils::computeDescriptorDistance(
           feat_1->descriptor_, feat_2->descriptor_);
       if (dist < min_dist) {
@@ -59,10 +50,84 @@ int Matcher::searchForInitialization(const Frame::Ptr& frame_1,
   return num_matches;
 }
 
+int Matcher::searchByProjection(const Frame::Ptr& last_frame,
+                                const Frame::Ptr& curr_frame) {
+  return Matcher::searchByProjection(std::set{last_frame}, curr_frame);
+}
+
+int Matcher::searchByProjection(const std::set<Frame::Ptr>& local_co_kfs,
+                                const Frame::Ptr& curr_frame) {
+  int num_matches = 0;
+
+  // Iterate each keyframe->feature->map_point to find best match between the
+  // map_point and features in curr_frame.
+  for (const auto& keyframe : local_co_kfs) {
+    for (const auto& feat_ : keyframe->feats_) {
+      if (feat_.expired()) continue;
+      const auto& feat = feat_.lock();
+      if (feat->point_.expire()) continue;
+      const auto& point = feat->point_.lock();
+      if (point->curr_tracked_frame_id_ == curr_frame->id_ ||
+          point->to_be_deleted_)
+        continue;
+      point->curr_tracked_frame_id_ = curr_frame->id_;
+      if (!curr_frame->isObservable(point)) continue;
+
+      // Perform 3D-2D searching.
+      // Search radius is enlarged at larger scale and also influenced by
+      // viewing direction from the camera center of current frame.
+      const int level = point->level_;
+      const int search_radius = Config::search_radius() *
+                                Config::search_factor(point->cos_view_dir_) *
+                                Config::scale_factors().at(level);
+      const vector<int> feat_indices =
+          curr_frame->searchFeatures(Vec2{point->repr_x_, point->repr_y_},
+                                     search_radius, level - 1, level + 1);
+      if (feat_indices.empty()) continue;
+
+      // Iterate all matched features in current frame to find best and second
+      // best matches.
+      int min_dist = 256, second_min_dist = 256;
+      int best_level = 0, second_best_level = 0;
+      int best_idx = 0;
+      for (int idx : feat_indices) {
+        // FIXME Should I always check expired for weak_ptr before lock?
+        const auto& feat_i = curr_frame->feats_.at(idx).lock();
+        // Only consider unmatched features.
+        if (!feat_i->point_.expired()) continue;
+        const int dist = matcher_utils::computeDescDist(
+            point->best_feat_.lock()->descriptor_, feat_i->descriptor_);
+        if (dist < min_dist) {
+          second_min_dist = min_dist;
+          min_dist = dist;
+          second_best_level = best_level;
+          best_level = feat_i->level_;
+          best_idx = idx;
+        } else if (dist < second_min_dist) {
+          second_min_dist = dist;
+          second_best_level = feat_i->level_;
+        }
+      }
+
+      // Perform thresholding, distance ratio test, and scale consistency test,
+      if (min_dist >= Config::thresh_relax() ||
+          min_dist >= Config::dist_ratio_test_factor() * second_min_dist ||
+          best_level != second_best_level)
+        continue;
+
+      // Update linked map point.
+      // FIXME Does weak_ptr incurs issues here?
+      curr_frame->feats_.at(best_idx).lock()->point_ = point;
+      ++num_matches;
+    }
+  }
+  return num_matches;
+}
+
 namespace matcher_utils {
 
-static inline int computeDescriptorDistance(const cv::Mat& desc_1,
-                                            const cv::Mat& desc_2) {
+static inline int computeDescDist(const cv::Mat& desc_1,
+                                  const cv::Mat& desc_2) {
   const int* pa = desc_1.ptr<int32_t>();
   const int* pb = desc_2.ptr<int32_t>();
 

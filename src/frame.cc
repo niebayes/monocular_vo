@@ -62,6 +62,7 @@ void Frame::computeBoW(const sptr<Vocabulary>& voc) {
 vector<int> Frame::searchFeatures(const Vec2& pt, const int radius,
                                   const int level_low,
                                   const int level_high) const {
+  // FIXME Would it be better if we clamp this rather than throw an error?
   CHECK(level_low >= 0 && level_high >= level_low);
   const int num_obs = this->NumObs();
   vector<int> feat_indices;
@@ -97,14 +98,14 @@ bool isObservable(const sptr<MapPoint>& point) const {
         repr_pt.y() >= y_min_ && repr_pt.y() <= y_max_))
     return false;
   // Test 3: predicted scale is consistent with median scale (i.e. within +- 1).
-  const double dist = cam_->getDistanceToCenter(p_w);
+  const double dist = cam_->getDistToCenter(p_w);
   const int level = math_utils::predictLevel(dist);
   if (!(level >= point->median_view_scale_ - 1 &&
         level <= point->median_view_scale_ + 1))
     return false;
   // Test 4: viewing direction is consistent with mean viewing direction.
   const double cos_view_dir =
-      (p_w - cam_->getCameraCenter()).dot(point->mean_view_dir_) / dist;
+      (p_w - cam_->getCamCenter()).dot(point->mean_view_dir_) / dist;
   if (cos_view_dir < std::cos(math_utils::degree2radian(60.))) return false;
 
   // Store the computed result to be used in searching.

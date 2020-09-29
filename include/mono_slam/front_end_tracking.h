@@ -47,39 +47,39 @@ class Tracking {
   Tracking();
 
   // Entry function.
-  void AddImage(const cv::Mat& img);
+  void addImage(const cv::Mat& img);
 
   // Setters.
-  void SetSystem(sptr<System> system);
-  void SetLocalMapper(sptr<LocalMapping> local_mapper);
-  void SetMap(Map::Ptr map);
-  void SetKeyframeDB(KeyframeDB::Ptr keyframe_db);
-  void SetViewer(sptr<Viewer> viewer);
-  void SetInitializer(uptr<Initializer> initializer);
-  void SetVocabulary(const sptr<Vocabulary>& voc);
-  void SetCamera(Camera::Ptr cam);
-  void SetFeatureDetector(const cv::Ptr<cv::FeatureDetector>& detector);
+  void setSystem(sptr<System> system);
+  void setLocalMapper(sptr<LocalMapping> local_mapper);
+  void setMap(Map::Ptr map);
+  void setKeyframeDB(KeyframeDB::Ptr keyframe_db);
+  void setViewer(sptr<Viewer> viewer);
+  void setInitializer(uptr<Initializer> initializer);
+  void setVocabulary(const sptr<Vocabulary>& voc);
+  void setCamera(Camera::Ptr cam);
+  void setFeatureDetector(const cv::Ptr<cv::FeatureDetector>& detector);
 
-  void Reset();
+  void reset();
 
  private:
   // Track current frame.
-  void TrackCurrentFrame();
+  void trackCurrentFrame();
 
   // Initialize map: collect two consecutive frames and try initialization.
-  bool InitMap();
+  bool initMap();
 
   // Track current frame from last frame assuming contant velocity model.
-  bool TrackWithConstantVelocityModel();
+  bool trackFromLastFrame();
 
   // Track local map to make the tracking more robust.
-  void TrackLocalMap();
+  void trackFromLocalMap();
 
   // True if the criteria of inserting new keyframe are satisfied.
-  bool NeedNewKeyframe();
+  bool needNewKeyframe();
 
   // Relocalize if tracking is lost.
-  bool Relocalization();
+  bool relocalization();
 
  private:
   // User specified objects.

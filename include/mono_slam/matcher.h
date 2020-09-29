@@ -8,23 +8,23 @@ namespace mono_slam {
 
 class Matcher {
  public:
-  static int matching_threshold_;
-  static int distance_ratio_test_threshold_;
-
-  Matcher(const int matching_threshold,
-          const int distance_ratio_test_threshold);
-
-  // Return number of matches.
-  static int SearchForInitialization(const Frame::Ptr& frame_1,
+  // Search feature correspondences between the two views used for
+  // initialization.
+  static int searchForInitialization(const Frame::Ptr& frame_1,
                                      const Frame::Ptr& frame_2,
                                      vector<int>& matches);
 
+  static int searchByProjection(const std::set<Frame::Ptr>& frames,
+                                const Frame::Ptr& curr_frame);
+                                
+  static int searchByProjection(const Frame::Ptr& last_frame,
+                                const Frame::Ptr& curr_frame);
 };
 
 namespace matcher_utils {
 
 //@ref http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
-int ComputeDescriptorDistance(const cv::Mat& desc_1, const cv::Mat& desc_2);
+int computeDescriptorDistance(const cv::Mat& desc_1, const cv::Mat& desc_2);
 
 }  // namespace matcher_utils
 }  // namespace mono_slam

@@ -19,6 +19,8 @@ class Frame {
   using Ptr = sptr<Frame>;
   using Features = std::vector<wptr<Feature>>;  // weak_ptr to avoid cyclic ref.
 
+  // FIXME Should frame has a member denoting self a frame to be deleted?
+
   static int frame_cnt_;           // Global frame counter, starting from 0.
   const int id_;                   // Unique frame identity.
   bool is_keyframe_;               // Is this frame a keyframe?
