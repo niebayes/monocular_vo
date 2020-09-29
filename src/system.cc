@@ -1,5 +1,16 @@
 #include "mono_slam/system.h"
 
+#include "mono_slam/back_end_local_mapping.h"
+#include "mono_slam/camera.h"
+#include "mono_slam/common_include.h"
+#include "mono_slam/config.h"
+#include "mono_slam/dataset.h"
+#include "mono_slam/front_end_map_initialization.h"
+#include "mono_slam/front_end_tracking.h"
+#include "mono_slam/map.h"
+#include "mono_slam/matcher.h"
+#include "mono_slam/viewer.h"
+
 namespace mono_slam {
 
 System::System(const string& config_file) : config_file_(config_file) {}
@@ -51,6 +62,10 @@ bool System::Init() {
   // Set feature detector parameters.
   const int& desired_num_features = Config::Get<int>("desired_num_features");
   cv::Ptr<cv::FeatureDetector> detector = cv::ORB::create(desired_num_features);
+
+  // Set matcher parameters.
+  Matcher matcher(Config::Get<double>("matching_threshold"),
+                  Config::Get<double>("distance_ratio_test_threshold"));
 
   // Prepare and link components.
   tracker_ = make_shared<Tracking>();

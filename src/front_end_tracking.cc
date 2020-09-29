@@ -2,93 +2,104 @@
 
 namespace mono_slam {
 
-Tracking::Tracking() : state_(Tracking::State::NOT_INITIALIZED_YET) {}
+Tracking::Tracking() : state_(State::NOT_INITIALIZED_YET) {}
 
-void Tracking::AddImage(const cv::Mat& img) {
+void Tracking::addImage(const cv::Mat& img) {
+  // FIXME Would it be better if using raw pointer for camera?
   curr_frame_ = make_shared<Frame>(img, std::move(cam_), voc_, detector_);
-  TrackCurrentFrame();
-  // Update last frame.
-  last_frame_ = curr_frame_;
-  // FIXME Need resetting? What will reset() do on smart point?
-  curr_frame_.reset();
+  trackCurrentFrame();
+  // Update constant velocity model, aka. relative motion.
+  const_velocity_ = curr_frame_->pose() * last_frame_->pose().inverse();
+  last_frame_ = curr_frame_;  // Update last frame.
+  curr_frame_.reset();        // Reseat to make it ready for next frame.
 }
 
-void Tracking::TrackCurrentFrame() {
+void Tracking::trackCurrentFrame() {
   switch (state_) {
     case Tracking::State::NOT_INITIALIZED_YET:
-      if (InitMap()) {
+      if (initMap()) {
         last_keyframe_id_ = curr_frame_->id_;
-        local_mapper_->InsertKeyframe(last_frame_);
-        local_mapper_->InsertKeyframe(curr_frame_);
+        local_mapper_->insertKeyframe(last_frame_);
+        local_mapper_->insertKeyframe(curr_frame_);
         state_ = Tracking::State::GOOD;
       }
       break;
 
     case Tracking::State::GOOD:
-      if (TrackWithConstantVelocityModel()) {
-        TrackLocalMap();  // Track local map making the tracking more robust.
-        if (NeedNewKeyframe()) {
-          curr_frame_->SetKeyframe();
-          local_mapper_->InsertKeyframe(curr_frame_);
+      if (trackFromLastFrame()) {
+        trackLocalMap();  // Track local map making the tracking more robust.
+        if (needNewKeyframe()) {
+          curr_frame_->setKeyframe();
+          local_mapper_->insertKeyframe(curr_frame_);
         }
       } else
         state_ = Tracking::State::LOST;
       break;
 
     case Tracking::State::LOST:
-      if (Relocalization()) {
-        curr_frame_->SetKeyframe();
-        local_mapper_->InsertKeyframe(curr_frame_);
+      if (relocalization()) {
+        curr_frame_->setKeyframe();
+        local_mapper_->insertKeyframe(curr_frame_);
         state_ = Tracking::State::GOOD;
       } else
-        Reset();
+        reset();
       break;
   }
 }
 
-bool Tracking::InitMap() {
+bool Tracking::initMap() {
   if (initializer_->stage() == Initializer::Stage::NO_FRAME_YET)
-    initializer_->AddReferenceFrame(curr_frame_);
+    initializer_->addReferenceFrame(curr_frame_);
   else
-    initializer_->AddCurrentFrame(curr_frame_);
+    initializer_->addCurrentFrame(curr_frame_);
   return initializer_->stage() == Initializer::Stage::SUCCESS;
 }
 
-bool Tracking::TrackWithConstantVelocityModel() {
-  //
+bool Tracking::trackFromLastFrame() {
+  // Set initial pose.
+  curr_frame_->setPose(const_velocity_ * last_frame_->pose());
+  // Search matches by projection (i.e. project map points observed by last
+  // frame onto current frame and try matching them against features around
+  // them).
+  const int num_matches = Matcher::searchByProjection(last_frame_, curr_frame_);
+  if (num_matches < Config::min_num_matches()) return false;
+  const int num_inlier_matches = Optimizer::optimizePose(curr_frame_);
+  if (num_inlier_matches < Config::min_num_inlier_matches()) return false;
   return true;
 }
 
-void Tracking::TrackLocalMap() {
-  // TODO(bayes) Implement this.
+void Tracking::trackLocalMap() {
+  updateLocalMap();
+  searchLocalMap();
+  Optimizer::optimizePose(curr_frame_);
   return;
 }
 
-bool Tracking::NeedNewKeyframe() {
+bool Tracking::needNewKeyframe() {
   //
   return true;
 }
 
-bool Tracking::Relocalization() {
+bool Tracking::relocalization() {
   //
   return true;
 }
 
-void Tracking::SetSystem(sptr<System> system) { system_ = system; }
-void Tracking::SetLocalMapper(sptr<LocalMapping> local_mapper) {
+void Tracking::setSystem(sptr<System> system) { system_ = system; }
+void Tracking::setLocalMapper(sptr<LocalMapping> local_mapper) {
   local_mapper_ = local_mapper;
 }
-void Tracking::SetMap(Map::Ptr map) { map_ = map; }
-void Tracking::SetKeyframeDB(KeyframeDB::Ptr keyframe_db) {
+void Tracking::setMap(Map::Ptr map) { map_ = map; }
+void Tracking::setKeyframeDB(KeyframeDB::Ptr keyframe_db) {
   keyframe_db_ = keyframe_db;
 }
-void Tracking::SetViewer(sptr<Viewer> viewer) { viewer_ = viewer; }
-void Tracking::SetInitializer(uptr<Initializer> initializer) {
+void Tracking::setViewer(sptr<Viewer> viewer) { viewer_ = viewer; }
+void Tracking::setInitializer(uptr<Initializer> initializer) {
   initializer_ = std::move(initializer);
 }
-void Tracking::SetVocabulary(const sptr<Vocabulary>& voc) { voc_ = voc; }
-void Tracking::SetCamera(Camera::Ptr cam) { cam_ = std::move(cam); }
-void Tracking::SetFeatureDetector(
+void Tracking::setVocabulary(const sptr<Vocabulary>& voc) { voc_ = voc; }
+void Tracking::setCamera(Camera::Ptr cam) { cam_ = std::move(cam); }
+void Tracking::setFeatureDetector(
     const cv::Ptr<cv::FeatureDetector>& detector) {
   detector_ = detector;
 }

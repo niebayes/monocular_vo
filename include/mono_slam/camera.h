@@ -15,18 +15,18 @@ class Camera {
 
   Camera(const SE3& T_c_w);
 
-  void Init(const double fx, const double fy, const double cx, const double cy,
+  void init(const double fx, const double fy, const double cx, const double cy,
             const Vec4& dist_coeffs);
 
   // Getters.
-  inline const SE3& Pose() const { return T_c_w_; }
-  inline const Vec3& Pos() const { return T_c_w_.inverse().translation(); }
+  inline const SE3& pose() const { return T_c_w_; }
+  inline const Vec3& pos() const { return T_c_w_.inverse().translation(); }
   inline const Mat33& K() const { return K_; }
-  inline const Vec4& DistCoeffs() const { return dist_coeffs_; }
+  inline const Vec4& distCoeffs() const { return dist_coeffs_; }
 
   // Setters.
-  void SetPose(const SE3& T_c_w);
-  void SetPos(const Vec3& pos);
+  void setPose(const SE3& T_c_w);
+  void setPos(const Vec3& pos);
 
   // Transformation utilites.
   // Transform map point in world frame to camera frame.

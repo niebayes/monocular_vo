@@ -20,12 +20,14 @@ class MapPoint {
   list<wptr<Feature>> observations_;
 
   // Map point characteristics.
-  static int point_cnt_;     // Global map point counter, starting from 0.
-  const int id_;             // Unique map point identity.
-  Vec3 pos_;                 // Position in world frame.
-  wptr<Feature> best_feat_;  // Best feature in that its descriptor has the
-                             // least median distance among all observations.
-  Vec3 mean_view_dir_;       // Mean viewing direction.
+  static int point_cnt_;       // Global map point counter, starting from 0.
+  const int id_;               // Unique map point identity.
+  Vec3 pos_;                   // Position in world frame.
+  wptr<Feature> best_feat_;    // Best feature in that its descriptor has the
+                               // least median distance among all observations.
+  Vec3 mean_view_dir_;         // Mean viewing direction.
+  int curr_tracked_frame_id_;  // Temporary marker storing the id of currently
+                               // tracked frame.
   sptr<g2o_types::VertexPoint> v_point_ =
       nullptr;  // Temporary g2o map point vertex storing the optimized result.
 

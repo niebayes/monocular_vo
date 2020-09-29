@@ -1,6 +1,5 @@
 #include "gflags/gflags.h"
 #include "glog/logging.h"
-#include "mono_slam/common_include.h"
 #include "mono_slam/system.h"
 
 using namespace mono_slam;
@@ -15,9 +14,9 @@ int main(int argc, char** argv) {
     LOG(WARNING) << "Use default configuration.";
   }
   Tracking::Ptr tracker = make_shared<Tracking>();
-  // System::Ptr system = make_unique<System>(FLAGS_config_file);
-  // CHECK_EQ(system->Init(), true);
-  // system->Run();
+  System::Ptr system = make_shared<System>(FLAGS_config_file);
+  CHECK_EQ(system->Init(), true);
+  system->Run();
 
   return EXIT_SUCCESS;
 }

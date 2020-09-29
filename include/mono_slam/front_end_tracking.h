@@ -34,7 +34,7 @@ class Tracking {
   // FIXME Need this?
   vector<int> matches_;  // Matches of last frame and current frame such that
                          // last_frame_[i] <-> curr_frame_[matches_[i]].
-  SE3 const_velocity_;   // Right transformation from last_frame_ to curr_frame_
+  SE3 const_velocity_;   // Rigid transformation from last_frame_ to curr_frame_
                          // assuming contant velocity.
   int last_keyframe_id_;
 

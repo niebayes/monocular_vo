@@ -218,7 +218,7 @@ int EvaluatePoseScore(const Mat33& R, const Vec3& t,
     ++num_good_points;
   }
 
-  // Obtain the median parallax.
+  // Obtain median parallax.
   if (!cos_parallaxes.empty()) {
     std::stable_sort(cos_parallaxes.begin(), cos_parallaxes.end());
     median_parallax = init_utils::radian2degree(

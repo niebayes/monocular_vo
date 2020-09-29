@@ -32,38 +32,38 @@ class Frame {
   Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
         const cv::Ptr<cv::FeatureDetector>& detector);
 
-  inline const SE3& Pose() const { return cam_->Pose(); }
+  inline const SE3& pose() const { return cam_->pose(); }
 
-  void SetPose(const SE3& T_c_w);
+  void setPose(const SE3& T_c_w);
 
-  inline const Vec3& Pos() const { return cam_->Pos(); }
+  inline const Vec3& pos() const { return cam_->pos(); }
 
-  void SetPos(const Vec3& pos);
+  void setPos(const Vec3& pos);
 
-  inline bool IsKeyframe() const { return is_keyframe_; }
+  inline bool isKeyframe() const { return is_keyframe_; }
 
-  void SetKeyframe();
+  void setKeyframe();
 
   // Number of observations (i.e. number of features observed in this frame).
-  inline int NumObs() const { return feats_.size(); }
+  inline int numObs() const { return feats_.size(); }
 
   // Extract features.
-  void ExtractFeatures(const cv::Mat& img,
+  void extractFeatures(const cv::Mat& img,
                        const cv::Ptr<cv::FeatureDetector>& detector);
 
   // Compute bag of words representation.
-  void ComputeBoW(const sptr<Vocabulary>& voc);
+  void computeBoW(const sptr<Vocabulary>& voc);
 
   // Search features given searching radius and image pyramid level range.
-  vector<int> SearchFeatures(const Vec2& pt, const int radius,
+  vector<int> searchFeatures(const Vec2& pt, const int radius,
                              const int level_low, const int level_high) const;
 
   // Check if the given map point is Observable by this frame.
-  bool IsObservable(const sptr<MapPoint>& point) const;
+  bool isObservable(const sptr<MapPoint>& point) const;
 
-  void UpdateConnections();
+  void updateConnections();
 
-  double ComputeSceneMedianDepth();
+  double computeSceneMedianDepth();
 
  private:
   // Image bounds.

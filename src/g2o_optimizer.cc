@@ -4,8 +4,7 @@
 
 namespace mono_slam {
 
-void GlobalBundleAdjustment(const Map::Ptr& map,
-                            const int num_iterations = 20) {
+void globalBA(const Map::Ptr& map, const int num_iterations = 20) {
   // Setup g2o optimizer.
   g2o::SparseOptimizer optimizer;
   g2o_utils::setupG2oOptimizer(&optimizer);
@@ -86,5 +85,11 @@ void GlobalBundleAdjustment(const Map::Ptr& map,
     }
   }
 }
+
+void optimizePose(const sptr<Frame>& frame, const int num_iters = 20) {
+  //
+}
+
+void localBa() {}
 
 }  // namespace mono_slam
