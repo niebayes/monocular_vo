@@ -1,21 +1,22 @@
 #include "mono_slam/frame.h"
 
 #include "mono_slam/feature.h"
+#include "utils/math_utils.h"
 
 namespace mono_slam {
 
 Frame::Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
              const cv::Ptr<cv::FeatureDetector>& detector)
     : id_(frame_cnt_++), is_keyframe_(false), cam_(std::move(cam)) {
-  ExtractFeatures(img, detector);
-  ComputeBoW(voc);
+  extractFeatures(img, detector);
+  computeBoW(voc);
   // TODO(bayes) Optimize when no distortion.
   // Compute image bounds (computed once in the first frame).
   if (id_ == 0) {
     // Matrix containing the four corners of the image:
     // Left upper, right upper, left bottom, right bottom.
     cv::Mat corners;
-    frame_utils::ComputeImageBounds(img, cam_->K(), cam_->DistCoeffs(),
+    frame_utils::computeImageBounds(img, cam_->K(), cam_->distCoeffs(),
                                     corners);
     x_min_ = std::min(corners.at<float>(0, 0), corners.at<float>(2, 0));
     x_max_ = std::max(corners.at<float>(1, 0), corners.at<float>(3, 0));
@@ -24,29 +25,30 @@ Frame::Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
   }
 }
 
-void Frame::SetPose(const SE3& T_c_w) { cam_->SetPose(T_c_w); }
+void Frame::setPose(const SE3& T_c_w) { cam_->setPose(T_c_w); }
 
-void Frame::SetPos(const Vec3& pos) { cam_->SetPos(pos); }
+void Frame::setPos(const Vec3& pos) { cam_->setPos(pos); }
 
-void Frame::SetKeyframe() { is_keyframe_ = true; }
+void Frame::setKeyframe() { is_keyframe_ = true; }
 
-void Frame::ExtractFeatures(const cv::Mat& img,
+void Frame::extractFeatures(const cv::Mat& img,
                             const cv::Ptr<cv::FeatureDetector>& detector) {
   vector<cv::KeyPoint> kpts;
   cv::Mat descriptors;
   detector->detectAndCompute(img, cv::Mat{}, kpts, descriptors);
-  if (cam_->DistCoeffs()(0) == 0)
-    frame_utils::UndistortKeypoints(cam_->K(), cam_->DistCoeffs(), kpts);
+  if (cam_->distCoeffs()(0) == 0)
+    frame_utils::undistortKeypoints(cam_->K(), cam_->distCoeffs(), kpts);
   const int num_kpts = kpts.size();
   feats_.reserve(num_kpts);
   for (int i = 0; i < num_kpts; ++i) {
+    // FIXME Is sptr<Frame>(this) ok?
     feats_.push_back(make_shared<Feature>(sptr<Frame>(this),
                                           Vec2{kpts[i].pt.x, kpts[i].pt.y},
                                           descriptors.row(i), kpts[i].octave));
   }
 }
 
-void Frame::ComputeBoW(const sptr<Vocabulary>& voc) {
+void Frame::computeBoW(const sptr<Vocabulary>& voc) {
   // Collect descriptors.
   vector<cv::Mat> descriptor_vec;
   descriptor_vec.reserve(this->NumObs());
@@ -57,7 +59,7 @@ void Frame::ComputeBoW(const sptr<Vocabulary>& voc) {
   voc->transform(descriptor_vec, bow_vec_, feat_vec_, 4);
 }
 
-vector<int> Frame::SearchFeatures(const Vec2& pt, const int radius,
+vector<int> Frame::searchFeatures(const Vec2& pt, const int radius,
                                   const int level_low,
                                   const int level_high) const {
   CHECK(level_low >= 0 && level_high >= level_low);
@@ -74,19 +76,48 @@ vector<int> Frame::SearchFeatures(const Vec2& pt, const int radius,
   return feat_indices;
 }
 
-void Frame::UpdateConnections() {
+void Frame::updateConnections() {
   //
   return;
 }
 
-double Frame::ComputeSceneMedianDepth() {
+double Frame::computeSceneMedianDepth() {
   //
   return 0;
 }
 
+bool isObservable(const sptr<MapPoint>& point) const {
+  // Test 1: has positive depth.
+  const Vec3& p_w = point->pos();
+  const Vec3 p_c = cam_->world2camera(p_w);
+  if (p_c(2) < 0.) return false;
+  // Test 2: does not go out of image boundary.
+  const Vec2 repr_pt = cam_->camera2pixel(p_c);
+  if (!(repr_pt.x() >= x_min_ && repr_pt.x() <= x_max_ &&
+        repr_pt.y() >= y_min_ && repr_pt.y() <= y_max_))
+    return false;
+  // Test 3: predicted scale is consistent with median scale (i.e. within +- 1).
+  const double dist = cam_->getDistanceToCenter(p_w);
+  const int level = math_utils::predictLevel(dist);
+  if (!(level >= point->median_view_scale_ - 1 &&
+        level <= point->median_view_scale_ + 1))
+    return false;
+  // Test 4: viewing direction is consistent with mean viewing direction.
+  const double cos_view_dir =
+      (p_w - cam_->getCameraCenter()).dot(point->mean_view_dir_) / dist;
+  if (cos_view_dir < std::cos(math_utils::degree2radian(60.))) return false;
+
+  // Store the computed result to be used in searching.
+  point->repr_x_ = repr_pt.x();
+  point->repr_y_ = repr_pt.y();
+  point->level_ = level;
+  point->cos_view_dir_ = cos_view_dir;
+  return true;
+}
+
 namespace frame_utils {
 
-void UndistortKeypoints(const Mat33& K, const Vec4& dist_coeffs,
+void undistortKeypoints(const Mat33& K, const Vec4& dist_coeffs,
                         std::vector<cv::KeyPoint>& kpts) {
   const int num_kpts = kpts.size();
   cv::Mat kpts_mat(num_kpts, 2, CV_64F);
@@ -104,7 +135,7 @@ void UndistortKeypoints(const Mat33& K, const Vec4& dist_coeffs,
   }
 }
 
-void ComputeImageBounds(const cv::Mat& img, const Mat33& K,
+void computeImageBounds(const cv::Mat& img, const Mat33& K,
                         const Vec4& dist_coeffs, cv::Mat& corners) {
   corners = cv::Mat(4, 2, CV_32F);
   cv::Mat K_, dist_coeffs_;

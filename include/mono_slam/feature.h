@@ -18,6 +18,8 @@ struct Feature {
   //! A feature links only one map point and will not change any more.
   wptr<MapPoint> point_;
 
+  // FIXME Should feature be deleted immediately?
+
   // Feature characteristics.
   const wptr<Frame> frame_;   // Frame in which the feature is detected.
   const Vec2 pt_;             // 2D image point expressed in pixels.

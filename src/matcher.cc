@@ -10,7 +10,7 @@ Matcher::Matcher(const int matching_threshold,
   distance_ratio_test_threshold_ = distance_ratio_test_threshold;
 }
 
-int Matcher::SearchForInitialization(const Frame::Ptr& frame_1,
+int Matcher::searchForInitialization(const Frame::Ptr& frame_1,
                                      const Frame::Ptr& frame_2,
                                      vector<int>& matches) {
   const int num_obs_1 = frame_1->NumObs(), num_obs_2 = frame_2->NumObs();
@@ -23,7 +23,7 @@ int Matcher::SearchForInitialization(const Frame::Ptr& frame_1,
     const int level = feat_1->level_;
     if (level > 0) continue;  // Only consider the finest level.
     const vector<int>& feats_indices_2 =
-        frame_2->SearchFeatures(feat_1->pt_, 100, level, level);
+        frame_2->searchFeatures(feat_1->pt_, 100, level, level);
     if (feats_indices_2.empty()) continue;
 
     int min_dist = 256, second_min_dist = 256, best_match_idx_2 = -1;
@@ -32,7 +32,7 @@ int Matcher::SearchForInitialization(const Frame::Ptr& frame_1,
          it_2 != it_2_end; ++it_2) {
       const int idx_2 = *it_2;
       const Feature::Ptr& feat_2 = frame_2->feats_[idx_2];
-      const int dist = matcher_utils::ComputeDescriptorDistance(
+      const int dist = matcher_utils::computeDescriptorDistance(
           feat_1->descriptor_, feat_2->descriptor_);
       if (dist < min_dist) {
         second_min_dist = min_dist;
@@ -61,7 +61,8 @@ int Matcher::SearchForInitialization(const Frame::Ptr& frame_1,
 
 namespace matcher_utils {
 
-int ComputeDescriptorDistance(const cv::Mat& desc_1, const cv::Mat& desc_2) {
+static inline int computeDescriptorDistance(const cv::Mat& desc_1,
+                                            const cv::Mat& desc_2) {
   const int* pa = desc_1.ptr<int32_t>();
   const int* pb = desc_2.ptr<int32_t>();
 

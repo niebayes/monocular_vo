@@ -70,6 +70,20 @@ class Camera {
     return K * Rt;
   }
 
+  // Camera center in world frame.
+  inline Vec3 getCameraCenter() const {
+    return -T_c_w_.rotationMatrix().transpose() * T_c_w_.translation();
+  }
+
+  inline double getDistanceToCenter(const Vec3& p_w) const {
+    return (p_w - this->getCameraCenter()).norm();
+  }
+
+  inline Vec3 getUnitBearVec(const Vec3& p_w) const {
+    const Vec3 unit_bear_vec = p_w - this->getCameraCenter();
+    return unit_bear_vec / unit_bear_vec.norm();
+  }
+
  private:
   SE3 T_c_w_;
   // Camera intrinsics.

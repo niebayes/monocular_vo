@@ -7,6 +7,7 @@
 #include "mono_slam/geometry_solver/linear_triangulation.h"
 #include "mono_slam/geometry_solver/normalized_fundamental_8point.h"
 #include "mono_slam/geometry_solver/point_to_epipolar_line_distance.h"
+#include "utils/math_utils.h"
 
 namespace mono_slam {
 
@@ -37,7 +38,7 @@ void FindFundamentalRansac(const Frame::Ptr& frame_1, const Frame::Ptr& frame_2,
     // Generate a hypothetical set used in RANSAC.
     std::set<int> hypo_set;
     while (hypo_set.size() < 8)
-      hypo_set.insert(init_utils::uniform_random_int(0, num_valid_matches - 1));
+      hypo_set.insert(math_utils::uniform_random_int(0, num_valid_matches - 1));
     // Collect matched feature correspondences.
     MatXX pts_1(2, 8), pts_2(2, 8);
     int c = 0;
@@ -199,7 +200,7 @@ int EvaluatePoseScore(const Mat33& R, const Vec3& t,
     const Vec3 bear_vec_1 = point_1 - C_1, bear_vec_2 = point_2 - C_2;
     const double cos_parallax =
         bear_vec_1.dot(bear_vec_2) / bear_vec_1.norm() * bear_vec_2.norm();
-    if (cos_parallax < std::cos(init_utils::degree2radian(min_parallax)))
+    if (cos_parallax < std::cos(math_utils::degree2radian(min_parallax)))
       continue;
     // Test 4: the reprojection error must below the tolerance.
     const double reproj_error_1 = geometry::ComputeReprojectionError(
@@ -221,28 +222,12 @@ int EvaluatePoseScore(const Mat33& R, const Vec3& t,
   // Obtain median parallax.
   if (!cos_parallaxes.empty()) {
     std::stable_sort(cos_parallaxes.begin(), cos_parallaxes.end());
-    median_parallax = init_utils::radian2degree(
+    median_parallax = math_utils::radian2degree(
         std::acos(cos_parallaxes[num_good_points / 2]));
   } else
     median_parallax = 0.;
 
   return num_good_points;
-}  // namespace mono_slam
-
-namespace init_utils {
-
-int uniform_random_int(const int low, const int high) {
-  const unsigned seed =
-      std::chrono::system_clock::now().time_since_epoch().count();
-  std::default_random_engine generator(seed);
-  std::uniform_int_distribution<int> distribution(low, high);
-  auto dice_once = std::bind(distribution, generator);
-  return dice_once();
 }
 
-double degree2radian(const double degree) { return degree * EIGEN_PI / 180.0; }
-
-double radian2degree(const double radian) { return radian * 180.0 / EIGEN_PI; }
-
-}  // namespace init_utils
 }  // namespace mono_slam

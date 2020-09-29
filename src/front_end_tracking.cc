@@ -9,7 +9,7 @@ void Tracking::addImage(const cv::Mat& img) {
   curr_frame_ = make_shared<Frame>(img, std::move(cam_), voc_, detector_);
   trackCurrentFrame();
   // Update constant velocity model, aka. relative motion.
-  const_velocity_ = curr_frame_->pose() * last_frame_->pose().inverse();
+  T_curr_last_ = curr_frame_->pose() * last_frame_->pose().inverse();
   last_frame_ = curr_frame_;  // Update last frame.
   curr_frame_.reset();        // Reseat to make it ready for next frame.
 }
@@ -26,14 +26,14 @@ void Tracking::trackCurrentFrame() {
       break;
 
     case Tracking::State::GOOD:
-      if (trackFromLastFrame()) {
-        trackLocalMap();  // Track local map making the tracking more robust.
+      if (!trackFromLastFrame() || !trackFromLocalMap())
+        state_ = State::LOST;
+      else {
         if (needNewKeyframe()) {
           curr_frame_->setKeyframe();
           local_mapper_->insertKeyframe(curr_frame_);
         }
-      } else
-        state_ = Tracking::State::LOST;
+      }
       break;
 
     case Tracking::State::LOST:
@@ -57,7 +57,7 @@ bool Tracking::initMap() {
 
 bool Tracking::trackFromLastFrame() {
   // Set initial pose.
-  curr_frame_->setPose(const_velocity_ * last_frame_->pose());
+  curr_frame_->setPose(T_curr_last_ * last_frame_->pose());
   // Search matches by projection (i.e. project map points observed by last
   // frame onto current frame and try matching them against features around
   // them).
@@ -68,11 +68,19 @@ bool Tracking::trackFromLastFrame() {
   return true;
 }
 
-void Tracking::trackLocalMap() {
-  updateLocalMap();
-  searchLocalMap();
-  Optimizer::optimizePose(curr_frame_);
-  return;
+bool Tracking::trackFromLocalMap() {
+  updateLocalCovisibleKeyframes();
+  const int num_matches =
+      Matcher::searchByProjection(local_co_kfs_, curr_frame_);
+  if (num_matches < Config::min_num_matches()) return false;
+  const int num_inlier_matches = Optimizer::optimizePose(curr_frame_);
+  if (num_inlier_matches < Config::min_num_inlier_matches()) return false;
+  return true;
+}
+
+void updateLocalCovisibleKeyframes() {
+  local_co_kfs_.clear();
+  //
 }
 
 bool Tracking::needNewKeyframe() {

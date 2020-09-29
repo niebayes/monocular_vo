@@ -27,16 +27,15 @@ class Tracking {
 
   enum class State { NOT_INITIALIZED_YET, GOOD, LOST };
 
-  Tracking::State state_;  // Tracking state.
-
+  Tracking::State state_;            // Tracking state.
   Frame::Ptr last_frame_ = nullptr;  // Last frame.
   Frame::Ptr curr_frame_ = nullptr;  // Current frame.
-  // FIXME Need this?
-  vector<int> matches_;  // Matches of last frame and current frame such that
-                         // last_frame_[i] <-> curr_frame_[matches_[i]].
-  SE3 const_velocity_;   // Rigid transformation from last_frame_ to curr_frame_
-                         // assuming contant velocity.
-  int last_keyframe_id_;
+  SE3 T_curr_last_;  // Rigid transformation from last_frame_ to curr_frame_
+                     // assuming constant velocity.
+  std::set<Frame::Ptr> local_co_kfs_;  // Local covisible keyframes having
+                                       // visual overlapping with current frame.
+  int last_keyframe_id_;  // Id of last keyframe. Frequency of keyframe
+                          // insertion is limited by this.
 
   // Linked components.
   sptr<System> system_ = nullptr;              // System.

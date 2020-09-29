@@ -56,8 +56,10 @@ static inline uptr<EdgeObs> createG2oEdgeObs(
     const Feature::Ptr& feat, const double weight,
     const double huber_delta = std::numeric_limits<double>::infinity()) {
   auto e_obs = make_unique<EdgeObs>();
-  e_obs->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_frame));
-  e_obs->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_point));
+  e_obs->setVertex(
+      0, dynamic_pointer_cast<g2o::OptimizableGraph::Vertex*>(v_frame));
+  e_obs->setVertex(
+      1, dynamic_pointer_cast<g2o::OptimizableGraph::Vertex*>(v_point));
   e_obs->setMeasurement(feat->pt_);
   e_obs->setInformation(weight * Mat22::Identity());
   auto huber_kernel = make_unique<g2o::RobustKernelHuber>();

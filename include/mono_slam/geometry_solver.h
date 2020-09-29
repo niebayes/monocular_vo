@@ -48,18 +48,6 @@ class GeometrySolver {
   static void P3PRansac();
 };
 
-namespace init_utils {
-
-// Generate uniformly distributed random integer number in range [low, high].
-int uniform_random_int(const int low, const int high);
-
-// Transform degrees to radians.
-double degree2radian(const double degree);
-
-// Transform radians to degrees.
-double radian2degree(const double radian);
-
-}  // namespace init_utils
 }  // namespace mono_slam
 
 #endif  // MONO_SLAM_GEOMETRY_SOLVER_H_

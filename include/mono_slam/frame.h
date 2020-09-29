@@ -75,10 +75,10 @@ class Frame {
 
 namespace frame_utils {
 
-void UndistortKeypoints(const Mat33& K, const Vec4& dist_coeffs,
+void undistortKeypoints(const Mat33& K, const Vec4& dist_coeffs,
                         std::vector<cv::KeyPoint>& kpts);
 
-void ComputeImageBounds(const cv::Mat& img, const Mat33& K,
+void computeImageBounds(const cv::Mat& img, const Mat33& K,
                         const Vec4& dist_coeffs, cv::Mat& corners);
 
 }  // namespace frame_utils
