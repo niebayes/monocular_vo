@@ -49,10 +49,18 @@ namespace feat_utils {
 
 static inline const sptr<MapPoint>& getPoint(const sptr<Feature>& feat) {
   if (!feat || feat->is_outlier_) return nullptr;
-  if (feat->point_.expire()) return nullptr;
-  const auto& point = feat->point_.lock();
+  if (feat->point_.expired()) return nullptr;
+  const sptr<MapPoint>& point = feat->point_.lock();
   if (point->to_be_deleted_) return nullptr;
   return point;
+}
+
+static inline const sptr<Frame>& getKeyframe(const sptr<Feature>& feat) {
+  if (!feat || feat->is_outlier_) return nullptr;
+  if (feat->frame_.expired()) return nullptr;
+  const sptr<Frame>& keyframe = feat->frame_.lock();
+  if (!keyframe->isKeyframe()) return nullptr;
+  return keyframe;
 }
 
 }  // namespace feat_utils

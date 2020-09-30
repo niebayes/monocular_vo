@@ -6,7 +6,7 @@
 
 namespace g2o_utils {
 
-static void setupG2oOptimizero(const sptr<g2o::SparseOptimizer>& optimizer,
+static void setupG2oOptimizer(const sptr<g2o::SparseOptimizer>& optimizer,
                                const sptr<Camera>& cam) {
   // Set solvers: linear solver and block sovler.
   auto linear_solver = make_unique<g2o_types::LinearSolver>();

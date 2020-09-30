@@ -32,10 +32,10 @@ class Tracking {
   Frame::Ptr curr_frame_ = nullptr;  // Current frame.
   SE3 T_curr_last_;  // Rigid transformation from last_frame_ to curr_frame_
                      // assuming constant velocity.
-  std::set<Frame::Ptr> local_co_kfs_;  // Local covisible keyframes having
-                                       // visual overlapping with current frame.
-  int last_keyframe_id_;  // Id of last keyframe. Frequency of keyframe
-                          // insertion is limited by this.
+  set<Frame::Ptr> local_co_kfs_;  // Local covisible keyframes having
+                                  // visual overlapping with current frame.
+  int last_keyframe_id_;          // Id of last keyframe. Frequency of keyframe
+                                  // insertion is limited by this.
 
   // Linked components.
   sptr<System> system_ = nullptr;              // System.

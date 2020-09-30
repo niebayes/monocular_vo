@@ -17,19 +17,20 @@ class Frame {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Frame>;
-  using Features = std::vector<wptr<Feature>>;  // weak_ptr to avoid cyclic ref.
+  using Features = std::vector<sptr<Feature>>;  // weak_ptr to avoid cyclic ref.
 
   // FIXME Should frame has a member denoting self a frame to be deleted?
 
-  static int frame_cnt_;           // Global frame counter, starting from 0.
-  const int id_;                   // Unique frame identity.
-  bool is_keyframe_;               // Is this frame a keyframe?
-  Features feats_;                 // Features extracted in this frame.
-  Camera::Ptr cam_ = nullptr;      // Linked camera.
-  DBoW3::BowVector bow_vec_;       // Bag of words vector.
-  DBoW3::FeatureVector feat_vec_;  // Feature vector.
-  sptr<g2o_types::VertexFrame> v_frame_ =
-      nullptr;  // Temporary g2o keyframe vertex storing the optimized result.
+  static int frame_cnt_;             // Global frame counter, starting from 0.
+  const int id_;                     // Unique frame identity.
+  bool is_keyframe_;                 // Is this frame a keyframe?
+  Features feats_;                   // Features extracted in this frame.
+  const Camera::Ptr cam_ = nullptr;  // Linked camera.
+  DBoW3::BowVector bow_vec_;         // Bag of words vector.
+  DBoW3::FeatureVector feat_vec_;    // Feature vector.
+
+  // Temporary g2o keyframe vertex storing the optimized result.
+  sptr<g2o_types::VertexFrame> v_frame_ = nullptr;
 
   Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
         const cv::Ptr<cv::FeatureDetector>& detector);
@@ -66,6 +67,8 @@ class Frame {
   void updateConnections();
 
   double computeSceneMedianDepth();
+
+  inline const set<Frame::Ptr>& getCovisibleKeyframes() const;
 
  private:
   // Image bounds.

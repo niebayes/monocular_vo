@@ -19,27 +19,37 @@ class MapPoint {
   static int point_cnt_;  // Global map point counter, starting from 0.
   const int id_;          // Unique map point identity.
   Vec3 pos_;              // Position in world frame.
-  list<wptr<Feature>> observations_;  // List of observations.
+  // FIXME Setting only point_ in feature class to weak_ptr suffices to resolve
+  // cyclic reference issue. Frequent weak_ptr.lock() operations making codes
+  // ugly.
+  list<sptr<Feature>> observations_;  // List of observations.
   wptr<Feature> best_feat_;  // Best feature in that its descriptor has the
                              // least median distance against other features.
-  Vec3 median_view_dir_;     // Median viewing direction (a unit vector).
-  int median_view_scale_;    // Median viewing scale (aka. image pyramid level).
+                             // Used for fast matching.
+  // These two variables are used in Frame::isObservable. \sa
+  // Frame::isObservable.
+  Vec3 median_view_dir_;   // Median viewing direction (a unit vector).
+  int median_view_scale_;  // Median viewing scale (aka. image pyramid level).
 
   // Temporary variables used for searching. These variables are updated as
   // Frame::isObservable() is called. \sa Frame::isObservable().
   int curr_tracked_frame_id_;  // Temporary marker storing the id of currently
-                               // tracked frame to avoid repeat computation.
+                               // tracked frame to avoid repeat insertion.
   double repr_x_;  // x coordinate reprojected on currently tracked frame.
   double repr_y_;  // y coordinate reprojected on currently tracked frame.
   int level_;  // Estimated image pyramid level at which searching is performed.
   double cos_view_dir_;  // Cosine of viewing direction from the camera center
                          // of currently tracked frame.
 
-  bool to_be_deleted_;  // When number of observations below certain threshold,
-                        // this map point is going to be deleted soon.
-
+  // Temporary variables used for optimization.
+  int curr_ba_keyframe_id_;  // Temporary marker storing the id of currently
+                             // bundle-adjusted keyframe to avoid repeat
+                             // insertion.
   // Temporary g2o point vertex storing the optimized result.
   sptr<g2o_types::VertexPoint> v_point_ = nullptr;
+
+  bool to_be_deleted_;  // When number of observations below certain threshold,
+                        // this map point is going to be deleted soon.
 
   MapPoint(const Vec3& pos);
 

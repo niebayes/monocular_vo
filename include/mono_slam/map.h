@@ -21,18 +21,18 @@ class Map {
 
   // FIXME Return copy or const reference?
   inline const list<Frame::Ptr>& GetAllKeyframes() {
-    u_lock take(ownership_);
+    u_lock lock(mutex_);
     return keyframes_;
   }
 
   // FIXME Candidate points?
   inline const list<MapPoint::Ptr>& GetAllMapPoints() {
-    u_lock take(ownership_);
+    u_lock lock(mutex_);
     return points_;
   }
 
   inline void Clear() {
-    u_lock take(ownership_);
+    u_lock lock(mutex_);
     keyframes_.clear();
     points_.clear();
     max_frame_id_ = 0;
@@ -47,11 +47,11 @@ class Map {
 
   // FIXME Would it be better if we simply use global frame counter?
   int max_frame_id_;  // Maximum id of frames inserted so far. Used for
-                      // optimization and checking for duplication as
-                      // new keyframe is comming.
+                      // checking for duplication as new keyframe is comming.
 
-  mutable std::mutex ownership_;
+  mutable std::mutex mutex_;
 };
+
 }  // namespace mono_slam
 
 #endif  // MONO_SLAM_MAP_H_

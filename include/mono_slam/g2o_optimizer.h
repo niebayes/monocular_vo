@@ -17,7 +17,8 @@ class Optimizer {
   static void optimizePose(const Frame::Ptr& frame, const int n_iters = 10);
 
   // Local bundle adjustment.
-  static void localBA();
+  static void localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
+                      const int n_iters = 5);
 };
 
 }  // namespace mono_slam
