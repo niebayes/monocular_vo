@@ -45,6 +45,7 @@ class Map {
   list<Frame::Ptr> keyframes_;  // Maintained keyframes.
   list<MapPoint::Ptr> points_;  // Maintained map points.
 
+  // FIXME Would it be better if we simply use global frame counter?
   int max_frame_id_;  // Maximum id of frames inserted so far. Used for
                       // optimization and checking for duplication as
                       // new keyframe is comming.

@@ -7,9 +7,8 @@
 #include "g2o/core/robust_kernel.h"
 #include "g2o/solvers/dense/linear_solver_dense.h"
 #include "g2o/solvers/eigen/linear_solver_eigen.h"
-#include "g2o/types/sba/types_six_dof_expmap.h"
-#include "g2o/types/sim3/types_seven_dof_expmap.h"
-#include "g2o/types/slam3d/g2o_types_slam3d_api.h"  // g2o::VertexSBAPointXYZ
+#include "g2o/types/sba/types_sba.h"  // g2o::VertexSBAPointXYZ
+#include "g2o/types/sba/types_six_dof_expmap.h"  // g2o::VertexSE3Expmap, g2o::EdgeProjectXYZ2UV, g2o::EdgeSE3ProjectXYZOnlyPose
 #include "mono_slam/common_include.h"
 #include "mono_slam/feature.h"
 #include "mono_slam/frame.h"
@@ -27,6 +26,7 @@ using LinearSolver = g2o::LinearSolverCSparse<BlockSolver::PoseMatrixType>;
 
 // Edge and vertex typedefs.
 using EdgeObs = g2o::EdgeProjectXYZ2UV;
+using EdgePoseOnly = g2o::EdgeSE3ProjectXYZOnlyPose;
 using VertexFrame = g2o::VertexSE3Expmap;
 using VertexPoint = g2o::VertexSBAPointXYZ;
 
@@ -34,9 +34,16 @@ struct EdgeContainer {
   sptr<EdgeObs> e_obs_ = nullptr;
   Frame::Ptr keyframe_ = nullptr;
   Feature::Ptr feat_ = nullptr;
-  g2oEdgeContainer(sptr<EdgeObs> e_obs, Frame::Ptr keyframe, Feature::Ptr feat)
+  EdgeContainer(sptr<EdgeObs> e_obs, Frame::Ptr keyframe, Feature::Ptr feat)
       : e_obs_(e_obs), keyframe_(keyframe), feat_(feat) {}
 };
+
+struct EdgeContainerPoseOnly {
+  sptr<EdgePoseOnly> e_pose_only_ = nullptr;
+  Feature::Ptr feat_ = nullptr;
+  EdgeContainerPoseOnly(sptr<EdgePoseOnly> e_pose_only, Feature::Ptr feat)
+      : e_pose_only_(e_pose_only), feat_(feat) {}
+}
 
 }  // namespace g2o_types
 

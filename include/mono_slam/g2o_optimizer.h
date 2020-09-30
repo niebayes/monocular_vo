@@ -1,8 +1,7 @@
 #ifndef MONO_SLAM_G2O_OPTIMIZER_H_
 #define MONO_SLAM_G2O_OPTIMIZER_H_
 
-#include "mono_slam/common_include.h"
-#include "mono_slam/g2o_optimizer/types.h"
+#include "mono_slam/frame.h"
 #include "mono_slam/map.h"
 
 namespace mono_slam {
@@ -12,14 +11,13 @@ class Map;
 class Optimizer {
  public:
   // Global bundle adjustment.
-  static void GlobalBundleAdjustment(const Map::Ptr& map,
-                                     const int num_iterations = 20);
+  static void globalBA(const Map::Ptr& map, const int n_iters = 20);
 
   // Pose graph optimization.
-  static void PoseGraphOptimization();
+  static void optimizePose(const Frame::Ptr& frame, const int n_iters = 10);
 
   // Local bundle adjustment.
-  static void LocalBundleAdjustment();
+  static void localBA();
 };
 
 }  // namespace mono_slam

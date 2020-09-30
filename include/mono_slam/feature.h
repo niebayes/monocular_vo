@@ -6,6 +6,9 @@
 #include "mono_slam/map_point.h"
 
 namespace mono_slam {
+namespace feat_utils {
+static inline const sptr<MapPoint>& getPoint(const sptr<Feature>& feat);
+}  // namespace feat_utils
 
 class Frame;
 class MapPoint;
@@ -19,6 +22,8 @@ struct Feature {
   wptr<MapPoint> point_;
 
   // FIXME Should feature be deleted immediately?
+  bool is_outlier_;  // If the observation formed with this feature and the
+                     // point_ is outlier?
 
   // Feature characteristics.
   const wptr<Frame> frame_;   // Frame in which the feature is detected.
@@ -40,6 +45,17 @@ struct Feature {
         bear_vec_(Vec3{}) {}
 };
 
+namespace feat_utils {
+
+static inline const sptr<MapPoint>& getPoint(const sptr<Feature>& feat) {
+  if (!feat || feat->is_outlier_) return nullptr;
+  if (feat->point_.expire()) return nullptr;
+  const auto& point = feat->point_.lock();
+  if (point->to_be_deleted_) return nullptr;
+  return point;
+}
+
+}  // namespace feat_utils
 }  // namespace mono_slam
 
 #endif  // MONO_SLAM_FEATURE_H_
