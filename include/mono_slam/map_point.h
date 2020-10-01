@@ -73,11 +73,9 @@ class MapPoint {
   // Erase an observation.
   void eraseObservation(sptr<Feature>& feat);
 
-  inline list<sptr<Feature>> getAllObservations() const {
+  inline list<sptr<Feature>> getObservations() const {
     u_lock take(ownership_);
-    list<sptr<Feature>> observations;
-    for (auto feat : observations_) observations.push_back(feat.lock());
-    return observations;
+    return observations_;
   }
 
   void updateBestFeature();

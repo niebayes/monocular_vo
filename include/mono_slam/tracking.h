@@ -32,10 +32,12 @@ class Tracking {
   Frame::Ptr curr_frame_ = nullptr;  // Current frame.
   SE3 T_curr_last_;  // Rigid transformation from last_frame_ to curr_frame_
                      // assuming constant velocity.
-  set<Frame::Ptr> local_co_kfs_;  // Local covisible keyframes having
-                                  // visual overlapping with current frame.
-  int last_keyframe_id_;          // Id of last keyframe. Frequency of keyframe
-                                  // insertion is limited by this.
+  unordered_set<Frame::Ptr>
+      local_co_kfs_;  // Local covisible keyframes having
+                      // visual overlapping with current frame.
+  // FIXME Seems the effect of this is not significant. Remove this?
+  int last_kf_id_;  // Id of last keyframe. Frequency of keyframe
+                    // insertion is partly limited by this.
 
   // Linked components.
   sptr<System> system_ = nullptr;              // System.
@@ -74,6 +76,9 @@ class Tracking {
 
   // Track local map to make the tracking more robust.
   void trackFromLocalMap();
+
+  // Update local covisible keyframes to be used in tracking from local map.
+  void updateLocalCovisibleKeyframes();
 
   // True if the criteria of inserting new keyframe are satisfied.
   bool needNewKeyframe();

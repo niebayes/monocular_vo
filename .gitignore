@@ -2,6 +2,12 @@
 bin
 build
 
+# Built libraries. 
+lib
+
+# Implementation detail.
+implementation_detail
+
 # Visual Studio Code settings
 .vscode
 

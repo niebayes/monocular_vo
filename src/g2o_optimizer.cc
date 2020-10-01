@@ -11,7 +11,7 @@
 namespace mono_slam {
 
 // FIXME Do we need to add a critical section whenever we access a shared
-// variable?
+// resource?
 
 void globalBA(const Map::Ptr& map, const int n_iters = 20) {
   // Setup g2o optimizer.
@@ -32,7 +32,7 @@ void globalBA(const Map::Ptr& map, const int n_iters = 20) {
     kf->v_frame_ = g2o_utils::createG2oVertexFrame(kf, v_id++, kf->id_ == 0);
     assert(optimizer.addVertex(kf->v_frame_));
     // Iterate all features and linked map points observed by this keyframe.
-    // FIXME .lock() changes states?
+    // FIXME .lock() changes state?
     // FIXME Frequent weak_ptr.lock() operations incur large overhead?
     for (const Feature::Ptr& feat : kf->feats_) {
       const MapPoint::Ptr& point = feat_utils::getPoint(feat);

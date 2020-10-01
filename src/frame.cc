@@ -116,6 +116,16 @@ bool isObservable(const sptr<MapPoint>& point) const {
   return true;
 }
 
+int Frame::computeTrackedPoints(const int min_n_obs = 0) const {
+  int n_tracked_points = 0;
+  for (const Feature::Ptr& feat : feats_) {
+    const MapPoint::Ptr& point = feat_utils::getPoint(feat);
+    if (!point || point->nObs() < min_n_obs) continue;
+    ++n_tracked_points;
+  }
+  return n_tracked_points;
+}
+
 namespace frame_utils {
 
 void undistortKeypoints(const Mat33& K, const Vec4& dist_coeffs,

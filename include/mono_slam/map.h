@@ -25,7 +25,8 @@ class KeyframeDataBase {
 
   // Detect relocalization keyframe candidates between which and the query frame
   // the number of shared words exceed some threshold.
-  bool detectRelocCandidates(const Frame::Ptr& frame);
+  bool detectRelocCandidates(const Frame::Ptr& frame,
+                             list<Frame::Ptr>& candidate_kfs);
 
   // Clear and reset inverted file indices.
   inline void clear() {
@@ -48,9 +49,13 @@ class Map {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Map>;
 
+  Map();
+
   void insertKeyframe(Frame::Ptr keyframe);
 
   void eraseKeyframeById(const int id);
+
+  inline int nKfs() const { return static_cast<int>(keyframes_.size()); }
 
   // FIXME Return copy or const reference?
   inline const list<Frame::Ptr>& getAllKeyframes() {
@@ -68,7 +73,7 @@ class Map {
     u_lock lock(mutex_);
     keyframes_.clear();
     points_.clear();
-    max_frame_id_ = 0;
+    max_keyframe_id_ = 0;
     kf_db_->clear();
   }
 
@@ -77,10 +82,11 @@ class Map {
 
  private:
   list<Frame::Ptr> keyframes_;  // Maintained keyframes.
+  // FIXME Do we really need to maintain map points?
   list<MapPoint::Ptr> points_;  // Maintained map points.
 
-  int max_frame_id_;  // Maximum id of frames inserted so far. Used for
-                      // checking for duplication as new keyframe is comming.
+  int max_keyframe_id_;  // Maximum id of keyframes inserted so far. Used for
+                         // checking for duplication as new keyframe is comming.
 
   // Keyframe database used for relocalization.
   KeyframeDataBase::Ptr kf_db_ = nullptr;

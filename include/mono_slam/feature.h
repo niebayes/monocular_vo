@@ -44,6 +44,7 @@ struct Feature {
 
 namespace feat_utils {
 
+// FIXME Would it be okay if these two utility functions being member methods?
 static inline const sptr<MapPoint>& getPoint(const sptr<Feature>& feat) {
   if (!feat || feat->is_outlier_) return nullptr;
   if (feat->point_.expired()) return nullptr;

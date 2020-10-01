@@ -57,6 +57,7 @@ int Matcher::searchByProjection(const Frame::Ptr& last_frame,
 
 int Matcher::searchByProjection(const std::set<Frame::Ptr>& local_co_kfs,
                                 const Frame::Ptr& curr_frame) {
+  if (local_co_kfs.empty()) return 0;
   int num_matches = 0;
 
   // Iterate each keyframe->feature->map_point to find best match between the
@@ -123,6 +124,8 @@ int Matcher::searchByProjection(const std::set<Frame::Ptr>& local_co_kfs,
   }
   return num_matches;
 }
+
+int Matcher::searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame)
 
 namespace matcher_utils {
 

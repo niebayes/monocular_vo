@@ -30,6 +30,7 @@ void Tracking::trackCurrentFrame() {
         state_ = State::LOST;
       else {
         if (needNewKeyframe()) {
+          last_kf_id_ = curr_frame_->id_;
           curr_frame_->setKeyframe();
           local_mapper_->insertKeyframe(curr_frame_);
         }
@@ -78,18 +79,78 @@ bool Tracking::trackFromLocalMap() {
   return true;
 }
 
-void updateLocalCovisibleKeyframes() {
-  local_co_kfs_.clear();
-  //
+void Tracking::updateLocalCovisibleKeyframes() {
+  local_co_kfs_.clear();  // Clear it first.
+
+  // Covisible keyframe voter with the key being the covisible keyframe and the
+  // weights being the number of shared map points.
+  unordered_map<Frame::Ptr, int> co_kf_weights;
+  // co_kf_weights.reserve(?). //! Don't know how much capacity to be reserved.
+
+  // Obtain all covisible keyframes (i.e. ones sharing at least one map point).
+  for (const Feature::Ptr& feat_ : curr_frame_->feats_) {
+    const MapPoint::Ptr& point = feat_utils::getPoint(feat_);
+    if (!point) continue;
+    for (const Feature::Ptr& feat : point->getObservations()) {
+      const Frame::Ptr& kf = feat_utils::getKeyframe(feat);
+      if (!kf || kf == curr_frame_) continue;  // Self of course is excluded.
+      co_kf_weights[kf]++;
+      // Insert to local covisible keyframes.
+      local_co_kfs_.insert(kf);  // Using set precludes repeat insertion.
+    }
+  }
+  if (locak_co_kfs_.empty()) return;
+
+  // Add the keyframes covisible with current members in the local covisible
+  // keyframes.
+  // FIXME Do we realy need to do this?
+  //! Iterate the copy of the local_co_kfs since we need to insert new elements
+  //! into it in progress.
+  for (const Frame::Ptr& kf_ : unordered_set(local_co_kfs_)) {
+    // Get top 10 keyframes ranked wrt. number of covisible map points.
+    const set<Frame::Ptr>& co_kfs = kf_->getCovisibleKeyframes(10);
+    if (co_kfs.empty()) continue;
+    for (const Frame::Ptr& kf : co_kfs)
+      if (kf == curr_frame_) continue;
+    co_kf_weights[kf]++;
+    local_co_kfs_.insert(kf);
+  }
+
+  // Obtain the maximal weight.
+  int max_weight = 0;
+  auto it = co_kf_weights.cbegin(), it_end = co_kf_weights.cend();
+  for (; it != it_end; ++it)
+    if (it->second > max_weight) max_weight = it->second;
+
+  // Only retain keyframes with the shared number of map points exceed this
+  // threshold.
+  const int min_weight_thresh = Config::min_weight_factor() * max_weight;
+  std::remove_if(local_co_kfs.begin(), local_co_kfs.end(),
+                 [=, &co_kf_weights](const Frame::Ptr& kf) {
+                   return co_kf_weights[kf] < min_weight_thresh;
+                 });
 }
 
 bool Tracking::needNewKeyframe() {
-  //
+  // TODO(bayes) Use a more complicated strategy.
+  const int n_kfs = map_->nKfs();
+  // Cannot exceed maximal number of keyframes in map at one moment.
+  if (n_kfs > Config::max_num_kfs()) return false;
+  // Frequently creating new keyframe is forbidden.
+  if (curr_frame_->id_ < last_kf_id_ + Config::fps()) return false;
+  // Local mapper cannot be busy.
+  if (!local_mapper_->isIdle()) return false;
   return true;
 }
 
 bool Tracking::relocalization() {
-  //
+  // Obtain relocalization candidates.
+  list<Frame::Ptr> candidate_kfs;
+  if (!(map_->kf_db_->detectRelocCandidates(curr_frame_, candidate_kfs)))
+    return false;
+  
+  
+  
   return true;
 }
 

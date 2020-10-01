@@ -120,10 +120,14 @@ bool KeyframeDataBase::detectRelocCandidates(const Frame::Ptr& frame,
 //##############################################################################
 // Map
 
-void Map::ensertKeyframe(Frame::Ptr keyframe) {
+Map::Map() max_keyframe_id_(0) {}
+
+void Map::insertKeyframe(Frame::Ptr keyframe) {
   CHECK_EQ(keyframe->isKeyframe(), true);
-  CHECK_GE(keyframe->id_, max_frame_id_);
+  // FIXME Is this check always valid?
+  CHECK_GE(keyframe->id_, max_keyframe_id_);
   u_lock lock(mutex_);
+  max_keyframe_id_ = keyframe->id_;
   keyframes_.push_back(keyframe);
 }
 

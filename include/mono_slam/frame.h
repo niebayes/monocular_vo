@@ -75,6 +75,10 @@ class Frame {
 
   inline const set<Frame::Ptr>& getCovisibleKeyframes() const;
 
+  // Compute number of tracked map points (i.e. ones that are observed by more
+  // than min_n_obs frames).
+  int computeTrackedPoints(const int min_n_obs) const;
+
  private:
   // Image bounds.
   static double x_min_;
