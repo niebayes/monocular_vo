@@ -29,6 +29,15 @@ class Frame {
   DBoW3::BowVector bow_vec_;         // Bag of words vector.
   DBoW3::FeatureVector feat_vec_;    // Feature vector.
 
+  // Temporary variables used for relocalization.
+  int query_frame_id_;     // Id of currently quering frame.
+  int n_sharing_words_;    // Number of sharing words between this and currently
+                           // quering frame.
+  double bow_simi_score_;  // Similarity score between the bag-of-words vector
+                           // of this and that of currently quering frame.
+  bool is_candidate_already_;  // Is this keyframe selected as relocalization
+                               // candidate already?
+
   // Temporary g2o keyframe vertex storing the optimized result.
   sptr<g2o_types::VertexFrame> v_frame_ = nullptr;
 
