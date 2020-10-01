@@ -36,21 +36,21 @@ class Initializer {
 
   inline const Stage& stage() const { return stage_; }
 
-  void SetTracker(sptr<Tracking> tracker);
+  void setTracker(sptr<Tracking> tracker);
 
-  void AddReferenceFrame(Frame::Ptr ref_frame);
+  void addReferenceFrame(Frame::Ptr ref_frame);
 
-  void AddCurrentFrame(Frame::Ptr curr_frame);
+  void addCurrentFrame(Frame::Ptr curr_frame);
 
  private:
   // Compute relative pose from ref_frame_ to curr_frame_ and triangulate points
   // by the way.
-  bool Initialize(const vector<int>& matches);
+  bool initialize(const vector<int>& matches);
 
   // Build initial map.
-  bool BuildInitMap();
+  bool buildInitMap();
 
-  inline void Reset() {
+  inline void reset() {
     stage_ = Stage::NO_FRAME_YET;
     ref_frame_.reset();
     curr_frame_.reset();

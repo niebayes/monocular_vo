@@ -30,13 +30,13 @@ class System {
   System(const string& config_file);
 
   // Init the system: load user-provided settings and link system components.
-  bool Init();
+  bool init();
 
   // Run system in an infinite loop till the dataset is exhausted.
-  void Run();
+  void run();
 
   // Reset system.
-  void Reset();
+  void reset();
 
  private:
   // System components.

@@ -22,11 +22,11 @@ class Config {
   ~Config();
 
   // Set the configuration file.
-  static bool SetConfigFile(const string& config_file);
+  static bool setConfigFile(const string& config_file);
 
   // Generic getter.
   template <typename T>
-  static T Get(const string& key);
+  static T get(const string& key);
 };
 
 }  // namespace mono_slam

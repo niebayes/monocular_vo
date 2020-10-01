@@ -39,10 +39,6 @@ class Frame {
 
   void setPose(const SE3& T_c_w);
 
-  inline const Vec3& pos() const { return cam_->pos(); }
-
-  void setPos(const Vec3& pos);
-
   inline bool isKeyframe() const { return is_keyframe_; }
 
   void setKeyframe();

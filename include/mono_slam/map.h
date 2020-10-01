@@ -15,23 +15,23 @@ class Map {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Map>;
 
-  void InsertKeyframe(Frame::Ptr keyframe);
+  void insertKeyframe(Frame::Ptr keyframe);
 
-  void EraseKeyframeById(const int id);
+  void eraseKeyframeById(const int id);
 
   // FIXME Return copy or const reference?
-  inline const list<Frame::Ptr>& GetAllKeyframes() {
+  inline const list<Frame::Ptr>& getAllKeyframes() {
     u_lock lock(mutex_);
     return keyframes_;
   }
 
   // FIXME Candidate points?
-  inline const list<MapPoint::Ptr>& GetAllMapPoints() {
+  inline const list<MapPoint::Ptr>& getAllMapPoints() {
     u_lock lock(mutex_);
     return points_;
   }
 
-  inline void Clear() {
+  inline void clear() {
     u_lock lock(mutex_);
     keyframes_.clear();
     points_.clear();

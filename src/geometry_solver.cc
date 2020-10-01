@@ -97,7 +97,7 @@ int evaluateFundamentalScore(const Frame::Features& feats_1,
     const double dist_1 = geometry::pointToEpiLineDist(feat_1->pt_, F);
     const double dist_2 = geometry::pointToEpiLineDist(feat_2->pt_, F);
     const double chi2_one_degree = 3.841,
-                 inv_sigma2 = 1.0 / (noise_sigma * noise_sigma);
+                 inv_sigma2 = 1. / (noise_sigma * noise_sigma);
     if (dist_1 * dist_1 * inv_sigma2 > chi2_one_degree ||
         dist_2 * dist_2 * inv_sigma2 > chi2_one_degree)
       continue;
@@ -129,7 +129,7 @@ bool findRelativePoseRansac(const Frame::Ptr& frame_1,
   vector<Vec3> best_points;            // Points corresponding to highest score.
   vector<bool> best_triangulate_mask;  // Mark which inlier match produces good
                                        // triangulated point.
-  double best_median_parallax = 0;
+  double best_median_parallax = 0.;
   for (Mat33& R : Rs) {
     for (Vec3& t : ts) {
       // Evaluate score of the current R and t.
@@ -195,7 +195,7 @@ int evaluatePoseScore(const Mat33& R, const Vec3& t,
     if (point_1.array().isInf().any()) continue;
     // Test 2: triangulated point must have positive depth (in both cameras).
     const Vec3 point_2 = R * point_1 + t;
-    if (point_1(2) <= 0 || point_2(2) <= 0) continue;
+    if (point_1(2) <= 0. || point_2(2) <= 0.) continue;
     // Test 3: triangulated point must have sufficient parallax.
     const Vec3 bear_vec_1 = point_1 - C_1, bear_vec_2 = point_2 - C_2;
     const double cos_parallax =
@@ -230,4 +230,123 @@ int evaluatePoseScore(const Mat33& R, const Vec3& t,
   return num_good_points;
 }
 
+namespace geometry {
+
+void normalizedFundamental8Point(const MatXX& pts_1, const MatXX& pts_2,
+                                 Mat33& F) {
+  CHECK_EQ(pts_1.cols(), pts_2.cols());
+  const int num_pts = pts_1.cols();
+  CHECK_GE(num_pts, 8);
+
+  // Normalize points.
+  MatXX normalized_pts_1, normalized_pts_2;
+  Mat33 T_1, T_2;
+  normalizePoints(pts_1, normalized_pts_1, T_1);
+  normalizePoints(pts_2, normalized_pts_2, T_2);
+
+  // Find F' using normalized point correspondences.
+  fundamental8Point(normalized_pts_1, normalized_pts_2, F);
+
+  // Obtain unnormalized F from F'.
+  F = (T_2.transpose() * F * T_1).eval();
+}
+
+void fundamental8Point(const MatXX& pts_1, const MatXX& pts_2, Mat33& F) {
+  CHECK_EQ(pts_1.cols(), pts_2.cols());
+  const int num_pts = pts_1.cols();
+  CHECK_GE(num_pts, 8);
+
+  MatXX A(num_pts, 9);
+  // Vectorization trick: AXB = C -> (B' kron A) * vec(X) = vec(C);
+  for (int i = 0; i < num_pts; ++i) {
+    // FIXME Error in calling this function.
+    // A.row(i) = Eigen::kroneckerProduct<Vec3, Vec3>(pts_1.col(i),
+    // pts_2.col(i))
+    //                .transpose()
+    //                .eval();
+  }
+  auto svd = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
+  const Vec9& F_vec = svd.matrixV().rightCols(1);
+  F.col(0) = F_vec.segment<3>(0);
+  F.col(1) = F_vec.segment<3>(3);
+  F.col(2) = F_vec.segment<3>(6);
+
+  // Enforce the det(F) = 0 constraint.
+  auto F_svd = F.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
+  Mat33 Sigma = F_svd.singularValues().asDiagonal();
+  Sigma(2, 2) = 0.;
+  F = F_svd.matrixU() * Sigma * F_svd.matrixV().transpose();
+}
+
+void decomposeEssential(const Mat33& E, vector<Mat33>& Rs, vector<Vec3>& ts) {
+  // The four possible decompositions are encoded in the SVD of E.
+  auto svd = E.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
+  const Mat33 U = svd.matrixU(), V = svd.matrixV();
+  const Mat33 W = (Mat33() << 0., -1., 0., 1., 0., 0., 0., 0., 1.).finished();
+  Rs.resize(2);
+  ts.resize(2);
+  Rs[0] = U * W * V.transpose();
+  Rs[1] = U * W.transpose() * V.transpose();
+
+  // Check if the decomposed Rs are valid rotation matrix (i.e. det(R) = +1).
+  // If not, simply invert the sign.
+  Rs[0] = (Rs[0].determinant() == 1) ? Rs[0].eval() : -Rs[0].eval();
+  Rs[1] = (Rs[1].determinant() == 1) ? Rs[1].eval() : -Rs[1].eval();
+
+  // Translations are encoded in the last column of U.
+  // The two possible translations are +u3 and -u3.
+  const Vec3& u3 = U.rightCols(1);
+  ts[0] = u3;
+  ts[1] = -u3;
+}
+
+void normalizePoints(const MatXX& pts, MatXX& normalized_pts, Mat33& T) {
+  const int num_pts = pts.cols();
+  CHECK_GE(num_pts, 0);
+
+  // Mean.
+  const Vec2 mean = pts.topRows(2).rowwise().sum();
+  // Rescale factor.
+  const double scale =
+      std::sqrt(2. / (pts.topRows(2) - mean).squaredNorm() / num_pts);
+  // Normalization matrix.
+  T << scale, 0., -scale * mean.x(), 0., scale, -scale * mean.y(), 0., 0., 1.;
+  // Perform normalization.
+  normalized_pts = T * pts;
+}
+
+void triangulateLin(const Vec2& pt_1, const Vec2& pt_2, const Mat34& M_1,
+                    const Mat34& M_2, Vec3& point) {
+  //! A could be [6 x 4] or [4 x 4].
+  MatXX A(6, 4);
+  A.topRows(3) = geometry::to_skew(pt_1.homogeneous()) * M_1;
+  A.bottomRows(3) = geometry::to_skew(pt_2.homogeneous()) * M_2;
+
+  // Compute 3D points using SVD.
+  auto svd = A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
+  point = svd.matrixV().rightCols(1).colwise().hnormalized();
+}
+
+double computeReprErr(const Vec3& point, const Vec2& pt, const Mat33& K) {
+  const Vec3& repr_point = K * point;
+  // Perspective division.
+  const double repr_x = repr_point(0) / repr_point(2);
+  const double repr_y = repr_point(1) / repr_point(2);
+  return ((pt.x() - repr_x) * (pt.x() - repr_x) +
+          (pt.y() - repr_y) * (pt.y() - repr_y));
+}
+
+double pointToEpiLineDist(const Vec2& pt, const Mat33& F) {
+  const Vec3 epi_line = F * pt.homogeneous();
+  const double &a = epi_line(0), &b = epi_line(1), &c = epi_line(2);
+  return (std::abs((a * pt.x() + b * pt.y() + c)) / std::sqrt(a * a + b * b));
+}
+
+Mat33 to_skew(const Vec3& vec) {
+  Mat33 skew_mat;
+  skew_mat << 0., -vec(2), vec(1), vec(2), 0., -vec(0), -vec(1), vec(0), 0.;
+  return skew_mat;
+}
+
+}  // namespace geometry
 }  // namespace mono_slam

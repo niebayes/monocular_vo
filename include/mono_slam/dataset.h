@@ -14,7 +14,7 @@ class Dataset {
   Dataset(const string& dataset_path, const string& image_file_name_fmt,
           const double resize_factor);
 
-  cv::Mat NextImage();
+  cv::Mat nextImage();
 
  private:
   // Current image index.

@@ -67,7 +67,7 @@
 #include <math.h>
 #include <stdlib.h>
 
-namespace uzh {
+namespace geometry {
 
 /**
  * The P3P class that solves the Perspective from Three Points (P3P) problem.
@@ -132,4 +132,4 @@ public:
 
 #endif  // UZH_RANSAC_KNEIP_P3P_H_
 
-}  // namespace uzh
+}  // namespace geometry

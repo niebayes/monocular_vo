@@ -15,11 +15,11 @@ class KeyframeDB {
 
   KeyframeDB(const sptr<Vocabulary>& voc);
 
-  void AddKeyframe(const Frame::Ptr& keyframe);
+  void addKeyframe(const Frame::Ptr& keyframe);
 
-  void EraseKeyframe(const Frame::Ptr& keyframe);
+  void eraseKeyframe(const Frame::Ptr& keyframe);
 
-  void Reset();
+  void reset();
 
  private:
   // Vocabulary.

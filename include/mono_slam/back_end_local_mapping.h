@@ -24,16 +24,16 @@ class LocalMapping {
 
   LocalMapping();
 
-  void InsertKeyframe(const Frame::Ptr& keyframe);
+  void insertKeyframe(const Frame::Ptr& keyframe);
 
-  void Reset();
+  void reset();
 
   // Setters to link components.
-  void SetSystem(sptr<System> system);
-  void SetTracker(sptr<Tracking> tracker);
-  void SetMap(sptr<Map> map);
-  void SetVocabulary(const sptr<Vocabulary>& voc);
-  void SetKeyframeDB(KeyframeDB::Ptr keyframe_db);
+  void setSystem(sptr<System> system);
+  void setTracker(sptr<Tracking> tracker);
+  void setMap(sptr<Map> map);
+  void setVocabulary(const sptr<Vocabulary>& voc);
+  void setKeyframeDB(KeyframeDB::Ptr keyframe_db);
 
  private:
   Keyframes keyframes_;

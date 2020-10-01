@@ -19,13 +19,11 @@ class MapPoint {
   static int point_cnt_;  // Global map point counter, starting from 0.
   const int id_;          // Unique map point identity.
   Vec3 pos_;              // Position in world frame.
-  // FIXME Setting only point_ in feature class to weak_ptr suffices to resolve
-  // cyclic reference issue. Frequent weak_ptr.lock() operations making codes
-  // ugly.
   list<sptr<Feature>> observations_;  // List of observations.
-  wptr<Feature> best_feat_;  // Best feature in that its descriptor has the
+  sptr<Feature> best_feat_;  // Best feature in that its descriptor has the
                              // least median distance against other features.
                              // Used for fast matching.
+
   // These two variables are used in Frame::isObservable. \sa
   // Frame::isObservable.
   Vec3 median_view_dir_;   // Median viewing direction (a unit vector).
@@ -45,6 +43,7 @@ class MapPoint {
   int curr_ba_keyframe_id_;  // Temporary marker storing the id of currently
                              // bundle-adjusted keyframe to avoid repeat
                              // insertion.
+
   // Temporary g2o point vertex storing the optimized result.
   sptr<g2o_types::VertexPoint> v_point_ = nullptr;
 

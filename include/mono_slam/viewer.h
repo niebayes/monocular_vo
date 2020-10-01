@@ -16,11 +16,11 @@ class Viewer {
 
   Viewer();
 
-  void Reset();
+  void reset();
 
-  void SetMap(const Map::Ptr& map);
+  void setMap(const Map::Ptr& map);
 
-  void SetSystem(const sptr<System>& system);
+  void setSystem(const sptr<System>& system);
 
  private:
   Map::Ptr map_ = nullptr;

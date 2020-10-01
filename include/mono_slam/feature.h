@@ -6,9 +6,6 @@
 #include "mono_slam/map_point.h"
 
 namespace mono_slam {
-namespace feat_utils {
-static inline const sptr<MapPoint>& getPoint(const sptr<Feature>& feat);
-}  // namespace feat_utils
 
 class Frame;
 class MapPoint;

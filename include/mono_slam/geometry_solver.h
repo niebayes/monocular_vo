@@ -9,7 +9,7 @@ namespace mono_slam {
 class GeometrySolver {
  public:
   // Find fundamental matrix using eight-point algorithm in a RANSAC scheme.
-  static void FindFundamentalRansac(const Frame::Ptr& frame_1,
+  static void findFundamentalRansac(const Frame::Ptr& frame_1,
                                     const Frame::Ptr& frame_2,
                                     const vector<int>& matches, Mat33& F,
                                     vector<pair<int, int>>& inlier_matches,
@@ -18,7 +18,7 @@ class GeometrySolver {
                                     const bool adaptive_iterations = true);
 
   // Evaluate the score of Fundamental matrix by computing reprojection error.
-  static int EvaluateFundamentalScore(const Frame::Features& feats_1,
+  static int evaluateFundamentalScore(const Frame::Features& feats_1,
                                       const Frame::Features& feats_2,
                                       const Mat33& F,
                                       const vector<pair<int, int>>& matches,
@@ -27,7 +27,7 @@ class GeometrySolver {
 
   // Find the best relative pose by decomposing essential matrix in a RANSAC
   // scheme.
-  static bool FindRelativePoseRansac(
+  static bool findRelativePoseRansac(
       const Frame::Ptr& frame_1, const Frame::Ptr& frame_2, const Mat33& F,
       const vector<pair<int, int>>& inlier_matches, SE3& relative_pose,
       vector<Vec3>& points, vector<bool>& triangulate_mask,
@@ -35,7 +35,7 @@ class GeometrySolver {
       const double min_parallax = 1.0);
 
   // Evaluate the score of pose by counting number of good triangulated points.
-  static int EvaluatePoseScore(const Mat33& R, const Vec3& t,
+  static int evaluatePoseScore(const Mat33& R, const Vec3& t,
                                const Frame::Features& feats_1,
                                const Frame::Features& feats_2,
                                const vector<pair<int, int>>& inlier_matches,
@@ -48,6 +48,30 @@ class GeometrySolver {
   static void P3PRansac();
 };
 
+namespace geometry {
+
+void normalizedFundamental8Point(const MatXX& pts_1, const MatXX& pts_2,
+                                 Mat33& F);
+
+void fundamental8Point(const MatXX& pts_1, const MatXX& pts_2, Mat33& F);
+
+void decomposeEssential(const Mat33& E, vector<Mat33>& Rs, vector<Vec3>& ts);
+
+// FIXME Inline at here and define at another place, inline still works?
+inline void normalizePoints(const MatXX& pts, MatXX& normalized_pts, Mat33& T);
+
+inline void triangulateLin(const Vec2& pt_1, const Vec2& pt_2, const Mat34& M_1,
+                           const Mat34& M_2, Vec3& point);
+
+inline double computeReprErr(const Vec3& point, const Vec2& pt, const Mat33& K);
+
+inline double pointToEpiLineDist(const Vec2& pt, const Mat33& F);
+
+inline Mat33 to_skew(const Vec3& vec);
+
+}  // namespace geometry
 }  // namespace mono_slam
+
+#include "mono_slam/geometry_solver/kneip_p3p.h"
 
 #endif  // MONO_SLAM_GEOMETRY_SOLVER_H_
