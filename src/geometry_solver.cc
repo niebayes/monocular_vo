@@ -158,7 +158,7 @@ int evaluatePoseScore(const Mat33& R, const Vec3& t,
                       const vector<pair<int, int>>& inlier_matches,
                       const Mat33& K, vector<Vec3>& points,
                       vector<bool>& triangulate_mask, double& median_parallax,
-                      const double reproj_tolerance2,
+                      const double repr_tolerance2,
                       const double min_parallax = 1.0) {
   // Initialize variables.
   const int num_inlier_matches = inlier_matches.size();
@@ -196,12 +196,9 @@ int evaluatePoseScore(const Mat33& R, const Vec3& t,
     if (cos_parallax < std::cos(math_utils::degree2radian(min_parallax)))
       continue;
     // Test 4: the reprojection error must below the tolerance.
-    const double reproj_error_1 =
-                     geometry::computeReprojErr(point_1, feat_1->pt_, K),
-                 reproj_error_2 =
-                     geometry::computeReprojErr(point_2, feat_2->pt_, K);
-    if (reproj_error_1 > reproj_tolerance2 ||
-        reproj_error_2 > reproj_tolerance2)
+    const double repr_err_1 = geometry::computeReprErr(point_1, feat_1->pt_, K),
+                 repr_err_2 = geometry::computeReprErr(point_2, feat_2->pt_, K);
+    if (repr_err_1 >= repr_tolerance2 || repr_err_2 >= repr_tolerance2)
       continue;
 
     // Retain the point only if it passed all tests.
@@ -221,6 +218,104 @@ int evaluatePoseScore(const Mat33& R, const Vec3& t,
     median_parallax = 0.;
 
   return num_good_points;
+}
+
+bool P3PRansac(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
+               const vector<int>& matches, SE3& relative_pose,
+               const double noise_sigma = 1.0) {
+  // Retain only valid matches;
+  const int num_matches = matches.size();
+  vector<pair<int, int>> valid_matches;
+  valid_matches.reserve(num_matches);
+  for (int i = 0; i < num_matches; ++i)
+    if (matches[i] != -1) valid_matches.push_back({i, matches[i]});
+  const int num_valid_matches = valid_matches.size();
+
+  // Obtain matched map points and features which form the 3D-2D correspondences
+  // used in P3P.
+  vector<MapPoint> points;  // Matched map points fetched from keyframe.
+  points.reserve(num_valid_matches);
+  vector<Frame::Ptr> feats_f;  // Matched features in frame.
+  feats_f.reserve(num_valid_matches);
+  for (int i = 0; i < num_valid_matches; ++i) {
+    points.push_back(
+        feat_utils::getPoint(keyframe->feats_[valid_matches[i].first]));
+    feats_f.push_back(frame->feats_[valid_matches[i].second]);
+  }
+
+  // For the sake of efficiency, only few iterations of P3P are performed. The
+  // qualify of the pose estimate will be further refined with pose graph
+  // optimization.
+  const int n_iters = Config::n_iters_p3p_reloc();
+  bool has_found =
+      false;  // At least one iteration of P3P solving is successful.
+  SE3 best_T_c_w;
+  int best_score = 0;
+  for (int iter = 0; iter < n_iters; ++iter) {
+    // Random sampling data for (Kneip) P3P.
+    set<int> hypo_set;  // Hypothetical set to be populated.
+    while (hypo_set.size() < 3)
+      hypo.insert(math_utils::uniform_random_int(0, num_valid_matches - 1));
+    Mat33 feature_vectors, world_points;
+    int c = 0;
+    for (int i : hypo_set) {
+      feature_vectors.col(c) = frame->cam_->pixel2bear(feats_f[i]));
+      world_points.col(c) = points[i].pos();
+      ++c;
+    }
+
+    // Perform P3P solving.
+    vector<SE3> T_c_w_vec;  // Four solutions.
+    // Kneip P3P may fail in the case that all points are colinear.
+    if (!geometry::P3PSolver::computePose(feature_vectors, world_points,
+                                          T_c_w_vec)) {
+      has_found = true;
+      continue;
+    }
+    // Evaluate alternatively scores of four candidate poses and select the best
+    // one with which the number of inliers passing the reprojection
+    // thresholding test is maximized.
+    SE3 best_T_c_w_i;
+    const int best_score_i = GeometrySolver::evaluatePosesScore(
+        T_c_w_vec, points, feats_f, keyframe->cam_->K(), best_T_c_w_i,
+        2 * noise_sigma);
+    if (best_score_i > best_score) {
+      best_score = best_score_i;
+      best_T_c_w = best_T_c_w_i;
+    }
+  }
+  relative_pose = best_T_c_w;
+  return has_found;
+}
+
+int evaluatePosesScore(const vector<SE3>& poses,
+                       const vector<MapPoint::Ptr>& points,
+                       const vector<Feature::Ptr>& feats, const Mat33& K,
+                       SE3& best_pose, const double repr_tolerance2) {
+  const int num_valid_matches = points.size();
+
+  int max_num_inliers = 0;
+  for (const SE3& pose : poses) {
+    int num_inliers = 0;
+    for (int i = 0; i < num_valid_matches; ++i) {
+      vector<Vec3> points_c;  // Points in camera frame.
+      points_c.reserve(num_valid_matches);
+      std::transform(points.cbegin(), points.cend(),
+                     std::back_inserter(points_c),
+                     [&pose](const MapPoint::Ptr& point_w) {
+                       return pose * point_w.pos();
+                     });
+      // FIXME Distortion is needed to be considered here?
+      const double repr_err2 =
+          geometry::computeReprErr(points_c[i], feats[i].pt_, K);
+      if (repr_err2 < repr_tolerance2) ++num_inliers;
+    }
+    if (num_inliers > max_num_inliers) {
+      max_num_inliers = num_inliers;
+      best_pose = pose;
+    }
+  }
+  return max_num_inliers;
 }
 
 namespace geometry {

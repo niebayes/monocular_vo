@@ -57,9 +57,9 @@ class Camera {
     return camera2world(pixel2camera(pt, depth));
   }
 
-  inline Vec3 pixel2bear(const Vec2& pt) const {
-    // TODO(bayes)
-    return Vec3{};
+  inline Vec3 pixel2unit(const Vec2& pt) const {
+    const Vec3 bear_vec = K_.inverse() * pt.homogeneous();
+    return bear_vec / bear_vec.norm();
   }
 
   // Camera center in world frame.
@@ -72,8 +72,8 @@ class Camera {
   }
 
   inline Vec3 getUnitBearVec(const Vec3& p_w) const {
-    const Vec3 unit_bear_vec = p_w - this->getCamCenter();
-    return unit_bear_vec / unit_bear_vec.norm();
+    const Vec3 bear_vec = p_w - this->getCamCenter();
+    return bear_vec / bear_vec.norm();
   }
 
  private:

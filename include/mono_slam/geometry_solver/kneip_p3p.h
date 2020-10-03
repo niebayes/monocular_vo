@@ -66,6 +66,8 @@
 #include <Eigen/Dense>
 #include <math.h>
 #include <stdlib.h>
+#include <vector>
+#include "sophus/se3.hpp"
 
 namespace geometry {
 
@@ -83,7 +85,7 @@ namespace geometry {
  *
  *
  */
-class P3P
+class P3PSolver
 {
 public:
 
@@ -101,15 +103,15 @@ public:
    *                               [3x4] (3x3 rotation matrix and 3x1 position vector (solution2));\n
    *                               [3x4] (3x3 rotation matrix and 3x1 position vector (solution3));\n
    *                               [3x4] (3x3 rotation matrix and 3x1 position vector (solution4)) ]\n
-   *                             The obtained orientation matrices are defined as transforming points from the camera to the world frame
+   *                             The obtained orientation matrices are defined as transforming points from world frame to camera frame.
    *
    * \returns
-   * - \b 0 if executed correctly
-   * - \b -1 if the world points are colinear and it was unable to solve the P3P problem
+   * - \b true if executed correctly
+   * - \b false if the world points are colinear and it was unable to solve the P3P problem
    *
    */
-  static int computePoses(const Eigen::Matrix3d & feature_vectors, const Eigen::Matrix3d & world_points,
-                          Eigen::Matrix<Eigen::Matrix<double, 3, 4>, 4, 1> & solutions);
+  static bool computePoses(const Eigen::Matrix3d & feature_vectors, const Eigen::Matrix3d & world_points,
+                          std::vector<Sophus::SE3d>& solutions);
 
   /**
    * Solves a quartic equation.

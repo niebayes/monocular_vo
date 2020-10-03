@@ -148,10 +148,26 @@ bool Tracking::relocalization() {
   list<Frame::Ptr> candidate_kfs;
   if (!(map_->kf_db_->detectRelocCandidates(curr_frame_, candidate_kfs)))
     return false;
-  
-  
-  
-  return true;
+  // Iterate all candidates.
+  bool reloc_success = false;
+  for (const Frame::Ptr& kf : candidate_kfs) {
+    // Matches from relocalization candidate keyframe to current frame such that
+    // kf[i] = curr_frame_[matches[i]];
+    vector<int> matches;
+    const int num_matches = Matcher::searchByBoW(kf, curr_frame_, matches);
+    if (num_matches <= Config::min_num_matches_reloc()) continue;
+    SE3 relative_pose;  // Relative pose from keyframe to current frame.
+    if (!GeometrySolver::P3PRansac(kf, curr_frame_, matches, relative_pose))
+      continue;
+    curr_frame_->setPose(relative_pose);
+    // Utilize pose graph optimization to count number of inliers.
+    const int num_inlier_matches = Optimizer::optimize(curr_frame_);
+    if (num_inlier_matches < Config::min_num_inlier_matches_reloc()) {
+      reloc_success = true;
+      break;  // Get out from loop once a acceptable candidate is found.
+    }
+  }
+  return reloc_success;
 }
 
 void reset() {

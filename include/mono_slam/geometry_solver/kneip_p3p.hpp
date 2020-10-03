@@ -1,6 +1,8 @@
-int P3P::computePoses(
-    const Eigen::Matrix3d& feature_vectors, const Eigen::Matrix3d& world_points,
-    Eigen::Matrix<Eigen::Matrix<double, 3, 4>, 4, 1>& solutions) {
+bool P3P::computePoses(const Eigen::Matrix3d& feature_vectors,
+                       const Eigen::Matrix3d& world_points,
+                       std::vector<Sophus::SE3d>& solutions) {
+  solutions.reserve(4);  // Exactly four solutions to be computed.
+
   // Extraction of world points
   Eigen::Vector3d P1 = world_points.col(0);
   Eigen::Vector3d P2 = world_points.col(1);
@@ -11,7 +13,7 @@ int P3P::computePoses(
   Eigen::Vector3d temp2 = P3 - P1;
 
   if (temp1.cross(temp2).norm() == 0) {
-    return -1;
+    return false;
   }
 
   // Extraction of feature vectors
@@ -159,14 +161,10 @@ int P3P::computePoses(
 
     R = N.transpose() * R.transpose() * T;
 
-    Eigen::Matrix<double, 3, 4> solution;
-    solution.block<3, 3>(0, 0) = R;
-    solution.col(3) = C;
-
-    solutions(i) = solution;
+    solutions.push_back(Sophus::SE3d(R, C).inverse());
   }
 
-  return 0;
+  return true;
 }
 
 int P3P::solveQuartic(const Eigen::Matrix<double, 5, 1>& factors,

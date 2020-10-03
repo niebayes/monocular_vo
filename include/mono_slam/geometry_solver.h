@@ -42,10 +42,22 @@ class GeometrySolver {
                                const Mat33& K, vector<Vec3>& points,
                                vector<bool>& triangulate_mask,
                                double& median_parallax,
-                               const double reproj_tolerance2,
+                               const double repr_tolerance2,
                                const double min_parallax = 1.0);
 
-  static void P3PRansac();
+  // Find the best relative pose frame relocalization candidate keyframe to
+  // quering frame.
+  static bool P3PRansac(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
+                        const vector<int>& matches, SE3& relative_pose,
+                        const double noise_sigma = 1.0);
+
+  // Evaluate the scores of the four solutions obtained from Kneip P3P. The best
+  // score among them is returned.
+  static int evaluatePosesScore(const vector<SE3>& poses,
+                                const vector<MapPoint::Ptr>& points,
+                                const vector<Feature::Ptr>& feats,
+                                const Mat33& K, SE3& best_pose,
+                                const double repr_tolerance2);
 };
 
 namespace geometry {

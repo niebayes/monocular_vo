@@ -7,7 +7,7 @@ namespace mono_slam {
 int Matcher::searchForInitialization(const Frame::Ptr& ref_frame,
                                      const Frame::Ptr& curr_frame,
                                      vector<int>& matches) {
-  const int num_obs_1 = ref_frame->NumObs(), num_obs_2 = curr_frame->NumObs();
+  const int num_obs_1 = ref_frame->nObs(), num_obs_2 = curr_frame->nObs();
   matches.assign(num_obs_1, -1);
   vector<int> matches_reverse(num_obs_2, -1);
 
@@ -125,7 +125,7 @@ int Matcher::searchByProjection(const std::set<Frame::Ptr>& local_co_kfs,
   return num_matches;
 }
 
-int Matcher::searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame)
+int Matcher::searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame);
 
 namespace matcher_utils {
 
