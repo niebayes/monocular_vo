@@ -5,9 +5,9 @@
 
 namespace mono_slam {
 
-Frame::Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
+Frame::Frame(const cv::Mat& img, Camera* cam, const sptr<Vocabulary>& voc,
              const cv::Ptr<cv::FeatureDetector>& detector)
-    : id_(frame_cnt_++), is_keyframe_(false), cam_(std::move(cam)) {
+    : id_(frame_cnt_++), is_keyframe_(false), cam_(cam) {
   extractFeatures(img, detector);
   computeBoW(voc);
   // TODO(bayes) Optimize when no distortion.
@@ -41,8 +41,7 @@ void Frame::extractFeatures(const cv::Mat& img,
   const int num_kpts = kpts.size();
   feats_.reserve(num_kpts);
   for (int i = 0; i < num_kpts; ++i) {
-    // FIXME Is sptr<Frame>(this) ok?
-    feats_.push_back(make_shared<Feature>(sptr<Frame>(this),
+    feats_.push_back(make_shared<Feature>(shared_from_this(),
                                           Vec2{kpts[i].pt.x, kpts[i].pt.y},
                                           descriptors.row(i), kpts[i].octave));
   }
@@ -51,11 +50,10 @@ void Frame::extractFeatures(const cv::Mat& img,
 void Frame::computeBoW(const sptr<Vocabulary>& voc) {
   // Collect descriptors.
   vector<cv::Mat> descriptor_vec;
-  descriptor_vec.reserve(this->NumObs());
-  // FIXME Parameter type in lambda?
+  descriptor_vec.reserve(this->nObs());
   std::transform(feats_.begin(), feats_.end(),
                  std::back_inserter(descriptor_vec),
-                 [](const sptr<Feature>& feat) { return feat->descriptor_; });
+                 [](const Feature::Ptr& feat) { return feat->descriptor_; });
   voc->transform(descriptor_vec, bow_vec_, feat_vec_, 4);
 }
 
@@ -64,7 +62,7 @@ vector<int> Frame::searchFeatures(const Vec2& pt, const int radius,
                                   const int level_high) const {
   // FIXME Would it be better if we clamp this rather than throw an error?
   CHECK(level_low >= 0 && level_high >= level_low);
-  const int num_obs = this->NumObs();
+  const int num_obs = this->nObs();
   vector<int> feat_indices;
   feat_indices.reserve(num_obs);
   for (int i = 0; i < num_obs; ++i) {

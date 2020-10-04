@@ -1,6 +1,19 @@
 %YAML:1.0
-# Camera intrinsics.
-## Calibration matrix 
+
+# Data related:
+## Dataset path.
+dataset_path: data/dataset/KITTI/seq_00/
+## Image file name format.
+img_file_name_fmt: 06d
+## Image resize factor. A bigger one speeds up tracking.
+img_resize_factor: 1.0
+## Vocabulary file name.
+voc_file: data/vocabulary/orbvoc.dbow3
+## Timestamp file name.
+timestamp_file: ""  # KITTI dataset does not provide timestamps
+
+# Camera related:
+## Calibration parameters. 
 fx: 718.856
 fy: 718.856
 cx: 607.1928
@@ -10,31 +23,6 @@ k1: 0.0
 k2: 0.0
 p1: 0.0
 p2: 0.0
-## Frame per second (fps)
+
+# Frame per second (fps)
 fps: 10.0
-
-# Feature related parameters  
-## When tracking is good:
-desired_num_features: 100
-min_num_features: 60
-## When tracker is initialzing:
-min_num_features_init: 200
-min_num_matched_features: 160
-min_num_inlier_matches: 120
-
-# Matching parameters.
-distance_ratio_test_threshold: 0.8 # Above which the match will be rejected.
-matching_threshold: 50 # Above which the match will be rejected.
-
-# Files
-## Dataset path 
-dataset_path: data/dataset/KITTI/seq_00/
-image_file_name_format: %06d
-## Vocabulary file name
-vocabulary_file: data/vocabulary/orbvoc.dbow3
-## Timestamp file
-timestamp_file: ""  # KITTI dataset does not provide timestamps
-
-# Image resize factor. A bigger speeds up tracking.
-resize_factor: 1.0
-

@@ -76,7 +76,7 @@ void triangulateNewPoints() {
     vector<int> matches;
     const int n_matches =
         Matcher::searchForTriangulation(kf, curr_keyframe_, matches);
-    if (n_matches < Config::min_num_matches_tri()) continue;
+    if (n_matches < Config::tri_min_n_matches()) continue;
 
     // Iterate all matches;
     for (int i = 0, i_end = matches.size(); i < i_end; ++i) {
@@ -90,7 +90,7 @@ void triangulateNewPoints() {
       const double cos_parallax =
           bear_vec_1.dot(bear_vec_2) / (bear_vec_1.norm() * bear_vec_2.norm());
       if (cos_parallax <
-          std::cos(math_utils::degree2radian(Config::min_parallax_tri())))
+          std::cos(math_utils::degree2radian(Config::tri_min_parallax())))
         continue;
 
       // Triangulate new point.
@@ -111,8 +111,8 @@ void triangulateNewPoints() {
                    repr_err_2 = geometry::computeReprErr(point_2, pt_2, K_2);
       const double chi2_thresh = 5.991;  // Two-degree chi-square p-value.
       const int level_1 = feat_1->level_, level_2 = feat_2->level_;
-      if (repr_err_1 > Config::level_sigma2().at(level_1) * chi2_thresh ||
-          repr_err_2 > Config::level_sigma2().at(level_2) * chi2_thresh)
+      if (repr_err_1 > Config::scale_level_sigma2().at(level_1) * chi2_thresh ||
+          repr_err_2 > Config::scale_level_sigma2().at(level_2) * chi2_thresh)
         continue;
       // Test 6: scale consistency (i.e. the scale ratio and the distance ratio
       // should be in a close range).
@@ -169,7 +169,7 @@ void removeRedundantKfs() {
       if (n_obs >= n_obs_thresh) ++n_redundant_obs;
     }
 
-    if (n_redundant_obs >= Config::redun_point_factor() * n_points) {
+    if (n_redundant_obs >= Config::redun_factor() * n_points) {
       // TODO(bayes) Mark this keyframe to be deleted.
     }
   }

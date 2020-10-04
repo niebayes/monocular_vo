@@ -9,7 +9,7 @@ namespace mono_slam {
 
 KeyframeDataBase::KeyframeDataBase(sptr<Vocabulary> voc) : voc_(voc) {
   // Personally, only approximately 20% of ids would be used.
-  inv_files_.reserve(Config::approx_words_pct() * voc_.size());
+  inv_files_.reserve(Config::approx_n_words_pct() * voc_.size());
 }
 
 void KeyframeDataBase::add(Frame::Ptr keyframe) {

@@ -23,16 +23,14 @@ class Initializer {
   Frame::Ptr curr_frame_ = nullptr;  // Current frame.
 
   SE3 T_curr_ref_;  // Relative pose from reference frame to current frame.
-  //! points_ and inlier_matches_ are one-to-one correspondent.
+  //! points_ and triangulate_mask_ are one-to-one correspondent.
   vector<Vec3> points_;            // Triangulated points in world frame.
+  vector<pair<int, int>> inlier_matches_;  // Inlier matches.
   vector<bool> triangulate_mask_;  // Mark which inlier match produces good
                                    // triangulated point.
-  vector<pair<int, int>> inlier_matches_;  // Inlier matches.
 
  public:
-  Initializer(const int min_num_features_init,
-              const int min_num_matched_features,
-              const int min_num_inlier_matches);
+  Initializer();
 
   inline const Stage& stage() const { return stage_; }
 
@@ -56,12 +54,6 @@ class Initializer {
     curr_frame_.reset();
     inlier_matches_.clear();
   }
-
- private:
-  // Configuration parameters.
-  const int min_num_features_init_;
-  const int min_num_matched_features_;
-  const int min_num_inlier_matches_;
 };
 
 }  // namespace mono_slam

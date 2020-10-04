@@ -35,7 +35,7 @@ int Matcher::searchForInitialization(const Frame::Ptr& ref_frame,
     }
 
     // Check matching threshold and apply distance ratio test.
-    if (min_dist >= Config::matching_thresh_relax() ||
+    if (min_dist >= Config::match_thresh_relax() ||
         min_dist >= Config::dist_ratio_test_factor() * second_min_dist)
       continue;
     matches[idx_1] = best_idx_2;
@@ -68,9 +68,10 @@ int Matcher::searchByProjection(const std::set<Frame::Ptr>& local_co_kfs,
       // Search radius is enlarged at larger scale and also influenced by
       // viewing direction from the camera center of current frame.
       const int level = point->level_;
-      const int search_radius = Config::search_radius() *
-                                Config::search_factor(point->cos_view_dir_) *
-                                Config::scale_factors().at(level);
+      const int search_radius =
+          Config::search_radius() *
+          Config::search_view_dir_factor(point->cos_view_dir_) *
+          Config::scale_factors().at(level);
       const vector<int> feat_indices =
           curr_frame->searchFeatures(Vec2{point->repr_x_, point->repr_y_},
                                      search_radius, level - 1, level + 1);
@@ -100,7 +101,7 @@ int Matcher::searchByProjection(const std::set<Frame::Ptr>& local_co_kfs,
       }
 
       // Perform thresholding, distance ratio test, and scale consistency test,
-      if (min_dist >= Config::matching_thresh_relax() ||
+      if (min_dist >= Config::match_thresh_relax() ||
           min_dist >= Config::dist_ratio_test_factor() * second_min_dist ||
           best_level != second_best_level)
         continue;
@@ -165,7 +166,7 @@ int Matcher::searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
         }
 
         // Apply thresholding test and distance ratio test.
-        if (min_dist >= Config::matching_thresh_strict() ||
+        if (min_dist >= Config::match_thresh_strict() ||
             min_dist >= Config::dist_ratio_test_factor() * second_min_dist)
           continue;
         matches[idx_kf] = best_idx_f;
@@ -238,7 +239,7 @@ int searchForTriangulation(const Frame::Ptr& keyframe_1,
 
         // Apply thresholding test, distance ratio test and epipolar constraint
         // test.
-        if (min_dist >= Config::matching_thresh_strict() ||
+        if (min_dist >= Config::match_thresh_strict() ||
             min_dist >= Config::dist_ratio_test_factor() * second_min_dist)
           continue;
         const Mat33 F_2_1 =
@@ -248,9 +249,9 @@ int searchForTriangulation(const Frame::Ptr& keyframe_1,
                      dist_2 = geometry::pointToEpiLineDist(
                          feat_1->pt_, feat_2->pt_, F_2_1, false);
         const int chi2_thresh = 3.84;  // One degree chi-square p-value;
-        // TODO(bayes) Compute level_sigma2
-        if (dist_1 >= chi2_thresh * Config::level_sigma2()[feat_1->level_] ||
-            dist_2 >= chi2_thresh * Config::level_sigma2()[feat_2->level_])
+        const vector<double>& sigma2s = Config::scale_level_sigma2();
+        if (dist_1 >= chi2_thresh * sigma2s.at(feat_1->level_) ||
+            dist_2 >= chi2_thresh * sigma2s.at(feat_2->level_)
           continue;
         matches[idx_1] = best_idx_2;
         matched[best_idx_2] = true;

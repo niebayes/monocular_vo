@@ -47,7 +47,7 @@ T get_median(std::vector<T>& data_vec) {
 inline int predictLevel(const double dist) const {
   const double level =
       std::log(max_scale_invariance_ / dist) / std::log(Config::scale_factor());
-  return std::round(std::clamp(level, 0, Config::num_scale_levels()));
+  return std::round(std::clamp(level, 0, Config::scale_n_levels()));
 }
 
 }  // namespace math_utils

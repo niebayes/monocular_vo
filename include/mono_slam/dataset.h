@@ -11,8 +11,8 @@ class Dataset {
  public:
   using Ptr = uptr<Dataset>;
 
-  Dataset(const string& dataset_path, const string& image_file_name_fmt,
-          const double resize_factor);
+  Dataset(const string& dataset_path, const string& img_file_name_fmt,
+          const double img_resize_factor, const int img_start_idx);
 
   cv::Mat nextImage();
 
@@ -22,9 +22,9 @@ class Dataset {
   // Dataset path.
   const string dataset_path_;
   // Image file name format.
-  const string image_file_name_fmt_;
+  const string img_file_name_fmt_;
   // Image resize factor. A bigger one speeds up tracking.
-  const double resize_factor_;
+  const double img_resize_factor_;
 };
 
 }  // namespace mono_slam

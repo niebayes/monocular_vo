@@ -2,7 +2,11 @@
 
 namespace mono_slam {
 
-Tracking::Tracking() : state_(State::NOT_INITIALIZED_YET) {}
+Tracking::Tracking() : state_(State::NOT_INITIALIZED_YET) {
+  detector_ = cv::ORB::create(Config::max_n_feats());
+}
+
+Tracking::~Tracking() { delete cam_; }
 
 void Tracking::addImage(const cv::Mat& img) {
   // FIXME Would it be better if using raw pointer for camera?
@@ -63,9 +67,9 @@ bool Tracking::trackFromLastFrame() {
   // frame onto current frame and try matching them against features around
   // them).
   const int num_matches = Matcher::searchByProjection(last_frame_, curr_frame_);
-  if (num_matches < Config::min_num_matches()) return false;
+  if (num_matches < Config::min_n_matches()) return false;
   const int num_inlier_matches = Optimizer::optimizePose(curr_frame_);
-  if (num_inlier_matches < Config::min_num_inlier_matches()) return false;
+  if (num_inlier_matches < Config::min_n_inlier_matches()) return false;
   return true;
 }
 
@@ -73,9 +77,9 @@ bool Tracking::trackFromLocalMap() {
   updateLocalCovisibleKeyframes();
   const int num_matches =
       Matcher::searchByProjection(local_co_kfs_, curr_frame_);
-  if (num_matches < Config::min_num_matches()) return false;
+  if (num_matches < Config::min_n_matches()) return false;
   const int num_inlier_matches = Optimizer::optimizePose(curr_frame_);
-  if (num_inlier_matches < Config::min_num_inlier_matches()) return false;
+  if (num_inlier_matches < Config::min_n_inlier_matches()) return false;
   return true;
 }
 
@@ -124,7 +128,7 @@ void Tracking::updateLocalCoKfs() {
 
   // Only retain keyframes with the shared number of map points exceed this
   // threshold.
-  const int min_weight_thresh = Config::min_weight_factor() * max_weight;
+  const int min_weight_thresh = Config::weight_factor() * max_weight;
   std::remove_if(local_co_kfs.begin(), local_co_kfs.end(),
                  [=, &co_kf_weights](const Frame::Ptr& kf) {
                    return co_kf_weights[kf] < min_weight_thresh;
@@ -135,9 +139,9 @@ bool Tracking::needNewKf() {
   // TODO(bayes) Use a more complicated strategy.
   const int n_kfs = map_->nKfs();
   // Cannot exceed maximal number of keyframes in map at one moment.
-  if (n_kfs > Config::max_num_kfs()) return false;
+  if (n_kfs > Config::max_n_kfs_in_map()) return false;
   // Frequently creating new keyframe is forbidden.
-  if (curr_frame_->id_ < last_kf_id_ + Config::fps()) return false;
+  if (curr_frame_->id_ < last_kf_id_ + Config::new_kf_interval()) return false;
   // Local mapper cannot be busy.
   if (!local_mapper_->isIdle()) return false;
   return true;
@@ -155,14 +159,14 @@ bool Tracking::relocalization() {
     // kf[i] = curr_frame_[matches[i]];
     vector<int> matches;
     const int num_matches = Matcher::searchByBoW(kf, curr_frame_, matches);
-    if (num_matches <= Config::min_num_matches_reloc()) continue;
+    if (num_matches <= Config::reloc_min_n_matches()) continue;
     SE3 relative_pose;  // Relative pose from keyframe to current frame.
     if (!GeometrySolver::P3PRansac(kf, curr_frame_, matches, relative_pose))
       continue;
     curr_frame_->setPose(relative_pose);
     // Utilize pose graph optimization to count number of inliers.
     const int num_inlier_matches = Optimizer::optimizePose(curr_frame_);
-    if (num_inlier_matches < Config::min_num_inlier_matches_reloc()) {
+    if (num_inlier_matches < Config::reloc_min_n_inlier_matches()) {
       reloc_success = true;
       break;  // Get out from loop once a acceptable candidate is found.
     }
@@ -192,7 +196,7 @@ void Tracking::setInitializer(uptr<Initializer> initializer) {
   initializer_ = std::move(initializer);
 }
 void Tracking::setVocabulary(const sptr<Vocabulary>& voc) { voc_ = voc; }
-void Tracking::setCamera(Camera::Ptr cam) { cam_ = std::move(cam); }
+void Tracking::setCamera(Camera* cam) { cam_ = cam; }
 void Tracking::setFeatureDetector(
     const cv::Ptr<cv::FeatureDetector>& detector) {
   detector_ = detector;

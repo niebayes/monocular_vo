@@ -23,7 +23,7 @@ class Dataset;
 class Camera;
 class Initializer;
 
-class System {
+class System : public std::enable_shared_from_this<System> {
  public:
   using Ptr = sptr<System>;
 

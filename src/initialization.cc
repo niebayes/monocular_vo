@@ -1,7 +1,6 @@
-#include "mono_slam/front_end_map_initialization.h"
-
 #include "mono_slam/frame.h"
-#include "mono_slam/front_end_tracking.h"
+#include "mono_slam/initialization.h"
+#include "mono_slam/tracking.h"
 #include "mono_slam/g2o_optimizer.h"
 #include "mono_slam/geometry_solver.h"
 #include "mono_slam/map.h"
@@ -10,19 +9,11 @@
 
 namespace mono_slam {
 
-Initializer::Initializer(const int min_num_features_init,
-                         const int min_num_matched_features,
-                         const int min_num_inlier_matches)
-    : stage_(Stage::NO_FRAME_YET),
-      min_num_features_init_(min_num_features_init),
-      min_num_matched_features_(min_num_matched_features),
-      min_num_inlier_matches_(min_num_inlier_matches) {}
-
-void Initializer::setTracker(sptr<Tracking> tracker) { tracker_ = tracker; }
+Initializer::Initializer() : stage_(Stage::NO_FRAME_YET), {}
 
 void Initializer::addReferenceFrame(Frame::Ptr ref_frame) {
   reset();
-  if (ref_frame->nObs() < min_num_features_init_) return;
+  if (ref_frame->nObs() < Config::init_min_n_feats()) return;
   ref_frame_ = ref_frame;
   stage_ = Stage::HAS_REFERENCE_FRAME;
 }
@@ -32,14 +23,14 @@ void Initializer::addCurrentFrame(Frame::Ptr curr_frame) {
     LOG(ERROR) << "No reference frame yet.";
     return;
   }
-  if (curr_frame->nObs() < min_num_features_init_) return;
+  if (curr_frame->nObs() < Config::init_min_n_feats()) return;
   curr_frame_ = curr_frame;
   // Matches between reference frame and current frame such that:
   // last_frame_[i] = curr_frame_[matches[i]].
   vector<int> matches;
-  const int num_matches =
+  const int n_matches =
       Matcher::searchForInitialization(ref_frame_, curr_frame_, matches);
-  if (num_matches < min_num_matched_features_) return;
+  if (n_matches < Config::init_min_n_matches()) return;
   if (initialize(matches) && buildInitMap()) {
     // If all criteria are satisfied, initialization is successful.
     stage_ = Stage::SUCCESS;
@@ -51,7 +42,8 @@ bool Initializer::initialize(const vector<int>& matches) {
   Mat33 F;
   GeometrySolver::findFundamentalRansac(ref_frame_, curr_frame_, matches, F,
                                         inlier_matches_);
-  if (inlier_matches_.size() < min_num_inlier_matches_) return false;
+  if (inlier_matches_.size() < Config::init_min_n_inlier_matches())
+    return false;
   // Find relative pose from ref_frame_ to curr_frame_.
   if (!GeometrySolver::findRelativePoseRansac(ref_frame_, curr_frame_, F,
                                               inlier_matches_, T_curr_ref_,
@@ -74,8 +66,8 @@ bool Initializer::buildInitMap() {
   // Insert initial map points.
   Frame::Features feats_1 = ref_frame_->feats_;
   Frame::Features feats_2 = curr_frame_->feats_;
-  const int num_inlier_matches = inlier_matches_.size();
-  for (int i = 0; i < num_inlier_matches; ++i) {
+  const int n_inlier_matches = inlier_matches_.size();
+  for (int i = 0; i < n_inlier_matches; ++i) {
     if (!triangulate_mask_[i]) continue;
     // Create new map point.
     MapPoint::Ptr point = make_shared<MapPoint>(points_[i]);
@@ -88,27 +80,26 @@ bool Initializer::buildInitMap() {
     feat_1->point_ = point;
     feat_2->point_ = point;
     // Update map point characteristics.
-    point->updateBestDescriptor();
-    point->updateMeanViewingDirection();
-    // Add map point to map.
-    tracker_->map_->insertMapPoint(point);
+    point->updateBestFeature();
+    point->updateMedianViewDirAndScale();
   }
 
-  // Update covisibility graph.
-  ref_frame_->updateConnections();
-  curr_frame_->updateConnections();
+  // Update covisible information.
+  ref_frame_->updateCoInfo();
+  curr_frame_->updateCoInfo();
 
   // Global bundle adjustment.
   const list<Frame::Ptr>& keyframes = tracker_->map_->getAllKeyframes();
   const list<MapPoint::Ptr>& points = tracker_->map_->getAllMapPoints();
   Optimizer::globalBA(keyframes, points, tracker_->map_);
 
+  // FIXME What is the rescaling principle under the hood?
   // Rescale the map such that the mean scene depth is equal to 1.0
   const double scene_median_depth = ref_frame_->computeSceneMedianDepth();
   if (scene_median_depth < 0) return false;
-  const double scale_factor = 1.0 / scene_median_depth;
+  const double scale_factor = 1. / scene_median_depth;
   // Scale the baseline between ref_frame_ and curr_frame_.
-  SE3 T_c_w_curr = curr_frame_->Pose();
+  SE3 T_c_w_curr = curr_frame_->pose();
   T_c_w_curr.translation() =
       -T_c_w_curr.rotationMatrix() *
       (ref_frame_->cam_->pos() +
@@ -119,5 +110,7 @@ bool Initializer::buildInitMap() {
 
   return true;
 }
+
+void Initializer::setTracker(sptr<Tracking> tracker) { tracker_ = tracker; }
 
 }  // namespace mono_slam

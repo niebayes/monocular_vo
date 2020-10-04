@@ -13,7 +13,7 @@ class Camera;
 struct Feature;
 class MapPoint;
 
-class Frame {
+class Frame : public std::enable_shared_from_this<Frame> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Frame>;
@@ -25,7 +25,7 @@ class Frame {
   const int id_;                     // Unique frame identity.
   bool is_keyframe_;                 // Is this frame a keyframe?
   Features feats_;                   // Features extracted in this frame.
-  const Camera::Ptr cam_ = nullptr;  // Linked camera.
+  Camera* cam_ = nullptr;  // Linked camera.
   DBoW3::BowVector bow_vec_;         // Bag of words vector.
   DBoW3::FeatureVector feat_vec_;    // Feature vector.
 

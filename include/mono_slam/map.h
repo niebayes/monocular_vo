@@ -31,7 +31,7 @@ class KeyframeDataBase {
   // Clear and reset inverted file indices.
   inline void clear() {
     inv_files_.clear();
-    inv_files_.reserve(Config::approx_words_pct() * voc_.size());
+    inv_files_.reserve(Config::approx_n_words_pct() * voc_.size());
   }
 
  private:
@@ -44,6 +44,8 @@ class KeyframeDataBase {
   std::mutex mutex_;
 };
 
+class Feature;
+
 class Map {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -53,6 +55,8 @@ class Map {
 
   void insertKeyframe(Frame::Ptr keyframe);
 
+  void removeObservation(const Frame::Ptr& keyframe, const Feature::Ptr& feat);
+
   void eraseKfById(const int id);
 
   inline int nKfs() const { return static_cast<int>(keyframes_.size()); }
@@ -61,12 +65,6 @@ class Map {
   inline const list<Frame::Ptr>& getAllKeyframes() {
     u_lock lock(mutex_);
     return keyframes_;
-  }
-
-  // FIXME Candidate points?
-  inline const list<MapPoint::Ptr>& getAllMapPoints() {
-    u_lock lock(mutex_);
-    return points_;
   }
 
   inline void clear() {
@@ -82,8 +80,6 @@ class Map {
 
  private:
   list<Frame::Ptr> keyframes_;  // Maintained keyframes.
-  // FIXME Do we really need to maintain map points?
-  list<MapPoint::Ptr> points_;  // Maintained map points.
 
   int max_keyframe_id_;  // Maximum id of keyframes inserted so far. Used for
                          // checking for duplication as new keyframe is comming.

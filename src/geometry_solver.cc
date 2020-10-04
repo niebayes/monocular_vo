@@ -249,7 +249,7 @@ bool P3PRansac(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
   // For the sake of efficiency, only few iterations of P3P are performed. The
   // qualify of the pose estimate will be further refined with pose graph
   // optimization.
-  const int n_iters = Config::n_iters_p3p_reloc();
+  const int n_iters = Config::reloc_n_iters_p3p();
   bool has_found =
       false;  // At least one iteration of P3P solving is successful.
   SE3 best_T_c_w;
