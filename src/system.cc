@@ -30,7 +30,7 @@ bool System::init() {
       config["img_resize_factor"], config["img_start_idx"]);
 
   // Load vocabulary.
-  sptr<Vocabulary> voc = make_shared<Vocabulary>(config["voc_file"]);
+  sptr<Vocabulary> voc = make_shared<Vocabulary>((string)config["voc_file"]);
   
   // Load timestamps.
   const string& timestamp_file = config["timestamp_file"];

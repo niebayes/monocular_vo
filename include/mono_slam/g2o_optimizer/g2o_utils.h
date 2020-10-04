@@ -3,7 +3,12 @@
 
 #include "mono_slam/common_include.h"
 #include "mono_slam/g2o_optimizer/g2o_types.h"
+#include "mono_slam/camera.h"
+#include "mono_slam/frame.h"
 
+using namespace g2o_types;
+
+namespace mono_slam {
 namespace g2o_utils {
 
 static void setupG2oOptimizer(const sptr<g2o::SparseOptimizer>& optimizer,
@@ -18,7 +23,7 @@ static void setupG2oOptimizer(const sptr<g2o::SparseOptimizer>& optimizer,
   auto cam_params = make_unique<g2o::CameraParameters>(f, Vec2{cx, cy}, b);
   cam_params->setId(CAMERA_PARAMETER_ID);
   // FIXME Why do this?
-  if (!optimizer->addParameter(cam_params)) {
+  if (!optimizer->addParameter(cam_params.get())) {
     assert(false);
   }
 }
@@ -99,5 +104,6 @@ static inline uptr<EdgePoseOnly> createG2oEdgePoseOnly(
 }
 
 }  // namespace g2o_utils
+}  // namespace mono_slam
 
 #endif  // MONO_SLAM_G2O_OPTIMIZER_UTILS_H_

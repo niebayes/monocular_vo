@@ -1,5 +1,5 @@
-#ifndef MONO_SLAM_MATH_UTILS_H_
-#define MONO_SLAM_MATH_UTILS_H_
+#ifndef MONO_SLAM_UTILS_MATH_UTILS_H_
+#define MONO_SLAM_UTILS_MATH_UTILS_H_
 
 #include <algorithm>
 #include <chrono>
@@ -59,4 +59,4 @@ inline int predictLevel(const double dist) {
 
 }  // namespace math_utils
 
-#endif  // MONO_SLAM_MATH_UTILS_H_
+#endif  // MONO_SLAM_UTILS_MATH_UTILS_H_

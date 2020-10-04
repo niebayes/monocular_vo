@@ -1,6 +1,7 @@
 #include "mono_slam/matcher.h"
 
 #include "mono_slam/feature.h"
+#include "mono_slam/config.h"
 
 namespace mono_slam {
 
@@ -47,7 +48,7 @@ int Matcher::searchForInitialization(const Frame::Ptr& ref_frame,
 
 int Matcher::searchByProjection(const Frame::Ptr& last_frame,
                                 const Frame::Ptr& curr_frame) {
-  return Matcher::searchByProjection(std::set{last_frame}, curr_frame);
+  return Matcher::searchByProjection(unordered_set<Frame::Ptr>{last_frame}, curr_frame);
 }
 
 int Matcher::searchByProjection(const unordered_set<Frame::Ptr>& local_co_kfs,
@@ -120,14 +121,14 @@ int Matcher::searchByProjection(const unordered_set<Frame::Ptr>& local_co_kfs,
 
 int Matcher::searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
                          vector<int>& matches) {
-  const vector<Feature::Ptr&> feats_kf = keyframe->feats_;
-  const vector<Feature::Ptr&> feats_f = frame->feats_;
+  const vector<Feature::Ptr>& feats_kf = keyframe->feats_;
+  const vector<Feature::Ptr>& feats_f = frame->feats_;
   const int n_feats_kf = feats_kf.size(), n_feats_f = feats_f.size();
   matches.assign(n_feats_kf, -1);  // -1 denotes no matching.
   // Record as well reverse matches to preclude repeat matching.
   vector<bool> matched(n_feats_f, false);
 
-  int num_matches = 0;
+  int n_matches = 0;
   // Searching feature matches by utilizing feature vectors formed by vocabulary
   // tree.
   auto it_kf = keyframe->feat_vec_.cbegin(),
@@ -155,7 +156,7 @@ int Matcher::searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
         int best_idx_f = 0;
         for (const int idx_f : indices_f) {
           if (matched[idx_f]) continue;  // Avoid repeat matching.
-          const int dist = matched_utils::computeDescDist(
+          const int dist = matcher_utils::computeDescDist(
               feats_kf[idx_kf]->descriptor_, feats_f[idx_f]->descriptor_);
           if (dist < min_dist) {
             second_min_dist = dist;
@@ -188,8 +189,8 @@ int Matcher::searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
 
 int searchForTriangulation(const Frame::Ptr& keyframe_1,
                            const Frame::Ptr& keyframe_2, vector<int>& matches) {
-  const vector<Feature::Ptr&> feats_1 = keyframe_1->feats_;
-  const vector<Feature::Ptr&> feats_2 = keyframe_2->feats_;
+  const vector<Feature::Ptr>& feats_1 = keyframe_1->feats_;
+  const vector<Feature::Ptr>& feats_2 = keyframe_2->feats_;
   const int n_feats_1 = feats_1.size(), n_feats_2 = feats_2.size();
   matches.assign(n_feats_1, -1);  // -1 denotes no matching.
   // Record as well reverse matches to preclude repeat matching.

@@ -134,10 +134,9 @@ void Tracking::updateLocalCoKfs() {
   // Only retain keyframes with the shared number of map points exceed this
   // threshold.
   const int min_weight_thresh = Config::weight_factor() * max_weight;
-  std::remove_if(local_co_kfs_.begin(), local_co_kfs_.end(),
-                 [&](Frame::Ptr& kf) {
-                   return co_kf_weights[kf] < min_weight_thresh;
-                 });
+  auto it_ = local_co_kfs_.begin();
+  for (; it_ != local_co_kfs_.end(); ++it_)
+    if (co_kf_weights[*it_] < min_weight_thresh) local_co_kfs_.erase(it_);
 }
 
 bool Tracking::needNewKf() {

@@ -18,7 +18,7 @@ void globalBA(const Map::Ptr& map, const int n_iters = 20) {
   g2o::SparseOptimizer optimizer;
   g2o_utils::setupG2oOptimizer(&optimizer);
 
-  const list<Frame::Ptr>& kfs = map->GetAllkeyframes();
+  const list<Frame::Ptr>& kfs = map->getAllkeyframes();
   // Chi-square test threshold used as the width of the robust huber kernel and
   // rejection of outliers in post-processing.
   const double chi2_thresh = 5.991;

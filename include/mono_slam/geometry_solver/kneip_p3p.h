@@ -132,6 +132,6 @@ public:
 
 #include "mono_slam/geometry_solver/kneip_p3p.hpp"
 
-#endif  // UZH_RANSAC_KNEIP_P3P_H_
-
 }  // namespace geometry
+
+#endif  // UZH_RANSAC_KNEIP_P3P_H_

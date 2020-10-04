@@ -68,7 +68,7 @@ class MapPoint {
   }
 
   // Add an observation.
-  void addObservation(const sptr<Feature>& feat);
+  void addObservation(sptr<Feature> feat);
 
   // Erase an observation.
   void eraseObservation(const sptr<Feature>& feat);
@@ -85,12 +85,7 @@ class MapPoint {
   // Check if this map point is observed by the given frame.
   // FIXME Incomplete type & forward declaration error if put definition here.
   // FIXME Does inline still work if definition is not here?
-  inline bool isObservedBy(const sptr<Frame>& frame) const {
-    u_lock lock(mutex_);
-    for (const sptr<Feature>& feat : observations_)
-      if (feat->frame_.lock() == frame) return true;
-    return false;
-  }
+  bool isObservedBy(const sptr<Frame>& frame) const;
 
   // TODO(bayes) Implement delete funtions like svo.
 

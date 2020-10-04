@@ -1,31 +1,30 @@
 #include "mono_slam/map_point.h"
+#include "mono_slam/frame.h"
+#include "mono_slam/feature.h"
+#include "mono_slam/utils/math_utils.h"
+#include "mono_slam/matcher.h"
 
 namespace mono_slam {
 
-MapPoint::MapPoint(const Vec3& pos)
-    : id_(point_cnt_++), pos_(pos), is_outlier_(false) {}
+MapPoint::MapPoint(const Vec3& pos) : id_(point_cnt_++), pos_(pos) {}
 
 // TODO(bayes) Compute mean_view_dirs_.
 MapPoint::MapPoint(const Vec3& pos, const sptr<Feature>& feat)
-    : id_(point_cnt_++),
-      pos_(pos),
-      best_feat_(feat),
-      median_view_dir_(Vec3{}),
-      is_outlier_(false) {
+    : id_(point_cnt_++), pos_(pos), best_feat_(feat) {
   observations_.push_back(feat);
 }
 
 void MapPoint::setPos(const Vec3& pos) {
-  u_lock take(ownership_);
+  u_lock lock(mutex_);
   pos_ = pos;
 }
 
-void MapPoint::addObservation(Feature::Ptr feat) {
+void MapPoint::addObservation(sptr<Feature> feat) {
   u_lock lock(mutex_);
   observations_.push_back(feat);
 }
 
-void MapPoint::eraseObservation(const Feature::Ptr& feat) {
+void MapPoint::eraseObservation(const sptr<Feature>& feat) {
   u_lock lock(mutex_);
   for (auto it = observations_.begin(), it_end = observations_.end();
        it != it_end; ++it) {
@@ -42,9 +41,8 @@ void MapPoint::updateBestFeature() {
   // Container of all available features.
   vector<sptr<Feature>> feats;
   feats.reserve(this->nObs());
-  for (const auto& feat_ : observations_) {
-    if (feat_.expired()) continue;
-    feats.push_back(feat_.lock());
+  for (const sptr<Feature>& feat : observations_) {
+    feats.push_back(feat);
   }
 
   const int num_feats = feats.size();
@@ -54,7 +52,7 @@ void MapPoint::updateBestFeature() {
     dists[i][i] = 0;
     // Computing upper triangular suffices.
     for (int j = i + 1; j < num_feats; ++j) {  // col j.
-      const int dist = matcher_utils::computeDescriptorDistance(
+      const int dist = matcher_utils::computeDescDist(
           feats[i]->descriptor_, feats[j]->descriptor_);
       dists[i][j] = dist;
       dists[j][i] = dist;
@@ -80,9 +78,7 @@ void MapPoint::updateMedianViewDirAndScale() {
   u_lock lock(mutex_);
   vector<Vec3> view_dirs;  // Container for viewing directions.
   vector<int> levels;      // Container for viewing scales (aka. levels).
-  for (const auto& feat_ : observations_) {
-    if (feat_.expired()) continue;
-    const auto& feat = feat_.lock();
+  for (const sptr<Feature>& feat : observations_) {
     if (feat->frame_.expired()) continue;
     const auto& frame = feat->frame_.lock();
     const Vec3 unit_bear_vec = frame->cam_->getUnitBearVec(this->pos());
@@ -98,10 +94,8 @@ void MapPoint::updateMedianViewDirAndScale() {
 bool MapPoint::isObservedBy(const sptr<Frame>& keyframe) const {
   CHECK_EQ(keyframe->isKeyframe(), true);
   u_lock lock(mutex_);
-  for (auto it = observations_.begin(), it_end = observations_.end();
-       it != it_end; ++it) {
-    if ((*it)->frame_.lock() == keyframe) return true;
-  }
+  for (const sptr<Feature>& feat : observations_)
+    if (feat->frame_.lock() == keyframe) return true;
   return false;
 }
 

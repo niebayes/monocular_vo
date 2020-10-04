@@ -238,7 +238,7 @@ bool P3PRansac(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
   // used in P3P.
   vector<MapPoint> points;  // Matched map points fetched from keyframe.
   points.reserve(num_valid_matches);
-  vector<Frame::Ptr> feats_f;  // Matched features in frame.
+  vector<Feature::Ptr> feats_f;  // Matched features in frame.
   feats_f.reserve(num_valid_matches);
   for (int i = 0; i < num_valid_matches; ++i) {
     points.push_back(
@@ -256,13 +256,13 @@ bool P3PRansac(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
   int best_score = 0;
   for (int iter = 0; iter < n_iters; ++iter) {
     // Random sampling data for (Kneip) P3P.
-    set<int> hypo_set;  // Hypothetical set to be populated.
+    unordered_set<int> hypo_set;  // Hypothetical set to be populated.
     while (hypo_set.size() < 3)
-      hypo.insert(math_utils::uniform_random_int(0, num_valid_matches - 1));
+      hypo_set.insert(math_utils::uniform_random_int(0, num_valid_matches - 1));
     Mat33 feature_vectors, world_points;
     int c = 0;
     for (int i : hypo_set) {
-      feature_vectors.col(c) = frame->cam_->pixel2bear(feats_f[i]));
+      feature_vectors.col(c) = frame->cam_->pixel2bear(feats_f[i]->pt_));
       world_points.col(c) = points[i].pos();
       ++c;
     }
@@ -306,11 +306,11 @@ int evaluatePosesScore(const vector<SE3>& poses,
       std::transform(points.cbegin(), points.cend(),
                      std::back_inserter(points_c),
                      [&pose](const MapPoint::Ptr& point_w) {
-                       return pose * point_w.pos();
+                       return pose * point_w->pos();
                      });
       // FIXME Distortion is needed to be considered here?
       const double repr_err2 =
-          geometry::computeReprErr(points_c[i], feats[i].pt_, K);
+          geometry::computeReprErr(points_c[i], feats[i]->pt_, K);
       if (repr_err2 < repr_tolerance2) ++num_inliers;
     }
     if (num_inliers > max_num_inliers) {
