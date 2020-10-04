@@ -97,6 +97,10 @@ class Frame {
   // than min_n_obs frames).
   int computeTrackedPoints(const int min_n_obs) const;
 
+  // FIXME Personally, this method should be in map.
+  // Erase the links between this frame and other stuff.
+  void erase();
+
  private:
   // Image bounds.
   static double x_min_;

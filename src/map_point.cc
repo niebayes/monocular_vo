@@ -20,18 +20,19 @@ void MapPoint::setPos(const Vec3& pos) {
   pos_ = pos;
 }
 
-void MapPoint::addObservation(const sptr<Feature>& feat) {
-  u_lock take(ownership_);
+void MapPoint::addObservation(Feature::Ptr feat) {
+  u_lock lock(mutex_);
   observations_.push_back(feat);
 }
 
-void MapPoint::eraseObservation(sptr<Feature>& feat) {
-  u_lock take(ownership_);
+void MapPoint::eraseObservation(const Feature::Ptr& feat) {
+  u_lock lock(mutex_);
   for (auto it = observations_.begin(), it_end = observations_.end();
        it != it_end; ++it) {
-    if (it->lock() == feat) {
+    if (*it == feat) {
       observations_.erase(it);
       feat->point_.reset();
+      break;  // FIXME Should we break out immediately?
     }
   }
 }
@@ -99,8 +100,7 @@ bool MapPoint::isObservedBy(const sptr<Frame>& keyframe) const {
   u_lock lock(mutex_);
   for (auto it = observations_.begin(), it_end = observations_.end();
        it != it_end; ++it) {
-    // FIXME Any good way to polish the codes?
-    if (it->lock()->frame_.lock() == keyframe) return true;
+    if ((*it)->frame_.lock() == keyframe) return true;
   }
   return false;
 }

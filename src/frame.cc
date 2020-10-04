@@ -87,7 +87,7 @@ void Frame::addConnection(Frame::Ptr& keyframe, const int weight) {
   if (need_update) updateCoKfsAndWeights();
 }
 
-void Frame::deleteConnection(const Frame::Ptr& keyframe, const int weight) {
+void Frame::deleteConnection(const Frame::Ptr& keyframe) {
   bool need_update = false;
   if (co_kf_weights_.count(keyframe)) {
     co_kf_weights_.erase(keyframe);
@@ -190,6 +190,25 @@ int Frame::computeTrackedPoints(const int min_n_obs = 0) const {
     ++n_tracked_points;
   }
   return n_tracked_points;
+}
+
+void Frame::erase() {
+  if (id_ == 0) return;  // The first frame is the datum which cannot be erased.
+
+  // Erase covisibility connections.
+  auto it = co_kf_weights.cbegin(), it_end = co_kf_weights.cend();
+  for (; it != it_end; ++it) it->first->deleteConnection(this);
+
+  // Erase related observations.
+  for (const Feature::Ptr& feat : feats_) {
+    const MapPoint::Ptr& point = feat_utils::getPoint(feat);
+    if (!point) continue;
+    point->eraseObservations(feat);
+  }
+
+  // Erase links with map.
+  // mpMap->EraseKeyFrame(this);
+  // mpKeyFrameDB->erase(this); 
 }
 
 namespace frame_utils {

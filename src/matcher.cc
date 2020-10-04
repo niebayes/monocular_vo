@@ -7,12 +7,12 @@ namespace mono_slam {
 int Matcher::searchForInitialization(const Frame::Ptr& ref_frame,
                                      const Frame::Ptr& curr_frame,
                                      vector<int>& matches) {
-  const int num_obs_1 = ref_frame->nObs(), num_obs_2 = curr_frame->nObs();
-  matches.assign(num_obs_1, -1);
-  vector<int> matches_reverse(num_obs_2, -1);
+  const int n_obs_1 = ref_frame->nObs(), n_obs_2 = curr_frame->nObs();
+  matches.assign(n_obs_1, -1);
+  vector<bool> matched(n_obs_2, false);
 
-  int num_matches = 0;
-  for (int idx_1 = 0; idx_1 < num_obs_1; ++idx_1) {
+  int n_matches = 0;
+  for (int idx_1 = 0; idx_1 < n_obs_1; ++idx_1) {
     const Feature::Ptr& feat_1 = ref_frame->feats_[idx_1];
     const int level = feat_1->level_;
     if (level > 0) continue;  // Only consider the finest level.
@@ -20,15 +20,16 @@ int Matcher::searchForInitialization(const Frame::Ptr& ref_frame,
         curr_frame->searchFeatures(feat_1->pt_, 100, level, level);
     if (feat_indices_2.empty()) continue;
 
-    int min_dist = 256, second_min_dist = 256, best_match_idx_2 = -1;
+    int min_dist = 256, second_min_dist = 256, best_idx_2 = 0;
     for (int idx_2 : feat_indices_2) {
+      if (matched[idx_2]) continue;  // Avoid repeat matching.
       const Feature::Ptr& feat_2 = curr_frame->feats_[idx_2];
-      const int dist = matcher_utils::computeDescriptorDistance(
-          feat_1->descriptor_, feat_2->descriptor_);
+      const int dist = matcher_utils::computeDescDist(feat_1->descriptor_,
+                                                      feat_2->descriptor_);
       if (dist < min_dist) {
         second_min_dist = min_dist;
         min_dist = dist;
-        best_match_idx_2 = idx_2;
+        best_idx_2 = idx_2;
       } else if (dist < second_min_dist)
         second_min_dist = dist;
     }
@@ -37,17 +38,11 @@ int Matcher::searchForInitialization(const Frame::Ptr& ref_frame,
     if (min_dist >= Config::matching_thresh_relax() ||
         min_dist >= Config::dist_ratio_test_factor() * second_min_dist)
       continue;
-    // Filter out duplicate matches. This further ensures matching quality.
-    if (matches_reverse[best_match_idx_2] != -1) {
-      matches[matches_reverse[best_match_idx_2]] = -1;
-      --num_matches;
-    }
-    // Update matches.
-    matches[idx_1] = best_match_idx_2;
-    matches_reverse[best_match_idx_2] = idx_1;
-    ++num_matches;
+    matches[idx_1] = best_idx_2;
+    matched[best_idx_2] = true;
+    ++n_matches;
   }
-  return num_matches;
+  return n_matches;
 }
 
 int Matcher::searchByProjection(const Frame::Ptr& last_frame,
@@ -58,19 +53,14 @@ int Matcher::searchByProjection(const Frame::Ptr& last_frame,
 int Matcher::searchByProjection(const std::set<Frame::Ptr>& local_co_kfs,
                                 const Frame::Ptr& curr_frame) {
   if (local_co_kfs.empty()) return 0;
-  int num_matches = 0;
+  int n_matches = 0;
 
   // Iterate each keyframe->feature->map_point to find best match between the
   // map_point and features in curr_frame.
-  for (const auto& keyframe : local_co_kfs) {
-    for (const auto& feat_ : keyframe->feats_) {
-      if (feat_.expired()) continue;
-      const auto& feat = feat_.lock();
-      if (feat->point_.expire()) continue;
-      const auto& point = feat->point_.lock();
-      if (point->curr_tracked_frame_id_ == curr_frame->id_ ||
-          point->to_be_deleted_)
-        continue;
+  for (const Frame::Ptr& kf : local_co_kfs) {
+    for (const Feature::Ptr& feat : kf->feats_) {
+      const MapPoint::Ptr& point = feat_utils::getPoint(feat);
+      if (!point || point->curr_tracked_frame_id_ == curr_frame->id_) continue;
       point->curr_tracked_frame_id_ = curr_frame->id_;
       if (!curr_frame->isObservable(point)) continue;
 
@@ -92,12 +82,11 @@ int Matcher::searchByProjection(const std::set<Frame::Ptr>& local_co_kfs,
       int best_level = 0, second_best_level = 0;
       int best_idx = 0;
       for (int idx : feat_indices) {
-        // FIXME Should I always check expired for weak_ptr before lock?
-        const auto& feat_i = curr_frame->feats_.at(idx).lock();
+        const Feature::Ptr& feat_i = curr_frame->feats_[idx];
         // Only consider unmatched features.
         if (!feat_i->point_.expired()) continue;
         const int dist = matcher_utils::computeDescDist(
-            point->best_feat_.lock()->descriptor_, feat_i->descriptor_);
+            point->best_feat_->descriptor_, feat_i->descriptor_);
         if (dist < min_dist) {
           second_min_dist = min_dist;
           min_dist = dist;
@@ -118,21 +107,24 @@ int Matcher::searchByProjection(const std::set<Frame::Ptr>& local_co_kfs,
 
       // Update linked map point.
       // FIXME Does weak_ptr incurs issues here?
-      curr_frame->feats_.at(best_idx).lock()->point_ = point;
-      ++num_matches;
+      //! Currently the point is associated with the feature and the frame but
+      //! the observation information of the point is not updated yet. (It will
+      //! be updated by the local mapper).
+      curr_frame->feats_[best_idx]->point_ = point;
+      ++n_matches;
     }
   }
-  return num_matches;
+  return n_matches;
 }
 
 int Matcher::searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
                          vector<int>& matches) {
   const vector<Feature::Ptr&> feats_kf = keyframe->feats_;
   const vector<Feature::Ptr&> feats_f = frame->feats_;
-  const int num_feats_kf = feats_kf.size(), num_feats_f = feats_f.size();
-  matches.assign(num_feats_kf, -1);  // -1 denotes no matching.
+  const int n_feats_kf = feats_kf.size(), n_feats_f = feats_f.size();
+  matches.assign(n_feats_kf, -1);  // -1 denotes no matching.
   // Record as well reverse matches to preclude repeat matching.
-  vector<int> matches_reverse(num_feats_f, -1);
+  vector<bool> matched(n_feats_f, false);
 
   int num_matches = 0;
   // Searching feature matches by utilizing feature vectors formed by vocabulary
@@ -161,7 +153,7 @@ int Matcher::searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
         int min_dist = 256, second_min_dist = 256;
         int best_idx_f = 0;
         for (const int idx_f : indices_f) {
-          if (matches_reverse[idx_f] != -1) continue;  // Avoid repeat matching.
+          if (matched[idx_f]) continue;  // Avoid repeat matching.
           const int dist = matched_utils::computeDescDist(
               feats_kf[idx_kf]->descriptor_, feats_f[idx_f]->descriptor_);
           if (dist < min_dist) {
@@ -173,12 +165,12 @@ int Matcher::searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
         }
 
         // Apply thresholding test and distance ratio test.
-        if (min_dist >= Config::matching_thresh_relax() ||
+        if (min_dist >= Config::matching_thresh_strict() ||
             min_dist >= Config::dist_ratio_test_factor() * second_min_dist)
           continue;
         matches[idx_kf] = best_idx_f;
-        matches_reverse[best_idx_f] = idx_kf;
-        ++num_matches;
+        matched[best_idx_f] = true;
+        ++n_matches;
       }
       ++it_kf;
       ++it_f;
@@ -190,13 +182,98 @@ int Matcher::searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
       it_f = keyframe->feat_vec_.lower_bound(it_kf->first);
     }
   }
-  return num_matches;
+  return n_matches;
 }
+
+int searchForTriangulation(const Frame::Ptr& keyframe_1,
+                           const Frame::Ptr& keyframe_2, vector<int>& matches) {
+  const vector<Feature::Ptr&> feats_1 = keyframe_1->feats_;
+  const vector<Feature::Ptr&> feats_2 = keyframe_2->feats_;
+  const int n_feats_1 = feats_1.size(), n_feats_2 = feats_2.size();
+  matches.assign(n_feats_1, -1);  // -1 denotes no matching.
+  // Record as well reverse matches to preclude repeat matching.
+  vector<bool> matched(n_feats_2, false);
+
+  int n_matches = 0;
+  // Searching feature matches by utilizing feature vectors formed by vocabulary
+  // tree.
+  auto it_1 = keyframe_1->feat_vec_.cbegin(),
+       it_1_end = keyframe_1->feat_vec_.cend(),
+       it_2 = keyframe_2->feat_vec_.cbegin(),
+       it_2_end = keyframe_2->feat_vec_.cend();
+  // Perform searching till exhausted.
+  while (it_1 != it_1_end && it_2 != it_2_end) {
+    // Search feature matches in the same node.
+    if (it_1->first == it_2->first) {
+      // Each node in the vocabulary contains indices of feature descriptors of
+      // the correponding features detected in the frame.
+      const vector<unsigned int>& indices_1 = it_1->second;
+      const vector<unsigned int>& indices_2 = it_2->second;
+
+      for (const int idx_1 : indices_1) {
+        const Feature::Ptr& feat_1 = feats_1[idx_1];
+        // Only consider unmatched features.
+        if (!feat_1->point_.expired()) continue;
+
+        // Search feature matches between the feature in keyframe_1 and all
+        // features in keyframe_2.
+        int min_dist = 256, second_min_dist = 256;
+        int best_idx_2 = 0;
+        for (const int idx_2 : indices_2) {
+          const Feature::Ptr& feat_2 = feats_2[idx_2];
+          // Skip those features that already link a map point or have matched
+          // before.
+          if (!feat_2->point_.expired() || matched[idx_2]) continue;
+
+          // Compute descriptor distance.
+          const int dist = matcher_utils::computeDescDist(feat_1->descriptor_,
+                                                          feat_2->descriptor_);
+          if (dist < min_dist) {
+            second_min_dist = dist;
+            min_dist = dist;
+            best_idx_2 = idx_2;
+          } else if (dist < second_min_dist)
+            second_min_dist = dist;
+        }
+
+        // Apply thresholding test, distance ratio test and epipolar constraint
+        // test.
+        if (min_dist >= Config::matching_thresh_strict() ||
+            min_dist >= Config::dist_ratio_test_factor() * second_min_dist)
+          continue;
+        const Mat33 F_2_1 =
+            geometry::getFundamentalByPose(keyframe_1, keyframe_2);
+        const double dist_1 = geometry::pointToEpiLineDist(
+                         feat_1->pt_, feat_2->pt_, F_2_1, true),
+                     dist_2 = geometry::pointToEpiLineDist(
+                         feat_1->pt_, feat_2->pt_, F_2_1, false);
+        const int chi2_thresh = 3.84;  // One degree chi-square p-value;
+        // TODO(bayes) Compute level_sigma2
+        if (dist_1 >= chi2_thresh * Config::level_sigma2()[feat_1->level_] ||
+            dist_2 >= chi2_thresh * Config::level_sigma2()[feat_2->level_])
+          continue;
+        matches[idx_1] = best_idx_2;
+        matched[best_idx_2] = true;
+        ++n_matches;
+      }
+      ++it_1;
+      ++it_2;
+    } else if (it_1->first < it_2->first) {
+      // Align the iterators of keyframe_1 with that of keyframe_2.
+      it_1 = keyframe_2->feat_vec_.lower_bound(it_2->first);
+    } else {
+      // Align the iterators of keyframe_2 with that of keyframe_1
+      it_2 = keyframe_1->feat_vec_.lower_bound(it_1->first);
+    }
+  }
+  return n_matches;
+}
+
+}  // namespace mono_slam
 
 namespace matcher_utils {
 
-static inline int computeDescDist(const cv::Mat& desc_1,
-                                  const cv::Mat& desc_2) {
+int computeDescDist(const cv::Mat& desc_1, const cv::Mat& desc_2) {
   const int* pa = desc_1.ptr<int32_t>();
   const int* pb = desc_2.ptr<int32_t>();
 

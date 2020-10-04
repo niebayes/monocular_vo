@@ -22,12 +22,17 @@ class Matcher {
 
   static int searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
                          vector<int>& matches);
+
+  static int searchForTriangulation(const Frame::Ptr& keyframe_1,
+                                    const Frame::Ptr& keyframe_2,
+                                    vector<int>& matches);
 };
 
 namespace matcher_utils {
 
 //@ref http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
-int computeDescriptorDistance(const cv::Mat& desc_1, const cv::Mat& desc_2);
+static inline int computeDescriptorDistance(const cv::Mat& desc_1,
+                                            const cv::Mat& desc_2);
 
 }  // namespace matcher_utils
 }  // namespace mono_slam

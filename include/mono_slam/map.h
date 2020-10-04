@@ -53,7 +53,7 @@ class Map {
 
   void insertKeyframe(Frame::Ptr keyframe);
 
-  void eraseKeyframeById(const int id);
+  void eraseKfById(const int id);
 
   inline int nKfs() const { return static_cast<int>(keyframes_.size()); }
 

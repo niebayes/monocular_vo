@@ -20,11 +20,28 @@ class LocalMapping {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = std::shared_ptr<LocalMapping>;
-  using Keyframes = std::queue<Frame::Ptr>;
 
   LocalMapping();
 
-  void insertKeyframe(const Frame::Ptr& keyframe);
+  void startThread();
+
+  void stopThread();
+
+  void LocalMappingLoop();
+
+  inline bool isIdle() const {
+    // FIXME Need lock here?
+    u_lock lock(mutex_);
+    return is_idle_.load();
+  }
+
+  void insertKeyframe(Frame::Ptr keyframe);
+
+  void processFrontKeyframe();
+
+  void triangulateNewPoints();
+
+  void removeRedundantKfs();
 
   void reset();
 
@@ -36,8 +53,14 @@ class LocalMapping {
   void setKeyframeDB(KeyframeDB::Ptr keyframe_db);
 
  private:
-  Keyframes keyframes_;
-  mutable std::mutex ownership_;
+  queue<Frame::Ptr> kfs_queue_;  // Keyframes queue waiting to be processed.
+  Frame::Ptr curr_keyframe_;     // The keyframe currently under processing.
+
+  // Multi-threading stuff.
+  uptr<std::thread> thread_ = nullptr;
+  std::condition_variable new_kf_cond_var_;
+  std::atomic<bool> is_idle_;
+  mutable std::mutex mutex_;
 
   sptr<System> system_ = nullptr;
   sptr<Tracking> tracker_ = nullptr;

@@ -79,7 +79,7 @@ bool Tracking::trackFromLocalMap() {
   return true;
 }
 
-void Tracking::updateLocalCovisibleKeyframes() {
+void Tracking::updateLocalCoKfs() {
   local_co_kfs_.clear();  // Clear it first.
 
   // Covisible keyframe voter with the key being the covisible keyframe and the
@@ -131,7 +131,7 @@ void Tracking::updateLocalCovisibleKeyframes() {
                  });
 }
 
-bool Tracking::needNewKeyframe() {
+bool Tracking::needNewKf() {
   // TODO(bayes) Use a more complicated strategy.
   const int n_kfs = map_->nKfs();
   // Cannot exceed maximal number of keyframes in map at one moment.

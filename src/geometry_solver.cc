@@ -87,8 +87,11 @@ int evaluateFundamentalScore(const Frame::Features& feats_1,
   for (int i = 0; i < num_valid_matches; ++i) {
     const Feature::Ptr& feat_1 = feats_1[valid_matches[i].first];
     const Feature::Ptr& feat_2 = feats_2[valid_matches[i].second];
-    const double dist_1 = geometry::pointToEpiLineDist(feat_1->pt_, F);
-    const double dist_2 = geometry::pointToEpiLineDist(feat_2->pt_, F);
+    // FIXME Left multiply with F annd right multiply with F.
+    const double dist_1 =
+        geometry::pointToEpiLineDist(feat_1->pt_, feat_2->pt_, F, true);
+    const double dist_2 =
+        geometry::pointToEpiLineDist(feat_1->pt_, feat_2->pt_, F, false);
     const double chi2_one_degree = 3.841,
                  inv_sigma2 = 1. / (noise_sigma * noise_sigma);
     if (dist_1 * dist_1 * inv_sigma2 > chi2_one_degree ||
@@ -424,10 +427,31 @@ double computeReprErr(const Vec3& point, const Vec2& pt, const Mat33& K) {
           (pt.y() - repr_y) * (pt.y() - repr_y));
 }
 
-double pointToEpiLineDist(const Vec2& pt, const Mat33& F) {
-  const Vec3 epi_line = F * pt.homogeneous();
-  const double &a = epi_line(0), &b = epi_line(1), &c = epi_line(2);
-  return (std::abs((a * pt.x() + b * pt.y() + c)) / std::sqrt(a * a + b * b));
+double pointToEpiLineDist(const Vec2& pt_1, const Vec2& pt_2,
+                          const Mat33& F_2_1, const bool reverse = false) {
+  if (!reverse) {
+    // Epipolar line in image 2.
+    const Vec3 epi_line = F_2_1 * pt_1.homogeneous();
+    const double &a = epi_line(0), &b = epi_line(1), &c = epi_line(2);
+    // Return distance between image point and epipolar line in image 2.
+    return (std::abs((a * pt_2.x() + b * pt_2.y() + c)) /
+            std::sqrt(a * a + b * b));
+  } else {
+    // Epipolar line in image 1.
+    const Vec3 epi_line = pt_2.homogeneous().transpose() * F_2_1;
+    const double &a = epi_line(0), &b = epi_line(1), &c = epi_line(2);
+    // Return distance between image point and epipolar line in image 1.
+    return (std::abs((a * pt_1.x() + b * pt_1.y() + c)) /
+            std::sqrt(a * a + b * b));
+  }
+}
+
+Mat33 getFundamentalByPose(const Frame::Ptr& frame_1,
+                           const Frame::Ptr& frame_2) {
+  const SE3 T_2_1 = frame_2->pose() * frame_1->pose().inverse();
+  const Mat33 &K1 = frame_1->cam_->K(), &K2 = frame_2->cam_->K();
+  return K1.transpose().inverse() * to_skew(T_2_1.translation()) *
+         T_2_1.rotationMatrix() * K2.inverse();
 }
 
 Mat33 to_skew(const Vec3& vec) {

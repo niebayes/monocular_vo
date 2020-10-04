@@ -87,11 +87,8 @@ class MapPoint {
   // FIXME Does inline still work if definition is not here?
   inline bool isObservedBy(const sptr<Frame>& frame) const {
     u_lock lock(mutex_);
-    for (const auto& feat_ : observations_) {
-      if (feat_.expired()) continue;
-      const auto& feat = feat_.lock();
-      if (feat.frame_.lock() == frame) return true;
-    }
+    for (const Feature::Ptr& feat : observations_)
+      if (feat->frame_.lock() == frame) return true;
     return false;
   }
 

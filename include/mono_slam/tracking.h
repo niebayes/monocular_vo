@@ -78,10 +78,10 @@ class Tracking {
   void trackFromLocalMap();
 
   // Update local covisible keyframes to be used in tracking from local map.
-  void updateLocalCovisibleKeyframes();
+  void updateLocalCoKfs();
 
   // True if the criteria of inserting new keyframe are satisfied.
-  bool needNewKeyframe();
+  bool needNewKf();
 
   // Relocalize if tracking is lost.
   bool relocalization();

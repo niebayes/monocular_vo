@@ -79,6 +79,9 @@ inline double computeReprErr(const Vec3& point, const Vec2& pt, const Mat33& K);
 
 inline double pointToEpiLineDist(const Vec2& pt, const Mat33& F);
 
+inline Mat33 getFundamentalByPose(const Frame::Ptr& frame_1,
+                                  const Frame::Ptr& frame_2);
+
 inline Mat33 to_skew(const Vec3& vec);
 
 }  // namespace geometry
