@@ -108,7 +108,7 @@ void Tracking::updateLocalCovisibleKeyframes() {
   //! into it in progress.
   for (const Frame::Ptr& kf_ : unordered_set(local_co_kfs_)) {
     // Get top 10 keyframes ranked wrt. number of covisible map points.
-    const set<Frame::Ptr>& co_kfs = kf_->getCovisibleKeyframes(10);
+    const forward_list<Frame::Ptr>& co_kfs = kf_->getCovisibleKeyframes(10);
     if (co_kfs.empty()) continue;
     for (const Frame::Ptr& kf : co_kfs)
       if (kf == curr_frame_) continue;
@@ -161,7 +161,7 @@ bool Tracking::relocalization() {
       continue;
     curr_frame_->setPose(relative_pose);
     // Utilize pose graph optimization to count number of inliers.
-    const int num_inlier_matches = Optimizer::optimize(curr_frame_);
+    const int num_inlier_matches = Optimizer::optimizePose(curr_frame_);
     if (num_inlier_matches < Config::min_num_inlier_matches_reloc()) {
       reloc_success = true;
       break;  // Get out from loop once a acceptable candidate is found.

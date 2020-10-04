@@ -4,22 +4,22 @@ namespace mono_slam {
 
 LocalMapping::LocalMapping() {}
 
-void LocalMapping::InsertKeyframe(const Frame::Ptr& keyframe) {
-  CHECK_EQ(keyframe->IsKeyframe(), true);
-  u_lock take(ownership_);
+void LocalMapping::insertKeyframe(const Frame::Ptr& keyframe) {
+  CHECK_EQ(keyframe->isKeyframe(), true);
+  u_lock lock(mutex_);
   keyframes_.push(keyframe);
 }
 
-void LocalMapping::Reset() {
-  u_lock take(ownership_);
+void LocalMapping::reset() {
+  u_lock lock(mutex_);
   while (!keyframes_.empty()) keyframes_.pop();
 }
 
-void LocalMapping::SetSystem(sptr<System> system) { system_ = system; }
-void LocalMapping::SetTracker(sptr<Tracking> tracker) { tracker_ = tracker; }
-void LocalMapping::SetMap(sptr<Map> map) { map_ = map; }
-void LocalMapping::SetVocabulary(const sptr<Vocabulary>& voc) { voc_ = voc; }
-void LocalMapping::SetKeyframeDB(KeyframeDB::Ptr keyframe_db) {
+void LocalMapping::setSystem(sptr<System> system) { system_ = system; }
+void LocalMapping::setTracker(sptr<Tracking> tracker) { tracker_ = tracker; }
+void LocalMapping::setMap(sptr<Map> map) { map_ = map; }
+void LocalMapping::setVocabulary(const sptr<Vocabulary>& voc) { voc_ = voc; }
+void LocalMapping::setKeyframeDB(KeyframeDB::Ptr keyframe_db) {
   keyframe_db_ = keyframe_db;
 }
 

@@ -41,6 +41,11 @@ class Frame {
   // Temporary g2o keyframe vertex storing the optimized result.
   sptr<g2o_types::VertexFrame> v_frame_ = nullptr;
 
+  // Variables used for covisibility graph.
+  unordered_map<Frame::Ptr, int> co_kf_weights_;
+  forward_list<Frame::Ptr> co_kfs_;
+  forward_list<int> co_weights_;
+
   Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
         const cv::Ptr<cv::FeatureDetector>& detector);
 
@@ -69,11 +74,24 @@ class Frame {
   // Check if the given map point is Observable by this frame.
   bool isObservable(const sptr<MapPoint>& point) const;
 
-  void updateConnections();
+  void addConnection();
+
+  void deleteConnection();
+
+  void updateCoKfsAndWeights();
+
+  void updateCoInfo();
 
   double computeSceneMedianDepth();
 
-  inline const set<Frame::Ptr>& getCovisibleKeyframes() const;
+  inline const forward_list<Frame::Ptr>& getCovisibleKeyframes(
+      const int n = std::numeric_limits<int>::max()) const {
+    const int n_kfs = static_cast<int>(
+        std::distance(co_kf_weights_.cbegin(), co_kf_weights_.cend()));
+    if (n > n_kfs) return co_kf_weights_;
+    return forward_list(co_kf_weights_.cbegin(),
+                        std::next(co_kf_weights_.cbegin(), n));
+  }
 
   // Compute number of tracked map points (i.e. ones that are observed by more
   // than min_n_obs frames).

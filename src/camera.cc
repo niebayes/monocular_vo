@@ -6,7 +6,7 @@ Camera::Camera() {}
 
 Camera::Camera(const SE3& T_c_w) : T_c_w_(T_c_w) {}
 
-void Camera::Init(const double fx, const double fy, const double cx,
+void Camera::init(const double fx, const double fy, const double cx,
                   const double cy, const Vec4& dist_coeffs) {
   fx_ = fx;
   fy_ = fy;
@@ -17,7 +17,7 @@ void Camera::Init(const double fx, const double fy, const double cx,
 }
 
 // Setters.
-void Camera::SetPose(const SE3& T_c_w) { T_c_w_ = T_c_w; }
-void Camera::SetPos(const Vec3& pos) { T_c_w_.translation() = pos; }
+void Camera::setPose(const SE3& T_c_w) { T_c_w_ = T_c_w; }
+void Camera::setPos(const Vec3& pos) { T_c_w_.translation() = pos; }
 
 }  // namespace mono_slam

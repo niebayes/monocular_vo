@@ -83,7 +83,7 @@ bool KeyframeDataBase::detectRelocCandidates(const Frame::Ptr& frame,
   for (auto it = score_of_kfs.cbegin(), it_end = score_of_kfs.cend(); ++it) {
     const Frame::Ptr& kf = it->second;
     // Collect top 10 covisible keyframes ranked wrt. number of shared words.
-    const set<Frame::Ptr>& co_kfs = kf->getCovisibleKeyframes(10);
+    const forward_list<Frame::Ptr>& co_kfs = kf->getCovisibleKeyframes(10);
 
     // Traverse the covisible keyframes and accumulate the similarity score.
     double max_score_i = kf->simi_score_, accu_score_i = max_score_i;
@@ -120,7 +120,7 @@ bool KeyframeDataBase::detectRelocCandidates(const Frame::Ptr& frame,
 //##############################################################################
 // Map
 
-Map::Map() max_keyframe_id_(0) {}
+Map::Map() : max_keyframe_id_(0) {}
 
 void Map::insertKeyframe(Frame::Ptr keyframe) {
   CHECK_EQ(keyframe->isKeyframe(), true);

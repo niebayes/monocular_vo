@@ -2,7 +2,7 @@
 
 namespace mono_slam {
 
-bool Config::SetConfigFile(const std::string& config_file) {
+bool Config::setConfigFile(const std::string& config_file) {
   if (config_ == nullptr) config_ = sptr<Config>(new Config);
   config_->file_ = cv::FileStorage(config_file, cv::FileStorage::READ);
   if (!config_->file_.isOpened()) {
@@ -18,7 +18,7 @@ Config::~Config() {
 }
 
 template <typename T>
-T Config::Get(const std::string& key) {
+T Config::get(const std::string& key) {
   return T(Config::config_->file_[key]);
 }
 

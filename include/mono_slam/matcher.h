@@ -16,9 +16,12 @@ class Matcher {
 
   static int searchByProjection(const std::set<Frame::Ptr>& frames,
                                 const Frame::Ptr& curr_frame);
-                                
+
   static int searchByProjection(const Frame::Ptr& last_frame,
                                 const Frame::Ptr& curr_frame);
+
+  static int searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
+                         vector<int>& matches);
 };
 
 namespace matcher_utils {

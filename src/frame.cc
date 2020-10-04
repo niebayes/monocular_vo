@@ -77,14 +77,80 @@ vector<int> Frame::searchFeatures(const Vec2& pt, const int radius,
   return feat_indices;
 }
 
-void Frame::updateConnections() {
-  //
-  return;
+//##############################################################################
+// Covisibility graph related.
+
+void Frame::addConnection(Frame::Ptr& keyframe, const int weight) {
+  bool need_update = false;
+  if (!co_kf_weights_.count(keyframe) || co_kf_weights_[keyframe] != weight)
+    need_update = true;
+  if (need_update) updateCoKfsAndWeights();
+}
+
+void Frame::deleteConnection(const Frame::Ptr& keyframe, const int weight) {
+  bool need_update = false;
+  if (co_kf_weights_.count(keyframe)) {
+    co_kf_weights_.erase(keyframe);
+    need_update = true;
+  }
+  if (need_update) updateCoKfsAndWeights();
+}
+
+void Frame::updateCoKfsAndWeights() {
+  // Filter out those keyframes that the number of shared map points below
+  // certain threshold.
+  map<int, Frame::Ptr> co_weight_kfs;  // Map structure is internally sorted.
+  for (auto it = co_kf_weights_.cbegin(), it_end = co_kf_weights_.cend();
+       it != it_end; ++it) {
+    if (it->second <= Config::co_kf_weight_thresh()) continue;
+    co_weight_kfs[it->second] = it->first;
+    // FIXME Need to enable shared_from_this() ?
+    it->first->addConnection(this, it->second);
+  }
+
+  // Update covisible informations.
+  co_kfs_.clear();
+  co_weights_.clear();
+  for (auto it = co_weight_kfs.cbegin(), it_end = co_weight_kfs.cend();
+       it != it_end; ++it) {
+    co_kfs_.push_front(it->second);
+    co_weights_.push_front(it->first);
+  }
+}
+
+void Frame::updateCoInfo() {
+  // Covisible keyframe voter with the key being the covisible keyframe and the
+  // weights being the number of shared map points.
+  unordered_map<Frame::Ptr, int> co_kf_weights;
+  // co_kf_weights.reserve(?). //! Don't know how much capacity to be reserved.
+  //! Map does not have a reserve method whilst unordered_map has.
+
+  // Obtain all covisible keyframes (i.e. ones sharing at least one map point).
+  for (const Feature::Ptr& feat_ : curr_frame_->feats_) {
+    const MapPoint::Ptr& point = feat_utils::getPoint(feat_);
+    if (!point) continue;
+    for (const Feature::Ptr& feat : point->getObservations()) {
+      const Frame::Ptr& kf = feat_utils::getKeyframe(feat);
+      if (!kf || kf == curr_frame_) continue;  // Self of course is excluded.
+      co_kf_weights[kf]++;
+    }
+  }
+  if (co_kf_weights.empty()) return;
+  co_kf_weights_ = co_kf_weights;
+  updateCoKfsAndWeights();
 }
 
 double Frame::computeSceneMedianDepth() {
-  //
-  return 0;
+  vector<double> depths;
+  depths.reserve(feats_.size());
+  for (const Feature::Ptr& feat : feats_) {
+    const MapPoint::Ptr& point = feat_utils::getPoint(feat);
+    if (!point) continue;
+    const double depth = cam_->world2camera(point->pos()).z();
+    depths.push_back(depth);
+  }
+  if (depths.empty()) return 0.;
+  return math_utils::get_median(depths);
 }
 
 bool isObservable(const sptr<MapPoint>& point) const {

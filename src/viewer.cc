@@ -2,10 +2,10 @@
 
 namespace mono_slam {
 
-void Viewer::Reset() {}
+void Viewer::reset() {}
 
-void Viewer::SetMap(const Map::Ptr& map) { map_ = map; }
+void Viewer::setMap(const Map::Ptr& map) { map_ = map; }
 
-void Viewer::SetSystem(const sptr<System>& system) { system_ = system; }
+void Viewer::setSystem(const sptr<System>& system) { system_ = system; }
 
 }  // namespace mono_slam

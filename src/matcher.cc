@@ -34,8 +34,8 @@ int Matcher::searchForInitialization(const Frame::Ptr& ref_frame,
     }
 
     // Check matching threshold and apply distance ratio test.
-    if (min_dist >= matching_threshold_ ||
-        min_dist >= distance_ratio_test_threshold_ * second_min_dist)
+    if (min_dist >= Config::matching_thresh_relax() ||
+        min_dist >= Config::dist_ratio_test_factor() * second_min_dist)
       continue;
     // Filter out duplicate matches. This further ensures matching quality.
     if (matches_reverse[best_match_idx_2] != -1) {
@@ -111,7 +111,7 @@ int Matcher::searchByProjection(const std::set<Frame::Ptr>& local_co_kfs,
       }
 
       // Perform thresholding, distance ratio test, and scale consistency test,
-      if (min_dist >= Config::thresh_relax() ||
+      if (min_dist >= Config::matching_thresh_relax() ||
           min_dist >= Config::dist_ratio_test_factor() * second_min_dist ||
           best_level != second_best_level)
         continue;
@@ -125,7 +125,73 @@ int Matcher::searchByProjection(const std::set<Frame::Ptr>& local_co_kfs,
   return num_matches;
 }
 
-int Matcher::searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame);
+int Matcher::searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
+                         vector<int>& matches) {
+  const vector<Feature::Ptr&> feats_kf = keyframe->feats_;
+  const vector<Feature::Ptr&> feats_f = frame->feats_;
+  const int num_feats_kf = feats_kf.size(), num_feats_f = feats_f.size();
+  matches.assign(num_feats_kf, -1);  // -1 denotes no matching.
+  // Record as well reverse matches to preclude repeat matching.
+  vector<int> matches_reverse(num_feats_f, -1);
+
+  int num_matches = 0;
+  // Searching feature matches by utilizing feature vectors formed by vocabulary
+  // tree.
+  auto it_kf = keyframe->feat_vec_.cbegin(),
+       it_kf_end = keyframe->feat_vec_.cend(), it_f = frame->feat_vec_.cbegin(),
+       it_f_end = frame->feat_vec_.cend();
+  // Perform searching till exhausted.
+  while (it_kf != it_kf_end && it_f != it_f_end) {
+    // Search feature matches in the same node.
+    if (it_kf->first == it_f->first) {
+      // Each node in the vocabulary contains indices of feature descriptors of
+      // the correponding features detected in the frame.
+      const vector<unsigned int>& indices_kf = it_kf->second;
+      const vector<unsigned int>& indices_f = it_f->second;
+
+      for (const int idx_kf : indices_kf) {
+        const Feature::Ptr& feat_kf = feats_kf[idx_kf];
+        const MapPoint::Ptr& point = feat_utils::getPoint(feat_kf);
+        // Since we're searching for 3D-2D matches, the corresponding point of
+        // this feature must be valid.
+        if (!point) continue;
+
+        // Search feature matches between the feature in keyframe and all
+        // features in frame.
+        int min_dist = 256, second_min_dist = 256;
+        int best_idx_f = 0;
+        for (const int idx_f : indices_f) {
+          if (matches_reverse[idx_f] != -1) continue;  // Avoid repeat matching.
+          const int dist = matched_utils::computeDescDist(
+              feats_kf[idx_kf]->descriptor_, feats_f[idx_f]->descriptor_);
+          if (dist < min_dist) {
+            second_min_dist = dist;
+            min_dist = dist;
+            best_idx_f = idx_f;
+          } else if (dist < second_min_dist)
+            second_min_dist = dist;
+        }
+
+        // Apply thresholding test and distance ratio test.
+        if (min_dist >= Config::matching_thresh_relax() ||
+            min_dist >= Config::dist_ratio_test_factor() * second_min_dist)
+          continue;
+        matches[idx_kf] = best_idx_f;
+        matches_reverse[best_idx_f] = idx_kf;
+        ++num_matches;
+      }
+      ++it_kf;
+      ++it_f;
+    } else if (it_kf->first < it_f->first) {
+      // Align the iterators of keyframe with that of frame.
+      it_kf = frame->feat_vec_.lower_bound(it_f->first);
+    } else {
+      // Align the iterators of frame with that of keyframe.
+      it_f = keyframe->feat_vec_.lower_bound(it_kf->first);
+    }
+  }
+  return num_matches;
+}
 
 namespace matcher_utils {
 

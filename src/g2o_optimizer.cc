@@ -165,7 +165,7 @@ void localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
   g2o_utils::setupG2oOptimizer(&optimizer);
 
   // Obtain covisible keyframes which are then going to be optimized.
-  const set<Frame::Ptr>& co_kfs = keyframe->getCovisibleKeyframes();
+  const forward_list<Frame::Ptr>& co_kfs = keyframe->getCovisibleKeyframes();
 
   // Chi-square test threshold used as the width of the robust huber kernel and
   // for rejection of outliers during post-processing.
@@ -183,7 +183,7 @@ void localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
 
   // Iterate all covisible keyframes.
   int v_id = 0;  // Vertex id.
-  for (const Frame::Ptr& kf : core_kfs) {
+  for (const Frame::Ptr& kf : co_kfs) {
     // Fixed if it's the first frame.
     kf->v_frame_ = g2o_utils::createG2oVertexFrame(kf, v_id++, kf->id_ == 0);
     assert(optimizer.addVertex(kf->v_frame_));
