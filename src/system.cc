@@ -68,14 +68,12 @@ bool System::init() {
   tracker_->setLocalMapper(local_mapper_);
   tracker_->setMap(map_);
   tracker_->setViewer(viewer_);
-  tracker_->setInitializer(std::move(initializer));
   tracker_->setVocabulary(voc);
   tracker_->setCamera(cam.get());
 
   local_mapper_->setSystem(shared_from_this());
   local_mapper_->setTracker(tracker_);
   local_mapper_->setMap(map_);
-  local_mapper_->setVocabulary(voc);
 
   viewer_->setSystem(shared_from_this());
   viewer_->setMap(map_);

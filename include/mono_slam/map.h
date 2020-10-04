@@ -2,6 +2,7 @@
 #define MONO_SLAM_MAP_H_
 
 #include "mono_slam/common_include.h"
+#include "mono_slam/config.h"
 #include "mono_slam/frame.h"
 #include "mono_slam/map_point.h"
 
@@ -31,13 +32,13 @@ class KeyframeDataBase {
   // Clear and reset inverted file indices.
   inline void clear() {
     inv_files_.clear();
-    inv_files_.reserve(Config::approx_n_words_pct() * voc_.size());
+    inv_files_.reserve(Config::approx_n_words_pct() * voc_->size());
   }
 
  private:
   // Inverted file indices such that inv_files_[i] = list of keyframes having
   // the word with id i (i = 0, 1, ..., length(vocabulary)-1).
-  std::unordered_map<int, list<Frame::Ptr>> inv_files_;
+  unordered_map<int, list<Frame::Ptr>> inv_files_;
 
   const sptr<Vocabulary> voc_;  // Vocabulary.
 
@@ -51,6 +52,18 @@ class Map {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Map>;
 
+  // Keyframe database used for relocalization.
+  KeyframeDataBase::Ptr kf_db_ = nullptr;
+
+ private:
+  list<Frame::Ptr> keyframes_;  // Maintained keyframes.
+
+  int max_keyframe_id_;  // Maximum id of keyframes inserted so far. Used for
+                         // checking for duplication as new keyframe is comming.
+
+  mutable std::mutex mutex_;
+
+ public:
   Map();
 
   void insertKeyframe(Frame::Ptr keyframe);
@@ -70,24 +83,12 @@ class Map {
   inline void clear() {
     u_lock lock(mutex_);
     keyframes_.clear();
-    points_.clear();
     max_keyframe_id_ = 0;
     kf_db_->clear();
   }
 
   // TODO(bayes) Implement remove functions, e.g. put outlier map points to
   // trash and empty trash properly. And more function like svo.
-
- private:
-  list<Frame::Ptr> keyframes_;  // Maintained keyframes.
-
-  int max_keyframe_id_;  // Maximum id of keyframes inserted so far. Used for
-                         // checking for duplication as new keyframe is comming.
-
-  // Keyframe database used for relocalization.
-  KeyframeDataBase::Ptr kf_db_ = nullptr;
-
-  mutable std::mutex mutex_;
 };
 
 }  // namespace mono_slam

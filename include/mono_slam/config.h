@@ -12,7 +12,7 @@ namespace mono_slam {
 // that only one instance exists.
 class Config {
  public:
-  Config& getInstance();
+  static Config& getInstance();
 
   // Maximum number of features to be detected when a new frame is created.
   static int& max_n_feats() { return getInstance().max_n_feats_; }
@@ -52,7 +52,7 @@ class Config {
   static int& tri_min_n_matches() { return getInstance().tri_min_n_matches_; }
 
   // Minimum parallax below which the triangulation is rejected.
-  static int& tri_min_parallax() { return getInstance().tri_min_parallax_; }
+  static double& tri_min_parallax() { return getInstance().tri_min_parallax_; }
 
   // Relax matching threshold used cases other than searching driven by bag of
   // words.

@@ -46,6 +46,7 @@ find_package(Pangolin REQUIRED)
 # Add additional include path for header files
 include_directories(BEFORE
     ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include/mono_slam
     ${OpenCV_INCLUDE_DIRS}
     # ${manif_INCLUDE_DIRS}
     ${Sophus_INCLUDE_DIRS}
@@ -75,9 +76,9 @@ list(APPEND LINK_LIBRARIES
 # Set source files
 list(APPEND SOURCE_FILES
     src/system.cc 
-    src/front_end_tracking.cc 
-    src/front_end_map_initialization.cc 
-    src/back_end_local_mapping.cc 
+    src/tracking.cc 
+    src/initialization.cc 
+    src/local_mapping.cc 
     src/map.cc 
     src/frame.cc 
     src/map_point.cc 
@@ -85,7 +86,6 @@ list(APPEND SOURCE_FILES
     src/matcher.cc
     src/geometry_solver.cc 
     src/g2o_optimizer.cc 
-    src/keyframe_database.cc
     src/config.cc 
     src/dataset.cc 
     src/viewer.cc 

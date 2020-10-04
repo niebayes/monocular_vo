@@ -50,7 +50,7 @@ int Matcher::searchByProjection(const Frame::Ptr& last_frame,
   return Matcher::searchByProjection(std::set{last_frame}, curr_frame);
 }
 
-int Matcher::searchByProjection(const std::set<Frame::Ptr>& local_co_kfs,
+int Matcher::searchByProjection(const unordered_set<Frame::Ptr>& local_co_kfs,
                                 const Frame::Ptr& curr_frame) {
   if (local_co_kfs.empty()) return 0;
   int n_matches = 0;

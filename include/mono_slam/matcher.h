@@ -14,7 +14,7 @@ class Matcher {
                                      const Frame::Ptr& frame_2,
                                      vector<int>& matches);
 
-  static int searchByProjection(const std::set<Frame::Ptr>& frames,
+  static int searchByProjection(const unordered_set<Frame::Ptr>& frames,
                                 const Frame::Ptr& curr_frame);
 
   static int searchByProjection(const Frame::Ptr& last_frame,

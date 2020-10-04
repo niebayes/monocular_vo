@@ -8,11 +8,13 @@
 #include <vector>
 
 #include "glog/logging.h"
-#include "mono_slam/config.h"  // FIXME It this okay?
+#include "mono_slam/config.h"  
+
+using namespace mono_slam;
 
 namespace math_utils {
 
-int uniform_random_int(const int low, const int high) {
+inline int uniform_random_int(const int low, const int high) {
   const unsigned seed =
       std::chrono::system_clock::now().time_since_epoch().count();
   std::default_random_engine generator(seed);
@@ -21,9 +23,13 @@ int uniform_random_int(const int low, const int high) {
   return dice_once();
 }
 
-double degree2radian(const double degree) { return degree * EIGEN_PI / 180.0; }
+inline double degree2radian(const double degree) {
+  return degree * EIGEN_PI / 180.0;
+}
 
-double radian2degree(const double radian) { return radian * 180.0 / EIGEN_PI; }
+inline double radian2degree(const double radian) {
+  return radian * 180.0 / EIGEN_PI;
+}
 
 inline Mat34 kRt2mat(const Mat33& K, const Mat33& R, const Vec3& t) {
   Mat34 Rt;
@@ -44,10 +50,11 @@ T get_median(std::vector<T>& data_vec) {
 
 // Estimate the image pyramid level of the feature in the given frame
 // corresponding to this map point.
-inline int predictLevel(const double dist) const {
-  const double level =
-      std::log(max_scale_invariance_ / dist) / std::log(Config::scale_factor());
-  return std::round(std::clamp(level, 0, Config::scale_n_levels()));
+// FIXME 
+inline int predictLevel(const double dist) {
+  // const double level =
+  //     std::log(max_scale_invariance_ / dist) / std::log(Config::scale_factor());
+  // return std::round(std::clamp(level, 0, Config::scale_n_levels()));
 }
 
 }  // namespace math_utils

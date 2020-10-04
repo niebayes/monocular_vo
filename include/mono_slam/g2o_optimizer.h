@@ -14,7 +14,7 @@ class Optimizer {
   static void globalBA(const Map::Ptr& map, const int n_iters = 20);
 
   // Pose graph optimization.
-  static void optimizePose(const Frame::Ptr& frame, const int n_iters = 10);
+  static int optimizePose(const Frame::Ptr& frame, const int n_iters = 10);
 
   // Local bundle adjustment.
   static void localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,

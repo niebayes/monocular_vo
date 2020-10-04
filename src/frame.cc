@@ -1,7 +1,7 @@
 #include "mono_slam/frame.h"
 
 #include "mono_slam/feature.h"
-#include "utils/math_utils.h"
+#include "mono_slam/utils/math_utils.h"
 
 namespace mono_slam {
 
@@ -26,8 +26,6 @@ Frame::Frame(const cv::Mat& img, Camera* cam, const sptr<Vocabulary>& voc,
 }
 
 void Frame::setPose(const SE3& T_c_w) { cam_->setPose(T_c_w); }
-
-void Frame::setPos(const Vec3& pos) { cam_->setPos(pos); }
 
 void Frame::setKeyframe() { is_keyframe_ = true; }
 
@@ -78,7 +76,7 @@ vector<int> Frame::searchFeatures(const Vec2& pt, const int radius,
 //##############################################################################
 // Covisibility graph related.
 
-void Frame::addConnection(Frame::Ptr& keyframe, const int weight) {
+void Frame::addConnection(Frame::Ptr keyframe, const int weight) {
   bool need_update = false;
   if (!co_kf_weights_.count(keyframe) || co_kf_weights_[keyframe] != weight)
     need_update = true;
@@ -103,7 +101,7 @@ void Frame::updateCoKfsAndWeights() {
     if (it->second <= Config::co_kf_weight_thresh()) continue;
     co_weight_kfs[it->second] = it->first;
     // FIXME Need to enable shared_from_this() ?
-    it->first->addConnection(this, it->second);
+    it->first->addConnection(shared_from_this(), it->second);
   }
 
   // Update covisible informations.
@@ -124,12 +122,13 @@ void Frame::updateCoInfo() {
   //! Map does not have a reserve method whilst unordered_map has.
 
   // Obtain all covisible keyframes (i.e. ones sharing at least one map point).
-  for (const Feature::Ptr& feat_ : curr_frame_->feats_) {
+  for (const Feature::Ptr& feat_ : feats_) {
     const MapPoint::Ptr& point = feat_utils::getPoint(feat_);
     if (!point) continue;
     for (const Feature::Ptr& feat : point->getObservations()) {
       const Frame::Ptr& kf = feat_utils::getKeyframe(feat);
-      if (!kf || kf == curr_frame_) continue;  // Self of course is excluded.
+      if (!kf || kf == shared_from_this())
+        continue;  // Self of course is excluded.
       co_kf_weights[kf]++;
     }
   }
@@ -151,7 +150,7 @@ double Frame::computeSceneMedianDepth() {
   return math_utils::get_median(depths);
 }
 
-bool isObservable(const sptr<MapPoint>& point) const {
+bool Frame::isObservable(const sptr<MapPoint>& point) const {
   // Test 1: has positive depth.
   const Vec3& p_w = point->pos();
   const Vec3 p_c = cam_->world2camera(p_w);
@@ -169,7 +168,7 @@ bool isObservable(const sptr<MapPoint>& point) const {
     return false;
   // Test 4: viewing direction is consistent with mean viewing direction.
   const double cos_view_dir =
-      (p_w - cam_->getCamCenter()).dot(point->mean_view_dir_) / dist;
+      (p_w - cam_->getCamCenter()).dot(point->median_view_dir_) / dist;
   if (cos_view_dir < std::cos(math_utils::degree2radian(60.))) return false;
 
   // Store the computed result to be used in searching.
@@ -194,19 +193,19 @@ void Frame::erase() {
   if (id_ == 0) return;  // The first frame is the datum which cannot be erased.
 
   // Erase covisibility connections.
-  auto it = co_kf_weights.cbegin(), it_end = co_kf_weights.cend();
-  for (; it != it_end; ++it) it->first->deleteConnection(this);
+  auto it = co_kf_weights_.cbegin(), it_end = co_kf_weights_.cend();
+  for (; it != it_end; ++it) it->first->deleteConnection(shared_from_this());
 
   // Erase related observations.
   for (const Feature::Ptr& feat : feats_) {
     const MapPoint::Ptr& point = feat_utils::getPoint(feat);
     if (!point) continue;
-    point->eraseObservations(feat);
+    point->eraseObservation(feat);
   }
 
   // Erase links with map.
   // mpMap->EraseKeyFrame(this);
-  // mpKeyFrameDB->erase(this); 
+  // mpKeyFrameDB->erase(this);
 }
 
 namespace frame_utils {

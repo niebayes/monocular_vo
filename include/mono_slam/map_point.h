@@ -4,7 +4,7 @@
 #include "mono_slam/common_include.h"
 #include "mono_slam/feature.h"
 #include "mono_slam/frame.h"
-#include "mono_slam/g2o_optimizer/types.h"
+#include "mono_slam/g2o_optimizer/g2o_types.h"
 
 namespace mono_slam {
 
@@ -71,10 +71,10 @@ class MapPoint {
   void addObservation(const sptr<Feature>& feat);
 
   // Erase an observation.
-  void eraseObservation(sptr<Feature>& feat);
+  void eraseObservation(const sptr<Feature>& feat);
 
   inline list<sptr<Feature>> getObservations() const {
-    u_lock take(ownership_);
+    u_lock lock(mutex_);
     return observations_;
   }
 
@@ -87,7 +87,7 @@ class MapPoint {
   // FIXME Does inline still work if definition is not here?
   inline bool isObservedBy(const sptr<Frame>& frame) const {
     u_lock lock(mutex_);
-    for (const Feature::Ptr& feat : observations_)
+    for (const sptr<Feature>& feat : observations_)
       if (feat->frame_.lock() == frame) return true;
     return false;
   }

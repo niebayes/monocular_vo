@@ -3,7 +3,7 @@
 
 #include "mono_slam/common_include.h"
 #include "mono_slam/frame.h"
-#include "mono_slam/front_end_tracking.h"
+#include "mono_slam/tracking.h"
 
 namespace mono_slam {
 

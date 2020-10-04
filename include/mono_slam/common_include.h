@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cassert>
 #include <chrono>
+#include <forward_list>
 #include <iostream>
 #include <iterator>
 #include <list>
@@ -50,28 +51,13 @@ template <typename T>
 using uptr = std::unique_ptr<T>;
 
 template <typename T>
-using const_uptr = std::unique_ptr<T const>;
-
-template <typename T>
 using sptr = std::shared_ptr<T>;
-
-template <typename T>
-using const_sptr = std::shared_ptr<T const>;
 
 template <typename T>
 using wptr = std::weak_ptr<T>;
 
-template <typename T>
-using const_wptr = std::weak_ptr<T const>;
-
-template <typename T>
-std::shared_ptr<T> to_sptr(std::weak_ptr<T> wptr) {
-  return wptr.lock();
-}
-
-// typedefs for multi-threading
+// typedef for multi-threading
 using u_lock = std::unique_lock<std::mutex>;
-using cond_var = std::condition_variable;
 
 // typedefs for eigen
 // double matricies

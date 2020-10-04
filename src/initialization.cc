@@ -9,7 +9,7 @@
 
 namespace mono_slam {
 
-Initializer::Initializer() : stage_(Stage::NO_FRAME_YET), {}
+Initializer::Initializer() : stage_(Stage::NO_FRAME_YET) {}
 
 void Initializer::addReferenceFrame(Frame::Ptr ref_frame) {
   reset();
@@ -89,9 +89,7 @@ bool Initializer::buildInitMap() {
   curr_frame_->updateCoInfo();
 
   // Global bundle adjustment.
-  const list<Frame::Ptr>& keyframes = tracker_->map_->getAllKeyframes();
-  const list<MapPoint::Ptr>& points = tracker_->map_->getAllMapPoints();
-  Optimizer::globalBA(keyframes, points, tracker_->map_);
+  Optimizer::globalBA(tracker_->map_);
 
   // FIXME What is the rescaling principle under the hood?
   // Rescale the map such that the mean scene depth is equal to 1.0
@@ -106,7 +104,7 @@ bool Initializer::buildInitMap() {
        scale_factor * (curr_frame_->cam_->pos() - ref_frame_->cam_->pos()));
   curr_frame_->setPose(T_c_w_curr);
   // Scale the position of map points.
-  for (const auto& point : points) point->setPos(scale_factor * point->pos());
+  // for (const auto& point : points) point->setPos(scale_factor * point->pos());
 
   return true;
 }

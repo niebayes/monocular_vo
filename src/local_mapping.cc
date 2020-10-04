@@ -1,4 +1,9 @@
-#include "mono_slam/back_end_local_mapping.h"
+#include "mono_slam/local_mapping.h"
+
+#include "mono_slam/g2o_optimizer.h"
+#include "mono_slam/geometry_solver.h"
+#include "mono_slam/matcher.h"
+#include "mono_slam/utils/math_utils.h"
 
 namespace mono_slam {
 
@@ -6,16 +11,16 @@ LocalMapping::LocalMapping() { startThread(); }
 
 void LocalMapping::startThread() {
   is_running_.store(false);
-  thread_ = make_unique(std::thread(std::bind(&LocalMappingLoop, this)));
+  thread_ = std::thread(std::bind(&LocalMapping::LocalMappingLoop, this));
 }
 
 void LocalMapping::stopThread() {
   is_running_.store(true);
   new_kf_cond_var_.notify_one();  // Release the lock or the halt won't proceed.
-  thread_->join();
+  thread_.join();
 }
 
-void LocalMapping::insertNewKf(Frame::Ptr keyframe) {
+void LocalMapping::insertKeyframe(Frame::Ptr keyframe) {
   CHECK_EQ(keyframe->isKeyframe(), true);
   u_lock lock(mutex_);
   kfs_queue_.push(keyframe);
@@ -25,7 +30,7 @@ void LocalMapping::LocalMappingLoop() {
   while (is_running_.load()) {
     u_lock lock(mutex_);
     new_kf_cond_var_.wait(lock);
-    processNewKf();
+    processFrontKeyframe();
     triangulateNewPoints();
     // Run local BA if keyframe queue is empty at this momment and the map
     // maintains more thant 2 keyframes as well.
@@ -35,7 +40,7 @@ void LocalMapping::LocalMappingLoop() {
   }
 }
 
-void LocalMapping::processNewKf() {
+void LocalMapping::processFrontKeyframe() {
   u_lock lock(mutex_);
   curr_keyframe_ = kfs_queue_.front();
   kfs_queue_.pop();
@@ -46,7 +51,7 @@ void LocalMapping::processNewKf() {
     if (!point || point->isObservedBy(curr_keyframe_)) continue;
     point->addObservation(feat);
     point->updateBestFeature();
-    point->updateMedianViewDirAndDepth();
+    point->updateMedianViewDirAndScale();
   }
 
   // Update covisibility information.
@@ -56,7 +61,7 @@ void LocalMapping::processNewKf() {
   map_->insertKeyframe(curr_keyframe_);
 }
 
-void triangulateNewPoints() {
+void LocalMapping::triangulateNewPoints() {
   // Get top 10 covisible keyframes ranked with number of shared map points.
   const forward_list<Frame::Ptr>& co_kfs = curr_keyframe_->getCoKfs(10);
 
@@ -140,7 +145,7 @@ void triangulateNewPoints() {
   }
 }
 
-void removeRedundantKfs() {
+void LocalMapping::removeRedundantKfs() {
   // Iterate all covisible keyframes.
   const forward_list<Frame::Ptr>& co_kfs = curr_keyframe_->co_kfs_;
   for (const Frame::Ptr& kf_ : co_kfs) {
@@ -183,9 +188,5 @@ void LocalMapping::reset() {
 void LocalMapping::setSystem(sptr<System> system) { system_ = system; }
 void LocalMapping::setTracker(sptr<Tracking> tracker) { tracker_ = tracker; }
 void LocalMapping::setMap(sptr<Map> map) { map_ = map; }
-void LocalMapping::setVocabulary(const sptr<Vocabulary>& voc) { voc_ = voc; }
-void LocalMapping::setKeyframeDB(KeyframeDB::Ptr keyframe_db) {
-  keyframe_db_ = keyframe_db;
-}
 
 }  // namespace mono_slam

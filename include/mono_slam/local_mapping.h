@@ -3,17 +3,15 @@
 
 #include "mono_slam/common_include.h"
 #include "mono_slam/frame.h"
-#include "mono_slam/front_end_tracking.h"
-#include "mono_slam/keyframe_database.h"
 #include "mono_slam/map.h"
 #include "mono_slam/system.h"
+#include "mono_slam/tracking.h"
 
 namespace mono_slam {
 
 class System;
 class Tracking;
 class Map;
-class KeyframeDB;
 class Frame;
 
 class LocalMapping {
@@ -38,9 +36,8 @@ class LocalMapping {
   void removeRedundantKfs();
 
   inline bool isIdle() const {
-    // FIXME Need lock here?
     u_lock lock(mutex_);
-    return is_idle_.load();
+    return is_idle_;
   }
 
   void reset();
@@ -49,24 +46,21 @@ class LocalMapping {
   void setSystem(sptr<System> system);
   void setTracker(sptr<Tracking> tracker);
   void setMap(sptr<Map> map);
-  void setVocabulary(const sptr<Vocabulary>& voc);
-  void setKeyframeDB(KeyframeDB::Ptr keyframe_db);
 
  private:
   queue<Frame::Ptr> kfs_queue_;  // Keyframes queue waiting to be processed.
   Frame::Ptr curr_keyframe_;     // The keyframe currently under processing.
 
   // Multi-threading stuff.
-  uptr<std::thread> thread_ = nullptr;
+  std::thread thread_;
   std::condition_variable new_kf_cond_var_;
   std::atomic<bool> is_running_;
+  bool is_idle_;
   mutable std::mutex mutex_;
 
   sptr<System> system_ = nullptr;
   sptr<Tracking> tracker_ = nullptr;
   sptr<Map> map_ = nullptr;
-  KeyframeDB::Ptr keyframe_db_ = nullptr;
-  sptr<Vocabulary> voc_ = nullptr;
 };
 
 }  // namespace mono_slam

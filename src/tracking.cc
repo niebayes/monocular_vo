@@ -1,4 +1,8 @@
-#include "mono_slam/front_end_tracking.h"
+#include "mono_slam/tracking.h"
+
+#include "mono_slam/g2o_optimizer.h"
+#include "mono_slam/geometry_solver.h"
+#include "mono_slam/matcher.h"
 
 namespace mono_slam {
 
@@ -22,7 +26,7 @@ void Tracking::trackCurrentFrame() {
   switch (state_) {
     case Tracking::State::NOT_INITIALIZED_YET:
       if (initMap()) {
-        last_keyframe_id_ = curr_frame_->id_;
+        last_kf_id_ = curr_frame_->id_;
         local_mapper_->insertKeyframe(last_frame_);
         local_mapper_->insertKeyframe(curr_frame_);
         state_ = Tracking::State::GOOD;
@@ -33,7 +37,7 @@ void Tracking::trackCurrentFrame() {
       if (!trackFromLastFrame() || !trackFromLocalMap())
         state_ = State::LOST;
       else {
-        if (needNewKeyframe()) {
+        if (needNewKf()) {
           last_kf_id_ = curr_frame_->id_;
           curr_frame_->setKeyframe();
           local_mapper_->insertKeyframe(curr_frame_);
@@ -74,7 +78,7 @@ bool Tracking::trackFromLastFrame() {
 }
 
 bool Tracking::trackFromLocalMap() {
-  updateLocalCovisibleKeyframes();
+  updateLocalCoKfs();
   const int num_matches =
       Matcher::searchByProjection(local_co_kfs_, curr_frame_);
   if (num_matches < Config::min_n_matches()) return false;
@@ -103,21 +107,22 @@ void Tracking::updateLocalCoKfs() {
       local_co_kfs_.insert(kf);  // Using set precludes repeat insertion.
     }
   }
-  if (locak_co_kfs_.empty()) return;
+  if (local_co_kfs_.empty()) return;
 
   // Add the keyframes covisible with current members in the local covisible
   // keyframes.
   // FIXME Do we realy need to do this?
   //! Iterate the copy of the local_co_kfs since we need to insert new elements
   //! into it in progress.
-  for (const Frame::Ptr& kf_ : unordered_set(local_co_kfs_)) {
+  for (const Frame::Ptr& kf_ : unordered_set<Frame::Ptr>(local_co_kfs_)) {
     // Get top 10 keyframes ranked wrt. number of covisible map points.
-    const forward_list<Frame::Ptr>& co_kfs = kf_->getCovisibleKeyframes(10);
+    const forward_list<Frame::Ptr>& co_kfs = kf_->getCoKfs(10);
     if (co_kfs.empty()) continue;
-    for (const Frame::Ptr& kf : co_kfs)
+    for (const Frame::Ptr& kf : co_kfs) {
       if (kf == curr_frame_) continue;
-    co_kf_weights[kf]++;
-    local_co_kfs_.insert(kf);
+      co_kf_weights[kf]++;
+      local_co_kfs_.insert(kf);
+    }
   }
 
   // Obtain the maximal weight.
@@ -129,8 +134,8 @@ void Tracking::updateLocalCoKfs() {
   // Only retain keyframes with the shared number of map points exceed this
   // threshold.
   const int min_weight_thresh = Config::weight_factor() * max_weight;
-  std::remove_if(local_co_kfs.begin(), local_co_kfs.end(),
-                 [=, &co_kf_weights](const Frame::Ptr& kf) {
+  std::remove_if(local_co_kfs_.begin(), local_co_kfs_.end(),
+                 [&](Frame::Ptr& kf) {
                    return co_kf_weights[kf] < min_weight_thresh;
                  });
 }
@@ -174,13 +179,13 @@ bool Tracking::relocalization() {
   return reloc_success;
 }
 
-void reset() {
+void Tracking::reset() {
   state_ = State::NOT_INITIALIZED_YET;
   last_frame_.reset();
   curr_frame_.reset();
-  T_curr_last_.setZero();
+  T_curr_last_ = SE3();
   local_co_kfs_.clear();
-  last_keyframe_id_ = 0;
+  last_kf_id_ = 0;
 }
 
 void Tracking::setSystem(sptr<System> system) { system_ = system; }
@@ -188,18 +193,8 @@ void Tracking::setLocalMapper(sptr<LocalMapping> local_mapper) {
   local_mapper_ = local_mapper;
 }
 void Tracking::setMap(Map::Ptr map) { map_ = map; }
-void Tracking::setKeyframeDB(KeyframeDB::Ptr keyframe_db) {
-  keyframe_db_ = keyframe_db;
-}
 void Tracking::setViewer(sptr<Viewer> viewer) { viewer_ = viewer; }
-void Tracking::setInitializer(uptr<Initializer> initializer) {
-  initializer_ = std::move(initializer);
-}
 void Tracking::setVocabulary(const sptr<Vocabulary>& voc) { voc_ = voc; }
 void Tracking::setCamera(Camera* cam) { cam_ = cam; }
-void Tracking::setFeatureDetector(
-    const cv::Ptr<cv::FeatureDetector>& detector) {
-  detector_ = detector;
-}
 
 }  // namespace mono_slam

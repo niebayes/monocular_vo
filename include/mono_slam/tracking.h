@@ -17,7 +17,6 @@ class Map;
 class Frame;
 class Viewer;
 class Initializer;
-class KeyFrameDB;
 
 class Tracking {
  public:
@@ -42,7 +41,6 @@ class Tracking {
   sptr<System> system_ = nullptr;              // System.
   sptr<LocalMapping> local_mapper_ = nullptr;  // Local mapper.
   Map::Ptr map_ = nullptr;                     // Map.
-  KeyframeDB::Ptr keyframe_db_ = nullptr;      // Keyframe database.
   sptr<Viewer> viewer_ = nullptr;              // Viewer.
 
   Tracking();
@@ -55,9 +53,7 @@ class Tracking {
   void setSystem(sptr<System> system);
   void setLocalMapper(sptr<LocalMapping> local_mapper);
   void setMap(Map::Ptr map);
-  void setKeyframeDB(KeyframeDB::Ptr keyframe_db);
   void setViewer(sptr<Viewer> viewer);
-  void setInitializer(uptr<Initializer> initializer);
   void setVocabulary(const sptr<Vocabulary>& voc);
   void setCamera(Camera* cam);
 
@@ -74,7 +70,7 @@ class Tracking {
   bool trackFromLastFrame();
 
   // Track local map to make the tracking more robust.
-  void trackFromLocalMap();
+  bool trackFromLocalMap();
 
   // Update local covisible keyframes to be used in tracking from local map.
   void updateLocalCoKfs();
@@ -92,8 +88,6 @@ class Tracking {
   Camera* cam_ = nullptr;                        // Camera.
   cv::Ptr<cv::FeatureDetector> detector_ = nullptr;  // Feature detector.
 };
-
-namespace tracking_utils {}  // namespace tracking_utils
 
 }  // namespace mono_slam
 

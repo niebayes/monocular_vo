@@ -4,7 +4,7 @@
 #include "mono_slam/camera.h"
 #include "mono_slam/common_include.h"
 #include "mono_slam/feature.h"
-#include "mono_slam/g2o_optimizer/types.h"
+#include "mono_slam/g2o_optimizer/g2o_types.h"
 #include "mono_slam/map_point.h"
 
 namespace mono_slam {
@@ -21,13 +21,13 @@ class Frame : public std::enable_shared_from_this<Frame> {
 
   // FIXME Should frame has a member denoting self a frame to be deleted?
 
-  static int frame_cnt_;             // Global frame counter, starting from 0.
-  const int id_;                     // Unique frame identity.
-  bool is_keyframe_;                 // Is this frame a keyframe?
-  Features feats_;                   // Features extracted in this frame.
-  Camera* cam_ = nullptr;  // Linked camera.
-  DBoW3::BowVector bow_vec_;         // Bag of words vector.
-  DBoW3::FeatureVector feat_vec_;    // Feature vector.
+  static int frame_cnt_;           // Global frame counter, starting from 0.
+  const int id_;                   // Unique frame identity.
+  bool is_keyframe_;               // Is this frame a keyframe?
+  Features feats_;                 // Features extracted in this frame.
+  Camera* cam_ = nullptr;          // Linked camera.
+  DBoW3::BowVector bow_vec_;       // Bag of words vector.
+  DBoW3::FeatureVector feat_vec_;  // Feature vector.
 
   // Temporary variables used for relocalization.
   int query_frame_id_;     // Id of currently quering frame.
@@ -46,7 +46,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
   forward_list<Frame::Ptr> co_kfs_;
   forward_list<int> co_weights_;
 
-  Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
+  Frame(const cv::Mat& img, Camera* cam, const sptr<Vocabulary>& voc,
         const cv::Ptr<cv::FeatureDetector>& detector);
 
   inline const SE3& pose() const { return cam_->pose(); }
@@ -58,7 +58,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
   void setKeyframe();
 
   // Number of observations (i.e. number of features observed in this frame).
-  inline int numObs() const { return feats_.size(); }
+  inline int nObs() const { return feats_.size(); }
 
   // Extract features.
   void extractFeatures(const cv::Mat& img,
@@ -74,9 +74,9 @@ class Frame : public std::enable_shared_from_this<Frame> {
   // Check if the given map point is Observable by this frame.
   bool isObservable(const sptr<MapPoint>& point) const;
 
-  void addConnection();
+  void addConnection(Frame::Ptr keyframe, const int weight);
 
-  void deleteConnection();
+  void deleteConnection(const Frame::Ptr& keyframe);
 
   void updateCoKfsAndWeights();
 
@@ -84,13 +84,13 @@ class Frame : public std::enable_shared_from_this<Frame> {
 
   double computeSceneMedianDepth();
 
-  inline const forward_list<Frame::Ptr>& getCoKfs(
+  inline forward_list<Frame::Ptr> getCoKfs(
       const int n = std::numeric_limits<int>::max()) const {
-    const int n_kfs = static_cast<int>(
-        std::distance(co_kf_weights_.cbegin(), co_kf_weights_.cend()));
-    if (n > n_kfs) return co_kf_weights_;
-    return forward_list(co_kf_weights_.cbegin(),
-                        std::next(co_kf_weights_.cbegin(), n));
+    const int n_kfs =
+        static_cast<int>(std::distance(co_kfs_.cbegin(), co_kfs_.cend()));
+    if (n > n_kfs) return co_kfs_;
+    return forward_list<Frame::Ptr>(co_kfs_.cbegin(),
+                                    std::next(co_kfs_.cbegin(), n));
   }
 
   // Compute number of tracked map points (i.e. ones that are observed by more

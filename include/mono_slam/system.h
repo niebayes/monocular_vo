@@ -1,13 +1,13 @@
 #ifndef MONO_SLAM_SYSTEM_H_
 #define MONO_SLAM_SYSTEM_H_
 
-#include "mono_slam/back_end_local_mapping.h"
+#include "mono_slam/local_mapping.h"
 #include "mono_slam/camera.h"
 #include "mono_slam/common_include.h"
 #include "mono_slam/config.h"
 #include "mono_slam/dataset.h"
-#include "mono_slam/front_end_map_initialization.h"
-#include "mono_slam/front_end_tracking.h"
+#include "mono_slam/initialization.h"
+#include "mono_slam/tracking.h"
 #include "mono_slam/map.h"
 #include "mono_slam/viewer.h"
 

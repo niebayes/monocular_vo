@@ -1,4 +1,4 @@
-bool P3P::computePoses(const Eigen::Matrix3d& feature_vectors,
+bool P3PSolver::computePoses(const Eigen::Matrix3d& feature_vectors,
                        const Eigen::Matrix3d& world_points,
                        std::vector<Sophus::SE3d>& solutions) {
   solutions.reserve(4);  // Exactly four solutions to be computed.
@@ -125,7 +125,7 @@ bool P3P::computePoses(const Eigen::Matrix3d& feature_vectors,
   // Computation of roots
   Eigen::Matrix<double, 4, 1> realRoots;
 
-  P3P::solveQuartic(factors, realRoots);
+  P3PSolver::solveQuartic(factors, realRoots);
 
   // Backsubstitution of each solution
   for (int i = 0; i < 4; ++i) {
@@ -167,7 +167,7 @@ bool P3P::computePoses(const Eigen::Matrix3d& feature_vectors,
   return true;
 }
 
-int P3P::solveQuartic(const Eigen::Matrix<double, 5, 1>& factors,
+int P3PSolver::solveQuartic(const Eigen::Matrix<double, 5, 1>& factors,
                       Eigen::Matrix<double, 4, 1>& real_roots) {
   double A = factors(0);
   double B = factors(1);
