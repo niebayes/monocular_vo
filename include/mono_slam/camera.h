@@ -57,7 +57,7 @@ class Camera {
     return camera2world(pixel2camera(pt, depth));
   }
 
-  inline Vec3 pixel2unit(const Vec2& pt) const {
+  inline Vec3 pixel2bear(const Vec2& pt) const {
     const Vec3 bear_vec = K_.inverse() * pt.homogeneous();
     return bear_vec / bear_vec.norm();
   }

@@ -165,7 +165,7 @@ void localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
   g2o_utils::setupG2oOptimizer(&optimizer);
 
   // Obtain covisible keyframes which are then going to be optimized.
-  const forward_list<Frame::Ptr>& co_kfs = keyframe->getCovisibleKeyframes();
+  const forward_list<Frame::Ptr>& co_kfs = keyframe->getCoKfs();
 
   // Chi-square test threshold used as the width of the robust huber kernel and
   // for rejection of outliers during post-processing.

@@ -27,21 +27,21 @@ class LocalMapping {
 
   void stopThread();
 
-  void LocalMappingLoop();
-
-  inline bool isIdle() const {
-    // FIXME Need lock here?
-    u_lock lock(mutex_);
-    return is_idle_.load();
-  }
-
   void insertKeyframe(Frame::Ptr keyframe);
+
+  void LocalMappingLoop();
 
   void processFrontKeyframe();
 
   void triangulateNewPoints();
 
   void removeRedundantKfs();
+
+  inline bool isIdle() const {
+    // FIXME Need lock here?
+    u_lock lock(mutex_);
+    return is_idle_.load();
+  }
 
   void reset();
 
@@ -59,7 +59,7 @@ class LocalMapping {
   // Multi-threading stuff.
   uptr<std::thread> thread_ = nullptr;
   std::condition_variable new_kf_cond_var_;
-  std::atomic<bool> is_idle_;
+  std::atomic<bool> is_running_;
   mutable std::mutex mutex_;
 
   sptr<System> system_ = nullptr;

@@ -84,7 +84,7 @@ class Frame {
 
   double computeSceneMedianDepth();
 
-  inline const forward_list<Frame::Ptr>& getCovisibleKeyframes(
+  inline const forward_list<Frame::Ptr>& getCoKfs(
       const int n = std::numeric_limits<int>::max()) const {
     const int n_kfs = static_cast<int>(
         std::distance(co_kf_weights_.cbegin(), co_kf_weights_.cend()));

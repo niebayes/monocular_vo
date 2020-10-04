@@ -195,7 +195,7 @@ int evaluatePoseScore(const Mat33& R, const Vec3& t,
     // Test 3: triangulated point must have sufficient parallax.
     const Vec3 bear_vec_1 = point_1 - C_1, bear_vec_2 = point_2 - C_2;
     const double cos_parallax =
-        bear_vec_1.dot(bear_vec_2) / bear_vec_1.norm() * bear_vec_2.norm();
+        bear_vec_1.dot(bear_vec_2) / (bear_vec_1.norm() * bear_vec_2.norm());
     if (cos_parallax < std::cos(math_utils::degree2radian(min_parallax)))
       continue;
     // Test 4: the reprojection error must below the tolerance.
