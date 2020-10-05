@@ -54,6 +54,7 @@ static inline sptr<Frame> getKeyframe(const sptr<Feature>& feat) {
   if (!feat || feat->is_outlier_) return nullptr;
   if (feat->frame_.expired()) return nullptr;
   const sptr<Frame>& keyframe = feat->frame_.lock();
+  // FIXME What fk cause this error?!
   // if (!keyframe->isKeyframe()) return nullptr;
   return keyframe;
 }

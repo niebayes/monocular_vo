@@ -10,7 +10,7 @@
 
 namespace mono_slam {
 
-class Feature;
+struct Feature;
 class Frame;
 class MapPoint;
 class Map;

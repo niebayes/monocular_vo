@@ -14,6 +14,7 @@ Initializer::Initializer() : stage_(Stage::NO_FRAME_YET) {}
 
 void Initializer::addReferenceFrame(Frame::Ptr ref_frame) {
   reset();
+  LOG(INFO) << "Initing: ref_frame's nObs = " << ref_frame->nObs();
   if (ref_frame->nObs() < Config::init_min_n_feats()) return;
   ref_frame_ = ref_frame;
   stage_ = Stage::HAS_REFERENCE_FRAME;
@@ -24,6 +25,7 @@ void Initializer::addCurrentFrame(Frame::Ptr curr_frame) {
     LOG(ERROR) << "No reference frame yet.";
     return;
   }
+  LOG(INFO) << "Initing: curr_frame's nObs = " << curr_frame->nObs();
   if (curr_frame->nObs() < Config::init_min_n_feats()) return;
   curr_frame_ = curr_frame;
   // Matches between reference frame and current frame such that:
@@ -31,6 +33,7 @@ void Initializer::addCurrentFrame(Frame::Ptr curr_frame) {
   vector<int> matches;
   const int n_matches =
       Matcher::searchForInitialization(ref_frame_, curr_frame_, matches);
+  LOG(INFO) << "Initing: n_matches = " << n_matches;
   if (n_matches < Config::init_min_n_matches()) return;
   if (initialize(matches) && buildInitMap()) {
     // If all criteria are satisfied, initialization is successful.
@@ -43,6 +46,7 @@ bool Initializer::initialize(const vector<int>& matches) {
   Mat33 F;
   GeometrySolver::findFundamentalRansac(ref_frame_, curr_frame_, matches, F,
                                         inlier_matches_);
+  LOG(INFO) << "Initing: n_inlier_matches = " << inlier_matches_.size();
   if (inlier_matches_.size() < Config::init_min_n_inlier_matches())
     return false;
   // Find relative pose from ref_frame_ to curr_frame_.
@@ -112,5 +116,12 @@ bool Initializer::buildInitMap() {
 }
 
 void Initializer::setTracker(sptr<Tracking> tracker) { tracker_ = tracker; }
+
+void Initializer::reset() {
+  stage_ = Stage::NO_FRAME_YET;
+  ref_frame_.reset();
+  curr_frame_.reset();
+  inlier_matches_.clear();
+}
 
 }  // namespace mono_slam

@@ -2,22 +2,22 @@ cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(BASIC_MONOCULAR_SLAM)
 
 # Configure compile mode: Debug, Release, etc.
-set(CMAKE_BUILD_TYPE Release)
+# set(CMAKE_BUILD_TYPE Release)
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
-# Enable C++14 standard
-# Check if the compiler supports C++14
-# DBoW3 uses some features which have been expired since C++14
+# Enable C++17 standard
+# Check if the compiler supports C++17
+# DBoW3 uses some features which have been expired since C++17
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
-if(COMPILER_SUPPORTS_CXX14)
-   message(STATUS "Using flag -std=c++14.")
-   set(CMAKE_CXX_STANDARD 14)
+CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
+if(COMPILER_SUPPORTS_CXX17)
+   message(STATUS "Using flag -std=c++17.")
+   set(CMAKE_CXX_STANDARD 17)
 else()
-   message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++14 support. Please use a different C++ compiler.")
+   message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++17 support. Please use a different C++ compiler.")
 endif()
 
 # Configure compile output directory
@@ -95,11 +95,11 @@ list(APPEND SOURCE_FILES
 )
 
 add_library(my_slam SHARED ${SOURCE_FILES})
-target_compile_options(my_slam PRIVATE -O3 -march=native)
+target_compile_options(my_slam PRIVATE -O0 -march=native)
 target_link_libraries(my_slam ${LINK_LIBRARIES})
 
 add_executable(mono_kitti app/mono_kitti.cc)
-target_compile_options(mono_kitti PRIVATE -O3 -march=native)
+target_compile_options(mono_kitti PRIVATE -O0 -march=native)
 target_link_libraries(mono_kitti my_slam ${LINK_LIBRARIES})
 
 add_executable(my_test src/my_test.cc)

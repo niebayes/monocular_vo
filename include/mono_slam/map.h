@@ -45,11 +45,10 @@ class KeyframeDataBase {
   std::mutex mutex_;
 };
 
-class Feature;
+struct Feature;
 
 class Map {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Map>;
 
   // Keyframe database used for relocalization.

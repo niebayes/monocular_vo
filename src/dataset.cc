@@ -13,12 +13,13 @@ cv::Mat Dataset::nextImage() {
   boost::format fmt(dataset_path_ + "%" + img_file_name_fmt_);
   cv::Mat image = cv::imread((fmt % img_idx_).str(), cv::IMREAD_GRAYSCALE);
   // Error in reading a single image should not interrupt the system.
-  if (image.empty()) return cv::Mat{};
+  CHECK_EQ(!image.empty(), true);
   cv::Mat resized_image;
   image.copyTo(resized_image);
   if (img_resize_factor_ != 1.0)
     cv::resize(image, resized_image, {}, img_resize_factor_, img_resize_factor_,
                cv::INTER_AREA);
+  LOG(INFO) << "Processing image " << img_idx_;
   ++img_idx_;
   return resized_image;
 }

@@ -10,9 +10,11 @@ namespace mono_slam {
 class Tracking;
 class Frame;
 
+enum class Stage { NO_FRAME_YET, HAS_REFERENCE_FRAME, SUCCESS };
+
 class Initializer {
  public:
-  enum class Stage { NO_FRAME_YET, HAS_REFERENCE_FRAME, SUCCESS };
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   Stage stage_;  // Initialization stage.
 
@@ -48,12 +50,7 @@ class Initializer {
   // Build initial map.
   bool buildInitMap();
 
-  void reset() {
-    stage_ = Stage::NO_FRAME_YET;
-    ref_frame_.reset();
-    curr_frame_.reset();
-    inlier_matches_.clear();
-  }
+  void reset();
 };
 
 }  // namespace mono_slam

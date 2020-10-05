@@ -18,8 +18,8 @@ int Matcher::searchForInitialization(const Frame::Ptr& ref_frame,
     const Feature::Ptr& feat_1 = ref_frame->feats_[idx_1];
     const int level = feat_1->level_;
     if (level > 0) continue;  // Only consider the finest level.
-    const vector<int> feat_indices_2 =
-        curr_frame->searchFeatures(feat_1->pt_, 100, level, level);
+    const vector<int> feat_indices_2 = curr_frame->searchFeatures(
+        feat_1->pt_, Config::search_radius(), level, level);
     if (feat_indices_2.empty()) continue;
 
     int min_dist = 256, second_min_dist = 256, best_idx_2 = 0;
@@ -190,7 +190,8 @@ int Matcher::searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
 }
 
 int Matcher::searchForTriangulation(const Frame::Ptr& keyframe_1,
-                           const Frame::Ptr& keyframe_2, vector<int>& matches) {
+                                    const Frame::Ptr& keyframe_2,
+                                    vector<int>& matches) {
   const vector<Feature::Ptr>& feats_1 = keyframe_1->feats_;
   const vector<Feature::Ptr>& feats_2 = keyframe_2->feats_;
   const int n_feats_1 = feats_1.size(), n_feats_2 = feats_2.size();

@@ -1,16 +1,16 @@
 %YAML:1.0
 # Data related:
 ## Dataset path.
-dataset_path: data/dataset/KITTI/seq_00/
+dataset_path: "data/dataset/KITTI/test_piece/"
 
 ## Image file name format.
-img_file_name_fmt: 06d
+img_file_name_fmt: "06d.png"
 
 ## Image resize factor. A bigger one speeds up tracking.
 img_resize_factor: 1.0
 
 ## Vocabulary file name.
-voc_file: data/vocabulary/orbvoc.dbow3
+voc_file: "data/vocabulary/orbvoc.dbow3"
 
 ## Timestamp file name.
 timestamp_file: ""  # KITTI dataset does not provide timestamps

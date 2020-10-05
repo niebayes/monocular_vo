@@ -17,7 +17,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Frame>;
-  using Features = std::vector<sptr<Feature>>;  // weak_ptr to avoid cyclic ref.
+  using Features = vector<sptr<Feature>>;  // weak_ptr to avoid cyclic ref.
 
   // FIXME Should frame has a member denoting self a frame to be deleted?
 
@@ -52,8 +52,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
   static double y_min_;
   static double y_max_;
 
-  Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
-        const cv::Ptr<cv::FeatureDetector>& detector);
+  Frame(const cv::Mat& img);
 
   inline const SE3& pose() const { return cam_->pose(); }
 
@@ -65,13 +64,6 @@ class Frame : public std::enable_shared_from_this<Frame> {
 
   // Number of observations (i.e. number of features observed in this frame).
   inline int nObs() const { return feats_.size(); }
-
-  // Extract features.
-  void extractFeatures(const cv::Mat& img,
-                       const cv::Ptr<cv::FeatureDetector>& detector);
-
-  // Compute bag of words representation.
-  void computeBoW(const sptr<Vocabulary>& voc);
 
   // Search features given searching radius and image pyramid level range.
   vector<int> searchFeatures(const Vec2& pt, const int radius,

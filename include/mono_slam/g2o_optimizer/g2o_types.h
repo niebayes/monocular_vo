@@ -26,8 +26,8 @@
 
 namespace mono_slam {
 
+struct Feature;
 class Frame;
-class Feature;
 
 namespace g2o_types {
 

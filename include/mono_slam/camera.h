@@ -21,11 +21,6 @@ class Camera {
   // Empty constructor used only when setting camera parameters.
   Camera();
 
-  Camera(const SE3& T_c_w);
-
-  void init(const double fx, const double fy, const double cx, const double cy,
-            const Vec4& dist_coeffs);
-
   // Getters.
   inline const SE3& pose() const { return T_c_w_; }
   inline const Vec3& pos() const { return T_c_w_.inverse().translation(); }

@@ -8,11 +8,8 @@ namespace mono_slam {
 int Frame::frame_cnt_ = 0;
 double Frame::x_min_, Frame::x_max_, Frame::y_min_, Frame::y_max_;
 
-Frame::Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
-             const cv::Ptr<cv::FeatureDetector>& detector)
-    : id_(frame_cnt_++), is_keyframe_(false), cam_(cam) {
-  extractFeatures(img, detector);
-  computeBoW(voc);
+Frame::Frame(const cv::Mat& img) : id_(frame_cnt_++), is_keyframe_(false) {
+  cam_ = make_unique<Camera>();
   // TODO(bayes) Optimize when no distortion.
   // Compute image bounds (computed once in the first frame).
   if (id_ == 0) {
@@ -31,32 +28,6 @@ Frame::Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
 void Frame::setPose(const SE3& T_c_w) { cam_->setPose(T_c_w); }
 
 void Frame::setKeyframe() { is_keyframe_ = true; }
-
-void Frame::extractFeatures(const cv::Mat& img,
-                            const cv::Ptr<cv::FeatureDetector>& detector) {
-  vector<cv::KeyPoint> kpts;
-  cv::Mat descriptors;
-  detector->detectAndCompute(img, cv::Mat{}, kpts, descriptors);
-  if (cam_->distCoeffs()(0) == 0)
-    frame_utils::undistortKeypoints(cam_->K(), cam_->distCoeffs(), kpts);
-  const int num_kpts = kpts.size();
-  feats_.reserve(num_kpts);
-  for (int i = 0; i < num_kpts; ++i) {
-    feats_.push_back(make_shared<Feature>(shared_from_this(),
-                                          Vec2{kpts[i].pt.x, kpts[i].pt.y},
-                                          descriptors.row(i), kpts[i].octave));
-  }
-}
-
-void Frame::computeBoW(const sptr<Vocabulary>& voc) {
-  // Collect descriptors.
-  vector<cv::Mat> descriptor_vec;
-  descriptor_vec.reserve(this->nObs());
-  std::transform(feats_.begin(), feats_.end(),
-                 std::back_inserter(descriptor_vec),
-                 [](const Feature::Ptr& feat) { return feat->descriptor_; });
-  voc->transform(descriptor_vec, bow_vec_, feat_vec_, 4);
-}
 
 vector<int> Frame::searchFeatures(const Vec2& pt, const int radius,
                                   const int level_low,
@@ -130,8 +101,7 @@ void Frame::updateCoInfo() {
     if (!point) continue;
     for (const Feature::Ptr& feat : point->getObservations()) {
       const Frame::Ptr& kf = feat_utils::getKeyframe(feat);
-      if (!kf || kf == shared_from_this())
-        continue;  // Self of course is excluded.
+      if (!kf || kf->id_ == id_) continue;  // Self of course is excluded.
       co_kf_weights[kf]++;
     }
   }

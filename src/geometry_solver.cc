@@ -1,5 +1,6 @@
 #include "mono_slam/geometry_solver.h"
 
+#include "eigen3/unsupported/Eigen/KroneckerProduct"
 #include "mono_slam/geometry_solver/kneip_p3p.h"
 #include "mono_slam/utils/math_utils.h"
 
@@ -60,7 +61,7 @@ void GeometrySolver::findFundamentalRansac(
           std::count(best_inlier_mask.cbegin(), best_inlier_mask.cend(), true);
       // Upper bound of outlier ratio is set to 0.90
       const double outlier_ratio =
-          std::min(1.0 - max_num_inliers / num_valid_matches, 0.90);
+          std::min(1.0 - max_num_inliers / (double)num_valid_matches, 0.90);
       // Confidence about how much matches are inliers.
       const double confidence = 0.95;
       num_iterations = std::log(1.0 - confidence) /
@@ -132,7 +133,8 @@ bool GeometrySolver::findRelativePoseRansac(
       double median_parallax;
       const int score = GeometrySolver::evaluatePoseScore(
           R, t, frame_1->feats_, frame_2->feats_, inlier_matches, K, points_,
-          triangulate_mask_, median_parallax, 2 * noise_sigma, min_parallax);
+          triangulate_mask_, median_parallax,
+          (2 * noise_sigma) * (2 * noise_sigma), min_parallax);
       if (score > best_score) {
         best_score = score;
         best_R = R;
@@ -171,8 +173,10 @@ int GeometrySolver::evaluatePoseScore(
   // Left camera frame is fixed as world frame. Hence the world frame of the
   // triangulated points is the left camera frame.
   const Mat34 M_1 = K * Mat34::Identity();
+  cout << M_1 << '\n';
   const Vec3 C_1 = Vec3::Zero();  // Left camera center.
   const Mat34 M_2 = math_utils::kRt2mat(K, R, t);
+  cout << M_2 << '\n';
   const Vec3 C_2 = -R.transpose() * t;  // Right camera center.
 
   // Iterate all inlier matches and accumulate all good points.
@@ -190,7 +194,7 @@ int GeometrySolver::evaluatePoseScore(
     const Vec3 point_2 = R * point_1 + t;
     if (point_1(2) <= 0. || point_2(2) <= 0.) continue;
     // Test 3: triangulated point must have sufficient parallax.
-    const Vec3 bear_vec_1 = point_1 - C_1, bear_vec_2 = point_2 - C_2;
+    const Vec3 bear_vec_1 = point_1 - C_1, bear_vec_2 = point_1 - C_2;
     const double cos_parallax =
         bear_vec_1.dot(bear_vec_2) / (bear_vec_1.norm() * bear_vec_2.norm());
     if (cos_parallax < std::cos(math_utils::degree2radian(min_parallax)))
@@ -350,10 +354,8 @@ void fundamental8Point(const MatXX& pts_1, const MatXX& pts_2, Mat33& F) {
   // Vectorization trick: AXB = C -> (B' kron A) * vec(X) = vec(C);
   for (int i = 0; i < num_pts; ++i) {
     // FIXME Error in calling this function.
-    // A.row(i) = Eigen::kroneckerProduct<Vec3, Vec3>(pts_1.col(i),
-    // pts_2.col(i))
-    //                .transpose()
-    //                .eval();
+    A.row(i) =
+        Eigen::kroneckerProduct(pts_1.col(i), pts_2.col(i)).transpose().eval();
   }
   auto svd = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
   const Vec9& F_vec = svd.matrixV().rightCols(1);
@@ -362,7 +364,9 @@ void fundamental8Point(const MatXX& pts_1, const MatXX& pts_2, Mat33& F) {
   F.col(2) = F_vec.segment<3>(6);
 
   // Enforce the det(F) = 0 constraint.
-  auto F_svd = F.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
+  //! JacobiSVD: thin U and V are only available when your matrix has a dynamic
+  //! number of columns
+  auto F_svd = F.jacobiSvd(Eigen::ComputeFullU | Eigen::ComputeFullV);
   Mat33 Sigma = F_svd.singularValues().asDiagonal();
   Sigma(2, 2) = 0.;
   F = F_svd.matrixU() * Sigma * F_svd.matrixV().transpose();
@@ -370,7 +374,7 @@ void fundamental8Point(const MatXX& pts_1, const MatXX& pts_2, Mat33& F) {
 
 void decomposeEssential(const Mat33& E, vector<Mat33>& Rs, vector<Vec3>& ts) {
   // The four possible decompositions are encoded in the SVD of E.
-  auto svd = E.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
+  auto svd = E.jacobiSvd(Eigen::ComputeFullU | Eigen::ComputeFullV);
   const Mat33 U = svd.matrixU(), V = svd.matrixV();
   const Mat33 W = (Mat33() << 0., -1., 0., 1., 0., 0., 0., 0., 1.).finished();
   Rs.resize(2);
@@ -389,15 +393,16 @@ void decomposeEssential(const Mat33& E, vector<Mat33>& Rs, vector<Vec3>& ts) {
   ts[0] = u3;
   ts[1] = -u3;
 }
+
 void normalizePoints(const MatXX& pts, MatXX& normalized_pts, Mat33& T) {
   const int num_pts = pts.cols();
   CHECK_GE(num_pts, 0);
 
   // Mean.
-  const Vec2 mean = pts.topRows(2).rowwise().sum();
+  const Vec2 mean = pts.topRows(2).rowwise().mean();
   // Rescale factor.
   const double scale =
-      std::sqrt(2. / (pts.topRows(2) - mean).squaredNorm() / num_pts);
+      std::sqrt(2. / (pts.topRows(2).colwise() - mean).squaredNorm() / num_pts);
   // Normalization matrix.
   T << scale, 0., -scale * mean.x(), 0., scale, -scale * mean.y(), 0., 0., 1.;
   // Perform normalization.

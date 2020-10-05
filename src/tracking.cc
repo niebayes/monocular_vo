@@ -9,31 +9,60 @@ namespace mono_slam {
 class Optimizer;
 
 Tracking::Tracking() : state_(State::NOT_INITIALIZED_YET) {
+  initializer_.reset(new Initializer());
   detector_ = cv::ORB::create(Config::max_n_feats());
 }
 
 void Tracking::addImage(const cv::Mat& img) {
-  // FIXME Would it be better if using raw pointer for camera?
-  curr_frame_ = make_shared<Frame>(img, cam_, voc_, detector_);
+  curr_frame_.reset(new Frame(img));
+  extractFeatures(img);
+  computeBoW();
   trackCurrentFrame();
   // Update constant velocity model, aka. relative motion.
-  T_curr_last_ = curr_frame_->pose() * last_frame_->pose().inverse();
   last_frame_ = curr_frame_;  // Update last frame.
+  T_curr_last_ = curr_frame_->pose() * last_frame_->pose().inverse();
   curr_frame_.reset();        // Reseat to make it ready for next frame.
+}
+
+void Tracking::extractFeatures(const cv::Mat& img) {
+  vector<cv::KeyPoint> kpts;
+  cv::Mat descriptors;
+  detector_->detectAndCompute(img, cv::Mat{}, kpts, descriptors);
+  if (curr_frame_->cam_->distCoeffs()(0) == 0)
+    frame_utils::undistortKeypoints(curr_frame_->cam_->K(),
+                                    curr_frame_->cam_->distCoeffs(), kpts);
+  const int n_kpts = kpts.size();
+  curr_frame_->feats_.reserve(n_kpts);
+  for (int i = 0; i < n_kpts; ++i) {
+    curr_frame_->feats_.push_back(
+        make_shared<Feature>(curr_frame_, Vec2{kpts[i].pt.x, kpts[i].pt.y},
+                             descriptors.row(i), kpts[i].octave));
+  }
+}
+
+void Tracking::computeBoW() {
+  // Collect descriptors.
+  vector<cv::Mat> descriptor_vec;
+  descriptor_vec.reserve(curr_frame_->nObs());
+  std::transform(curr_frame_->feats_.begin(), curr_frame_->feats_.end(),
+                 std::back_inserter(descriptor_vec),
+                 [](const Feature::Ptr& feat) { return feat->descriptor_; });
+  voc_->transform(descriptor_vec, curr_frame_->bow_vec_, curr_frame_->feat_vec_,
+                  4);
 }
 
 void Tracking::trackCurrentFrame() {
   switch (state_) {
-    case Tracking::State::NOT_INITIALIZED_YET:
+    case State::NOT_INITIALIZED_YET:
       if (initMap()) {
         last_kf_id_ = curr_frame_->id_;
         local_mapper_->insertKeyframe(last_frame_);
         local_mapper_->insertKeyframe(curr_frame_);
-        state_ = Tracking::State::GOOD;
+        state_ = State::GOOD;
       }
       break;
 
-    case Tracking::State::GOOD:
+    case State::GOOD:
       if (!trackFromLastFrame() || !trackFromLocalMap())
         state_ = State::LOST;
       else {
@@ -45,11 +74,12 @@ void Tracking::trackCurrentFrame() {
       }
       break;
 
-    case Tracking::State::LOST:
+    case State::LOST:
       if (relocalization()) {
+        last_kf_id_ = curr_frame_->id_;
         curr_frame_->setKeyframe();
         local_mapper_->insertKeyframe(curr_frame_);
-        state_ = Tracking::State::GOOD;
+        state_ = State::GOOD;
       } else
         reset();
       break;
@@ -57,11 +87,11 @@ void Tracking::trackCurrentFrame() {
 }
 
 bool Tracking::initMap() {
-  if (initializer_->stage() == Initializer::Stage::NO_FRAME_YET)
+  if (initializer_->stage() == Stage::NO_FRAME_YET)
     initializer_->addReferenceFrame(curr_frame_);
-  else
+  else if (initializer_->stage() == Stage::HAS_REFERENCE_FRAME)
     initializer_->addCurrentFrame(curr_frame_);
-  return initializer_->stage() == Initializer::Stage::SUCCESS;
+  return initializer_->stage() == Stage::SUCCESS;
 }
 
 bool Tracking::trackFromLastFrame() {

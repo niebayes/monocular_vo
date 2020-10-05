@@ -31,12 +31,16 @@ bool System::init() {
   }
 
   // Prepare dataset.
-  dataset_ = make_unique<Dataset>(
-      config["dataset_path"], config["img_file_name_fmt"],
-      config["img_resize_factor"], config["img_start_idx"]);
+  const string& dataset_path = config["dataset_path"];
+  const string& img_file_name_fmt = config["img_file_name_fmt"];
+  const double& img_resize_factor = config["img_resize_factor"];
+  const int& img_start_idx = config["img_start_idx"];
+  dataset_ = make_unique<Dataset>(dataset_path, img_file_name_fmt,
+                                  img_resize_factor, img_start_idx);
 
   // Load vocabulary.
-  sptr<Vocabulary> voc = make_shared<Vocabulary>((string)config["voc_file"]);
+  const string& voc_file = config["voc_file"];
+  sptr<Vocabulary> voc = make_shared<Vocabulary>(voc_file);
 
   // Load timestamps.
   const string& timestamp_file = config["timestamp_file"];
@@ -63,6 +67,7 @@ bool System::init() {
   Camera::cy_ = cy;
   Camera::K_ = (Mat33() << fx, 0., cx, 0., fy, cy, 0., 0., 1.).finished();
   Camera::dist_coeffs_ = dist_coeffs;
+  cout << Camera::K_ << '\n';
 
   // Release the file as soon as possible.
   config.release();

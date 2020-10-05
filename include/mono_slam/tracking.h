@@ -18,14 +18,13 @@ class Frame;
 class Viewer;
 class Initializer;
 
+enum class State { NOT_INITIALIZED_YET, GOOD, LOST };
+
 class Tracking {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Tracking>;
 
-  enum class State { NOT_INITIALIZED_YET, GOOD, LOST };
-
-  Tracking::State state_;            // Tracking state.
+  State state_;            // Tracking state.
   Frame::Ptr last_frame_ = nullptr;  // Last frame.
   Frame::Ptr curr_frame_ = nullptr;  // Current frame.
   SE3 T_curr_last_;  // Rigid transformation from last_frame_ to curr_frame_
@@ -58,6 +57,14 @@ class Tracking {
   void reset();
 
  private:
+  // FIXME Due to errors involved with shared_from_this(), I have to move these
+  // two methods from Frame to Tracking. 
+  // Extract features.
+  void extractFeatures(const cv::Mat& img);
+
+  // Compute bag of words representation.
+  void computeBoW();
+
   // Track current frame.
   void trackCurrentFrame();
 
@@ -83,7 +90,6 @@ class Tracking {
   // User specified objects.
   uptr<Initializer> initializer_ = nullptr;          // Initializer.
   sptr<Vocabulary> voc_ = nullptr;                   // Vocabulary.
-  Camera::Ptr cam_ = nullptr;                        // Camera.
   cv::Ptr<cv::FeatureDetector> detector_ = nullptr;  // Feature detector.
 };
 
