@@ -8,12 +8,12 @@
 #include "mono_slam/map.h"
 #include "mono_slam/map_point.h"
 
+namespace mono_slam {
+
 class Feature;
 class Frame;
 class MapPoint;
 class Map;
-
-namespace mono_slam {
 
 // FIXME Do we need to add a critical section whenever we access a shared
 // resource?

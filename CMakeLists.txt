@@ -2,15 +2,15 @@ cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(BASIC_MONOCULAR_SLAM)
 
 # Configure compile mode: Debug, Release, etc.
-# set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Release)
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
-# Enable C++17 standard
-# Check if the compiler supports C++17
-# DBoW3 uses some features which have been expired since C++17
+# Enable C++14 standard
+# Check if the compiler supports C++14
+# DBoW3 uses some features which have been expired since C++14
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
 if(COMPILER_SUPPORTS_CXX14)
@@ -58,7 +58,6 @@ include_directories(BEFORE
     ${GFLAGS_INCLUDE_DIRS}
 ) # path relative to this CMakeLists.txt
 
-
 # Set link libraries
 list(APPEND LINK_LIBRARIES
     ${OpenCV_LIBRARIES}
@@ -69,6 +68,9 @@ list(APPEND LINK_LIBRARIES
     ${Pangolin_LIBRARIES}
     ${G2O_CORE_LIBRARY}
     ${G2O_STUFF_LIBRARY}
+    ${G2O_SOLVER_CHOLMOD}
+    ${G2O_TYPES_SBA} 
+    cholmod 
     ${GLOG_LIBRARIES}
     ${GFLAGS_LIBRARIES}
 )

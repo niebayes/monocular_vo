@@ -80,7 +80,7 @@ class Map {
     return keyframes_;
   }
 
-  inline void clear() {
+  void clear() {
     u_lock lock(mutex_);
     keyframes_.clear();
     max_keyframe_id_ = 0;

@@ -5,8 +5,6 @@
 
 namespace mono_slam {
 
-class Frame;
-
 class Dataset {
  public:
   using Ptr = uptr<Dataset>;

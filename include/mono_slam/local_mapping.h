@@ -47,7 +47,7 @@ class LocalMapping {
   void setTracker(sptr<Tracking> tracker);
   void setMap(sptr<Map> map);
 
- private:
+ protected:
   queue<Frame::Ptr> kfs_queue_;  // Keyframes queue waiting to be processed.
   Frame::Ptr curr_keyframe_;     // The keyframe currently under processing.
 

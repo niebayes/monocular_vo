@@ -3,9 +3,11 @@
 
 #include "mono_slam/frame.h"
 #include "mono_slam/map.h"
+#include "mono_slam/g2o_optimizer/g2o_types.h"
 
 namespace mono_slam {
 
+class Frame;
 class Map;
 
 class Optimizer {

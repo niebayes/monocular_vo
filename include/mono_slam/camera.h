@@ -10,6 +10,15 @@ class Camera {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Camera>;
 
+  SE3 T_c_w_;
+  // Camera intrinsics.
+  static double fx_;
+  static double fy_;
+  static double cx_;
+  static double cy_;
+  static Mat33 K_;
+  static Vec4 dist_coeffs_;
+
   // Empty constructor used only when setting camera parameters.
   Camera();
 
@@ -75,16 +84,6 @@ class Camera {
     const Vec3 bear_vec = p_w - this->getCamCenter();
     return bear_vec / bear_vec.norm();
   }
-
- private:
-  SE3 T_c_w_;
-  // Camera intrinsics.
-  static double fx_;
-  static double fy_;
-  static double cx_;
-  static double cy_;
-  static Mat33 K_;
-  static Vec4 dist_coeffs_;
 };
 
 }  // namespace mono_slam

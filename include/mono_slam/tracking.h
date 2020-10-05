@@ -44,7 +44,6 @@ class Tracking {
   sptr<Viewer> viewer_ = nullptr;              // Viewer.
 
   Tracking();
-  ~Tracking();
 
   // Entry function.
   void addImage(const cv::Mat& img);

@@ -7,7 +7,7 @@
 #include "g2o/core/robust_kernel_impl.h"
 #include "g2o/core/solver.h"
 #include "g2o/core/sparse_optimizer.h"
-#include "g2o/solvers/csparse/linear_solver_csparse.h"
+#include "g2o/solvers/cholmod/linear_solver_cholmod.h"
 #include "g2o/types/sba/types_sba.h"  // g2o::VertexSBAPointXYZ
 #include "g2o/types/sba/types_six_dof_expmap.h"  // g2o::VertexSE3Expmap, g2o::EdgeProjectXYZ2UV, g2o::EdgeSE3ProjectXYZOnlyPose
 #include "mono_slam/common_include.h"
@@ -15,6 +15,14 @@
 #include "mono_slam/frame.h"
 
 #define CAMERA_PARAMETER_ID 0
+
+// FIXME Is it necessary forward declare g2o stuff here?
+// namespace g2o {
+// class EdgeProjectXYZ2UV;
+// class EdgeSE3ProjectXYZOnlyPose;
+// class VertexSE3Expmap;
+// class VertexSBAPointXYZ;
+// }
 
 namespace mono_slam {
 
@@ -25,7 +33,7 @@ namespace g2o_types {
 
 // Solver type typedefs.
 using BlockSolver = g2o::BlockSolver_6_3;
-using LinearSolver = g2o::LinearSolverCSparse<BlockSolver::PoseMatrixType>;
+using LinearSolver = g2o::LinearSolverCholmod<BlockSolver::PoseMatrixType>;
 
 // Edge and vertex typedefs.
 using EdgeObs = g2o::EdgeProjectXYZ2UV;

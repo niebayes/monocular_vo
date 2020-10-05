@@ -14,10 +14,10 @@ class Initializer {
  public:
   enum class Stage { NO_FRAME_YET, HAS_REFERENCE_FRAME, SUCCESS };
 
+  Stage stage_;  // Initialization stage.
+
  private:
   sptr<Tracking> tracker_ = nullptr;
-
-  Stage stage_;  // Initialization stage.
 
   Frame::Ptr ref_frame_ = nullptr;   // Reference frame.
   Frame::Ptr curr_frame_ = nullptr;  // Current frame.
@@ -48,7 +48,7 @@ class Initializer {
   // Build initial map.
   bool buildInitMap();
 
-  inline void reset() {
+  void reset() {
     stage_ = Stage::NO_FRAME_YET;
     ref_frame_.reset();
     curr_frame_.reset();

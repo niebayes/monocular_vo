@@ -7,6 +7,10 @@
 
 namespace mono_slam {
 
+class Frame;
+struct Feature; 
+class MapPoint;
+
 class GeometrySolver {
  public:
   // Find fundamental matrix using eight-point algorithm in a RANSAC scheme.
