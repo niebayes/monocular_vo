@@ -1,7 +1,8 @@
 #include "mono_slam/matcher.h"
 
-#include "mono_slam/feature.h"
 #include "mono_slam/config.h"
+#include "mono_slam/feature.h"
+#include "mono_slam/geometry_solver.h"
 
 namespace mono_slam {
 
@@ -48,7 +49,8 @@ int Matcher::searchForInitialization(const Frame::Ptr& ref_frame,
 
 int Matcher::searchByProjection(const Frame::Ptr& last_frame,
                                 const Frame::Ptr& curr_frame) {
-  return Matcher::searchByProjection(unordered_set<Frame::Ptr>{last_frame}, curr_frame);
+  return Matcher::searchByProjection(unordered_set<Frame::Ptr>{last_frame},
+                                     curr_frame);
 }
 
 int Matcher::searchByProjection(const unordered_set<Frame::Ptr>& local_co_kfs,
@@ -245,14 +247,15 @@ int searchForTriangulation(const Frame::Ptr& keyframe_1,
           continue;
         const Mat33 F_2_1 =
             geometry::getFundamentalByPose(keyframe_1, keyframe_2);
+        const Feature::Ptr& feat_2 = feats_2[best_idx_2];
         const double dist_1 = geometry::pointToEpiLineDist(
                          feat_1->pt_, feat_2->pt_, F_2_1, true),
                      dist_2 = geometry::pointToEpiLineDist(
                          feat_1->pt_, feat_2->pt_, F_2_1, false);
-        const int chi2_thresh = 3.84;  // One degree chi-square p-value;
+        const double chi2_thresh = 3.84;  // One degree chi-square p-value;
         const vector<double>& sigma2s = Config::scale_level_sigma2();
         if (dist_1 >= chi2_thresh * sigma2s.at(feat_1->level_) ||
-            dist_2 >= chi2_thresh * sigma2s.at(feat_2->level_)
+            dist_2 >= chi2_thresh * sigma2s.at(feat_2->level_))
           continue;
         matches[idx_1] = best_idx_2;
         matched[best_idx_2] = true;
@@ -270,8 +273,6 @@ int searchForTriangulation(const Frame::Ptr& keyframe_1,
   }
   return n_matches;
 }
-
-}  // namespace mono_slam
 
 namespace matcher_utils {
 

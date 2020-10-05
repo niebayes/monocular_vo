@@ -10,11 +10,9 @@ Tracking::Tracking() : state_(State::NOT_INITIALIZED_YET) {
   detector_ = cv::ORB::create(Config::max_n_feats());
 }
 
-Tracking::~Tracking() { delete cam_; }
-
 void Tracking::addImage(const cv::Mat& img) {
   // FIXME Would it be better if using raw pointer for camera?
-  curr_frame_ = make_shared<Frame>(img, std::move(cam_), voc_, detector_);
+  curr_frame_ = make_shared<Frame>(img, cam_, voc_, detector_);
   trackCurrentFrame();
   // Update constant velocity model, aka. relative motion.
   T_curr_last_ = curr_frame_->pose() * last_frame_->pose().inverse();
@@ -194,6 +192,6 @@ void Tracking::setLocalMapper(sptr<LocalMapping> local_mapper) {
 void Tracking::setMap(Map::Ptr map) { map_ = map; }
 void Tracking::setViewer(sptr<Viewer> viewer) { viewer_ = viewer; }
 void Tracking::setVocabulary(const sptr<Vocabulary>& voc) { voc_ = voc; }
-void Tracking::setCamera(Camera* cam) { cam_ = cam; }
+void Tracking::setCamera(Camera::Ptr cam) { cam_ = cam; }
 
 }  // namespace mono_slam

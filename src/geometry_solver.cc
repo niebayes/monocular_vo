@@ -236,7 +236,7 @@ bool P3PRansac(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
 
   // Obtain matched map points and features which form the 3D-2D correspondences
   // used in P3P.
-  vector<MapPoint> points;  // Matched map points fetched from keyframe.
+  vector<MapPoint::Ptr> points;  // Matched map points fetched from keyframe.
   points.reserve(num_valid_matches);
   vector<Feature::Ptr> feats_f;  // Matched features in frame.
   feats_f.reserve(num_valid_matches);
@@ -262,16 +262,16 @@ bool P3PRansac(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
     Mat33 feature_vectors, world_points;
     int c = 0;
     for (int i : hypo_set) {
-      feature_vectors.col(c) = frame->cam_->pixel2bear(feats_f[i]->pt_));
-      world_points.col(c) = points[i].pos();
+      feature_vectors.col(c) = frame->cam_->pixel2bear(feats_f[i]->pt_);
+      world_points.col(c) = points[i]->pos();
       ++c;
     }
 
     // Perform P3P solving.
     vector<SE3> T_c_w_vec;  // Four solutions.
     // Kneip P3P may fail in the case that all points are colinear.
-    if (!geometry::P3PSolver::computePose(feature_vectors, world_points,
-                                          T_c_w_vec)) {
+    if (!geometry::P3PSolver::computePoses(feature_vectors, world_points,
+                                           T_c_w_vec)) {
       has_found = true;
       continue;
     }
@@ -389,75 +389,6 @@ void decomposeEssential(const Mat33& E, vector<Mat33>& Rs, vector<Vec3>& ts) {
   const Vec3& u3 = U.rightCols(1);
   ts[0] = u3;
   ts[1] = -u3;
-}
-
-void normalizePoints(const MatXX& pts, MatXX& normalized_pts, Mat33& T) {
-  const int num_pts = pts.cols();
-  CHECK_GE(num_pts, 0);
-
-  // Mean.
-  const Vec2 mean = pts.topRows(2).rowwise().sum();
-  // Rescale factor.
-  const double scale =
-      std::sqrt(2. / (pts.topRows(2) - mean).squaredNorm() / num_pts);
-  // Normalization matrix.
-  T << scale, 0., -scale * mean.x(), 0., scale, -scale * mean.y(), 0., 0., 1.;
-  // Perform normalization.
-  normalized_pts = T * pts;
-}
-
-void triangulateLin(const Vec2& pt_1, const Vec2& pt_2, const Mat34& M_1,
-                    const Mat34& M_2, Vec3& point) {
-  //! A could be [6 x 4] or [4 x 4].
-  MatXX A(6, 4);
-  A.topRows(3) = geometry::to_skew(pt_1.homogeneous()) * M_1;
-  A.bottomRows(3) = geometry::to_skew(pt_2.homogeneous()) * M_2;
-
-  // Compute 3D points using SVD.
-  auto svd = A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
-  point = svd.matrixV().rightCols(1).colwise().hnormalized();
-}
-
-double computeReprErr(const Vec3& point, const Vec2& pt, const Mat33& K) {
-  const Vec3& repr_point = K * point;
-  // Perspective division.
-  const double repr_x = repr_point(0) / repr_point(2);
-  const double repr_y = repr_point(1) / repr_point(2);
-  return ((pt.x() - repr_x) * (pt.x() - repr_x) +
-          (pt.y() - repr_y) * (pt.y() - repr_y));
-}
-
-double pointToEpiLineDist(const Vec2& pt_1, const Vec2& pt_2,
-                          const Mat33& F_2_1, const bool reverse = false) {
-  if (!reverse) {
-    // Epipolar line in image 2.
-    const Vec3 epi_line = F_2_1 * pt_1.homogeneous();
-    const double &a = epi_line(0), &b = epi_line(1), &c = epi_line(2);
-    // Return distance between image point and epipolar line in image 2.
-    return (std::abs((a * pt_2.x() + b * pt_2.y() + c)) /
-            std::sqrt(a * a + b * b));
-  } else {
-    // Epipolar line in image 1.
-    const Vec3 epi_line = pt_2.homogeneous().transpose() * F_2_1;
-    const double &a = epi_line(0), &b = epi_line(1), &c = epi_line(2);
-    // Return distance between image point and epipolar line in image 1.
-    return (std::abs((a * pt_1.x() + b * pt_1.y() + c)) /
-            std::sqrt(a * a + b * b));
-  }
-}
-
-Mat33 getFundamentalByPose(const Frame::Ptr& frame_1,
-                           const Frame::Ptr& frame_2) {
-  const SE3 T_2_1 = frame_2->pose() * frame_1->pose().inverse();
-  const Mat33 &K1 = frame_1->cam_->K(), &K2 = frame_2->cam_->K();
-  return K1.transpose().inverse() * to_skew(T_2_1.translation()) *
-         T_2_1.rotationMatrix() * K2.inverse();
-}
-
-Mat33 to_skew(const Vec3& vec) {
-  Mat33 skew_mat;
-  skew_mat << 0., -vec(2), vec(1), vec(2), 0., -vec(0), -vec(1), vec(0), 0.;
-  return skew_mat;
 }
 
 }  // namespace geometry

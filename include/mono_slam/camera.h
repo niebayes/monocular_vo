@@ -8,6 +8,7 @@ namespace mono_slam {
 class Camera {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  using Ptr = sptr<Camera>;
 
   // Empty constructor used only when setting camera parameters.
   Camera();

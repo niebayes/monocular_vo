@@ -69,6 +69,7 @@
 #include <vector>
 #include "sophus/se3.hpp"
 
+namespace mono_slam {
 namespace geometry {
 
 /**
@@ -133,5 +134,6 @@ public:
 #include "mono_slam/geometry_solver/kneip_p3p.hpp"
 
 }  // namespace geometry
+}  // namespace mono_slam
 
 #endif  // UZH_RANSAC_KNEIP_P3P_H_

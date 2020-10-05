@@ -3,6 +3,7 @@
 
 #include "mono_slam/common_include.h"
 #include "mono_slam/frame.h"
+#include "mono_slam/geometry_solver/kneip_p3p.h"
 
 namespace mono_slam {
 
@@ -70,19 +71,20 @@ void fundamental8Point(const MatXX& pts_1, const MatXX& pts_2, Mat33& F);
 void decomposeEssential(const Mat33& E, vector<Mat33>& Rs, vector<Vec3>& ts);
 
 // FIXME Inline at here and define at another place, inline still works?
-inline void normalizePoints(const MatXX& pts, MatXX& normalized_pts, Mat33& T);
+void normalizePoints(const MatXX& pts, MatXX& normalized_pts, Mat33& T);
 
-inline void triangulateLin(const Vec2& pt_1, const Vec2& pt_2, const Mat34& M_1,
-                           const Mat34& M_2, Vec3& point);
+void triangulateLin(const Vec2& pt_1, const Vec2& pt_2, const Mat34& M_1,
+                    const Mat34& M_2, Vec3& point);
 
-inline double computeReprErr(const Vec3& point, const Vec2& pt, const Mat33& K);
+double computeReprErr(const Vec3& point, const Vec2& pt, const Mat33& K);
 
-inline double pointToEpiLineDist(const Vec2& pt_1, const Vec2& pt_2, const Mat33& F_2_1, const bool reverse =false);
+double pointToEpiLineDist(const Vec2& pt_1, const Vec2& pt_2,
+                          const Mat33& F_2_1, const bool reverse = false);
 
-inline Mat33 getFundamentalByPose(const Frame::Ptr& frame_1,
-                                  const Frame::Ptr& frame_2);
+Mat33 getFundamentalByPose(const Frame::Ptr& frame_1,
+                           const Frame::Ptr& frame_2);
 
-inline Mat33 to_skew(const Vec3& vec);
+Mat33 to_skew(const Vec3& vec);
 
 }  // namespace geometry
 }  // namespace mono_slam

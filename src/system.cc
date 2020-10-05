@@ -1,14 +1,14 @@
 #include "mono_slam/system.h"
 
-#include "mono_slam/local_mapping.h"
 #include "mono_slam/camera.h"
 #include "mono_slam/common_include.h"
 #include "mono_slam/config.h"
 #include "mono_slam/dataset.h"
 #include "mono_slam/initialization.h"
-#include "mono_slam/tracking.h"
+#include "mono_slam/local_mapping.h"
 #include "mono_slam/map.h"
 #include "mono_slam/matcher.h"
+#include "mono_slam/tracking.h"
 #include "mono_slam/viewer.h"
 
 namespace mono_slam {
@@ -31,16 +31,15 @@ bool System::init() {
 
   // Load vocabulary.
   sptr<Vocabulary> voc = make_shared<Vocabulary>((string)config["voc_file"]);
-  
+
   // Load timestamps.
   const string& timestamp_file = config["timestamp_file"];
   arma::mat timestamps_mat;
   if (timestamp_file.empty())
     LOG(WARNING) << "No timestamp file.";
-  else 
+  else
     timestamps_mat.load(timestamp_file, arma::file_type::auto_detect, true);
   timestamps_ = arma::conv_to<vector<double>>::from(timestamps_mat);
-
 
   // Set camera parameters.
   const double& fx = config["fx"];
@@ -52,7 +51,7 @@ bool System::init() {
   const double& p1 = config["p1"];
   const double& p2 = config["p2"];
   const Vec4 dist_coeffs{k1, k2, p1, p2};
-  uptr<Camera> cam = make_unique<Camera>();
+  sptr<Camera> cam = make_shared<Camera>();
   cam->init(fx, fy, cx, cy, dist_coeffs);
 
   // Release the file as soon as possible.
@@ -69,7 +68,7 @@ bool System::init() {
   tracker_->setMap(map_);
   tracker_->setViewer(viewer_);
   tracker_->setVocabulary(voc);
-  tracker_->setCamera(cam.get());
+  tracker_->setCamera(cam);
 
   local_mapper_->setSystem(shared_from_this());
   local_mapper_->setTracker(tracker_);

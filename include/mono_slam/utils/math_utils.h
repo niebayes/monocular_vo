@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "glog/logging.h"
-#include "mono_slam/config.h"  
+#include "mono_slam/config.h"
 
 using namespace mono_slam;
 
@@ -40,7 +40,7 @@ inline Mat34 kRt2mat(const Mat33& K, const Mat33& R, const Vec3& t) {
 
 // FIXME Should this function "sort" data vector in place?
 template <typename T>
-T get_median(std::vector<T>& data_vec) {
+inline T get_median(std::vector<T>& data_vec) {
   CHECK_EQ(data_vec.empty(), false);
   typename std::vector<T>::iterator it = std::next(
       data_vec.begin(), std::floor(static_cast<int>(data_vec.size()) / 2));
@@ -50,11 +50,13 @@ T get_median(std::vector<T>& data_vec) {
 
 // Estimate the image pyramid level of the feature in the given frame
 // corresponding to this map point.
-// FIXME 
+// FIXME
 inline int predictLevel(const double dist) {
   // const double level =
-  //     std::log(max_scale_invariance_ / dist) / std::log(Config::scale_factor());
+  //     std::log(max_scale_invariance_ / dist) /
+  //     std::log(Config::scale_factor());
   // return std::round(std::clamp(level, 0, Config::scale_n_levels()));
+  return 0;
 }
 
 }  // namespace math_utils

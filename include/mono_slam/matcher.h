@@ -31,8 +31,7 @@ class Matcher {
 namespace matcher_utils {
 
 //@ref http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
-static inline int computeDescDist(const cv::Mat& desc_1,
-                                            const cv::Mat& desc_2);
+int computeDescDist(const cv::Mat& desc_1, const cv::Mat& desc_2);
 
 }  // namespace matcher_utils
 }  // namespace mono_slam

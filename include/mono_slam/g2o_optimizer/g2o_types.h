@@ -4,7 +4,9 @@
 // FIXME which definition is in which file?
 #include "g2o/core/block_solver.h"
 #include "g2o/core/optimization_algorithm_levenberg.h"
-#include "g2o/core/robust_kernel.h"
+#include "g2o/core/robust_kernel_impl.h"
+#include "g2o/core/solver.h"
+#include "g2o/core/sparse_optimizer.h"
 #include "g2o/solvers/csparse/linear_solver_csparse.h"
 #include "g2o/types/sba/types_sba.h"  // g2o::VertexSBAPointXYZ
 #include "g2o/types/sba/types_six_dof_expmap.h"  // g2o::VertexSE3Expmap, g2o::EdgeProjectXYZ2UV, g2o::EdgeSE3ProjectXYZOnlyPose
@@ -14,10 +16,12 @@
 
 #define CAMERA_PARAMETER_ID 0
 
-namespace g2o_types {
+namespace mono_slam {
 
 class Frame;
 class Feature;
+
+namespace g2o_types {
 
 // Solver type typedefs.
 using BlockSolver = g2o::BlockSolver_6_3;
@@ -45,5 +49,6 @@ struct EdgeContainerPoseOnly {
 };
 
 }  // namespace g2o_types
+}  // namespace mono_slam
 
 #endif  // MONO_SLAM_G2O_OPTIMIZER_TYPES_H_

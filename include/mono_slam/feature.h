@@ -35,9 +35,8 @@ struct Feature {
       : frame_(frame),
         pt_(pt),
         descriptor_(descriptor),
-        level_(level), 
-        is_outlier_(false)
-        {}
+        level_(level),
+        is_outlier_(false) {}
 };
 
 namespace feat_utils {
@@ -47,7 +46,7 @@ static inline sptr<MapPoint> getPoint(const sptr<Feature>& feat) {
   if (!feat || feat->is_outlier_) return nullptr;
   if (feat->point_.expired()) return nullptr;
   const sptr<MapPoint>& point = feat->point_.lock();
-  if (point->to_be_deleted_) return nullptr;
+  // if (point->to_be_deleted_) return nullptr;
   return point;
 }
 

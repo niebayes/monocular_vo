@@ -1,11 +1,12 @@
-#include "mono_slam/frame.h"
 #include "mono_slam/initialization.h"
-#include "mono_slam/tracking.h"
+
+#include "mono_slam/frame.h"
 #include "mono_slam/g2o_optimizer.h"
 #include "mono_slam/geometry_solver.h"
 #include "mono_slam/map.h"
 #include "mono_slam/map_point.h"
 #include "mono_slam/matcher.h"
+#include "mono_slam/tracking.h"
 
 namespace mono_slam {
 
@@ -104,7 +105,8 @@ bool Initializer::buildInitMap() {
        scale_factor * (curr_frame_->cam_->pos() - ref_frame_->cam_->pos()));
   curr_frame_->setPose(T_c_w_curr);
   // Scale the position of map points.
-  // for (const auto& point : points) point->setPos(scale_factor * point->pos());
+  // for (const auto& point : points) point->setPos(scale_factor *
+  // point->pos());
 
   return true;
 }

@@ -8,29 +8,35 @@
 #include "mono_slam/map.h"
 #include "mono_slam/map_point.h"
 
+class Feature;
+class Frame;
+class MapPoint;
+class Map;
+
 namespace mono_slam {
 
 // FIXME Do we need to add a critical section whenever we access a shared
 // resource?
 
 void globalBA(const Map::Ptr& map, const int n_iters = 20) {
-  // Setup g2o optimizer.
-  g2o::SparseOptimizer optimizer;
-  g2o_utils::setupG2oOptimizer(&optimizer);
+  const list<Frame::Ptr>& kfs = map->getAllKeyframes();
 
-  const list<Frame::Ptr>& kfs = map->getAllkeyframes();
+  // Setup g2o optimizer.
+  sptr<g2o::SparseOptimizer> optimizer;
+  g2o_utils::setupG2oOptimizer(optimizer, kfs.front()->cam_->K());
+
   // Chi-square test threshold used as the width of the robust huber kernel and
   // rejection of outliers in post-processing.
   const double chi2_thresh = 5.991;
   // Edges container used for post-processing.
-  list<uptr<g2o_types::EdgeContainer>> edge_container;
+  list<g2o_types::EdgeContainer> edge_container;
 
   // Iterate all keyframes in the map.
   int v_id = 0;  // Vertex id.
   for (const Frame::Ptr& kf : kfs) {
     // Create frame vertex. Fixed if it's the first frame.
     kf->v_frame_ = g2o_utils::createG2oVertexFrame(kf, v_id++, kf->id_ == 0);
-    assert(optimizer.addVertex(kf->v_frame_));
+    assert(optimizer->addVertex(kf->v_frame_.get()));
     // Iterate all features and linked map points observed by this keyframe.
     // FIXME .lock() changes state?
     // FIXME Frequent weak_ptr.lock() operations incur large overhead?
@@ -46,18 +52,20 @@ void globalBA(const Map::Ptr& map, const int n_iters = 20) {
       const auto& e_obs = g2o_utils::createG2oEdgeObs(
           kf->v_frame_, point->v_point_, feat->pt_, 1. / (1 << feat->level_),
           std::sqrt(chi2_thresh));
-      assert(optimizer.addVertex(point->v_point_));
-      optimizer.addEdge(e_obs);
+      assert(optimizer->addVertex(point->v_point_.get()));
+      optimizer->addEdge(e_obs.get());
       edge_container.emplace_back(e_obs, kf, feat);
     }
   }
 
   // Run g2o optimizer.
-  g2o_utils::runG2oOptimizer(&optimizer, n_iters);
+  g2o_utils::runG2oOptimizer(optimizer, n_iters);
 
   // Update structure and motion.
   for (const Frame::Ptr& kf : kfs) {
-    kf->setPose(kf->v_frame_->estimate());
+    SE3 estimate_(kf->v_frame_->estimate().rotation(),
+                  kf->v_frame_->estimate().translation());
+    kf->setPose(estimate_);
     // FIXME reset or set to nullptr?
     kf->v_frame_.reset();
     for (const Feature::Ptr& feat : kf->feats_) {
@@ -75,8 +83,6 @@ void globalBA(const Map::Ptr& map, const int n_iters = 20) {
       // TODO(bayes) These marking logic can be wrapped into removeObservation()
       // FIXME Will it help if a feature can be marked as outlier?
       edge.feat_->is_outlier_ = true;  // FIXME Does this help in deletion?
-      // FIXME Will it help if map point can be marked as outlier?
-      edge.feat_->point_.lock()->is_outlier_ = true;
       // TODO(bayes) Wrap the removal logic into the function below.
       map->removeObservation(edge.keyframe_, edge.feat_);
     } else {
@@ -89,18 +95,18 @@ void globalBA(const Map::Ptr& map, const int n_iters = 20) {
 
 int optimizePose(const Frame::Ptr& frame, const int n_iters = 10) {
   // Setup g2o optimizer.
-  g2o::SparseOptimizer optimizer;
-  g2o_utils::setupG2oOptimizer(&optimizer);
+  sptr<g2o::SparseOptimizer> optimizer;
+  g2o_utils::setupG2oOptimizer(optimizer, frame->cam_->K());
 
   // Chi-square test threshold used as the width of the robust huber kernel and
   // for rejection of outliers during post-processing.
   const double chi2_thresh = 5.991;
   // Store the added edges used for post-processing.
-  list<uptr<g2o_types::EdgeContainerPoseOnly>> edge_container;
+  list<g2o_types::EdgeContainerPoseOnly> edge_container;
 
   // Create g2o Frame vertex.
   frame->v_frame_ = g2o_utils::createG2oVertexFrame(frame, frame->id_);
-  assert(optimizer.addVertex(frame->v_frame_));
+  assert(optimizer->addVertex(frame->v_frame_.get()));
 
   // Iterate all frame->features->map_points.
   for (const Feature::Ptr& feat : frame->feats_) {
@@ -108,10 +114,10 @@ int optimizePose(const Frame::Ptr& frame, const int n_iters = 10) {
     if (!point) continue;
     // Create g2o pose-only unary edge.
     const auto& e_pose_only = g2o_utils::createG2oEdgePoseOnly(
-        frame->v_frame_, feat.lock()->pt_, point->pos_, frame->cam_->K(),
+        frame->v_frame_, feat->pt_, point->pos_, frame->cam_->K(),
         1. / (1 << feat->level_), std::sqrt(chi2_thresh));
-    assert(optimizer.addEdge(e_pose_only));
-    edge_container.emplace_back(e_pose_only, feat.lock());
+    assert(optimizer->addEdge(e_pose_only.get()));
+    edge_container.emplace_back(e_pose_only, feat);
   }
 
   // Alternatively perform 4 optimizations each for 10 iterations. Classify
@@ -122,9 +128,11 @@ int optimizePose(const Frame::Ptr& frame, const int n_iters = 10) {
   for (int i = 0; i < 4; ++i) {
     // Reset initial pose estimate in case that the last optimization make it
     // diverged.
-    frame->v_frame_->setEstimate(frame->pose());
+    g2o::SE3Quat init_pose(frame->pose().rotationMatrix(),
+                           frame->pose().translation());
+    frame->v_frame_->setEstimate(init_pose);
     // Run g2o optimizer.
-    g2o_utils::runG2oOptimizer(&optimizer, n_iters);
+    g2o_utils::runG2oOptimizer(optimizer, n_iters);
 
     final_num_inliers = 0;  // Reset at each optimization.
     for (const auto& edge : edge_container) {
@@ -153,7 +161,9 @@ int optimizePose(const Frame::Ptr& frame, const int n_iters = 10) {
   // FIXME Shall we do this right now?
 
   // Update frame pose.
-  frame->setPose(frame->v_frame_->estimate());
+  SE3 estimate_(frame->v_frame_->estimate().rotation(),
+                frame->v_frame_->estimate().translation());
+  frame->setPose(estimate_);
   frame->v_frame_.reset();
   return final_num_inliers;
 }
@@ -161,8 +171,8 @@ int optimizePose(const Frame::Ptr& frame, const int n_iters = 10) {
 void localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
              const int n_iters = 5) {
   // Setup g2o optimizer.
-  g2o::SparseOptimizer optimizer;
-  g2o_utils::setupG2oOptimizer(&optimizer);
+  sptr<g2o::SparseOptimizer> optimizer;
+  g2o_utils::setupG2oOptimizer(optimizer, keyframe->cam_->K());
 
   // Obtain covisible keyframes which are then going to be optimized.
   const forward_list<Frame::Ptr>& co_kfs = keyframe->getCoKfs();
@@ -175,18 +185,18 @@ void localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
   //! container is unknown and cannot be predicted precisely in advance which
   //! excludes the most general container -- "vector".
   // Store the added g2o edges and their vertices.
-  list<uptr<g2o_types::EdgeContainer>> edge_container;
+  list<g2o_types::EdgeContainer> edge_container;
   // Store the map points to be optimized.
-  list<sptr<MapPoint>> points;
+  list<MapPoint::Ptr> points;
   // Store the keyframes involved in optimization while fixed.
-  list<sptr<Frame::Ptr>> fixed_kfs;
+  list<Frame::Ptr> fixed_kfs;
 
   // Iterate all covisible keyframes.
   int v_id = 0;  // Vertex id.
   for (const Frame::Ptr& kf : co_kfs) {
     // Fixed if it's the first frame.
     kf->v_frame_ = g2o_utils::createG2oVertexFrame(kf, v_id++, kf->id_ == 0);
-    assert(optimizer.addVertex(kf->v_frame_));
+    assert(optimizer->addVertex(kf->v_frame_.get()));
 
     // Iterate all map points observed by this keyframe.
     for (const Feature::Ptr& feat : kf->feats_) {
@@ -194,7 +204,7 @@ void localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
       if (!point || point->curr_ba_keyframe_id_ == kf->id_) continue;
       point->curr_ba_keyframe_id_ = kf->id_;
       point->v_point_ = g2o_utils::createG2oVertexPoint(point, v_id++);
-      assert(optimizer.addVertex(point->v_point_));
+      assert(optimizer->addVertex(point->v_point_.get()));
       points.push_back(point);
       //! Delay the iteration of observations of each map point to avoid many
       //! repeat comparisons.
@@ -210,7 +220,7 @@ void localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
       if (kf->v_frame_ == nullptr) {
         // If does not have a frame yet, kf is selected as afixed keyframe.
         kf->v_frame_ = g2o_utils::createG2oVertexFrame(kf, v_id++, true);
-        assert(optimzier.addVertex(kf->v_frame_));
+        assert(optimizer->addVertex(kf->v_frame_.get()));
         fixed_kfs.push_back(kf);
       }
 
@@ -223,23 +233,24 @@ void localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
   }
 
   // Run g2o optimizer.
-  g2o_utils::runG2oOptimizer(&optimizer, n_iter);
+  g2o_utils::runG2oOptimizer(optimizer, n_iters);
 
   // Filter out edges having large reprojection error or negative depth value.
   for (const auto& edge : edge_container) {
-    auto& e_obs = edge->e_obs_;
-    // FIXME Why only do positive depth checking at here only?
-    if (e_obs_->chi2() > chi2_thresh || !e_obs_->isDepthPositive())
+    auto& e_obs = edge.e_obs_;
+    if (e_obs->chi2() > chi2_thresh)
       e_obs->setLevel(1);  // Not involved in optimization from now on.
     e_obs->setRobustKernel(nullptr);  // Not using robust kernel from now on.
   }
 
   // Run g2o optimizer again.
-  g2o_utils::runG2oOptimizer(&optimizer, n_iter);
+  g2o_utils::runG2oOptimizer(optimizer, n_iters);
 
   // Update structure and motion.
   for (const Frame::Ptr& kf : co_kfs) {
-    kf->setPose(kf->v_frame_->estimate());
+    SE3 estimate_(kf->v_frame_->estimate().rotation(),
+                  kf->v_frame_->estimate().translation());
+    kf->setPose(estimate_);
     kf->v_frame_.reset();
   }
   for (const MapPoint::Ptr& point : points) {
@@ -251,8 +262,8 @@ void localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
 
   // Remove observations with too large reprojection error.
   for (const auto& edge : edge_container)
-    if (edge->e_obs_->chi2() > chi2_thresh)
-      map->removeObservation(edge->keyframe_, edge->feat_);
+    if (edge.e_obs_->chi2() > chi2_thresh)
+      map->removeObservation(edge.keyframe_, edge.feat_);
 }
 
 }  // namespace mono_slam

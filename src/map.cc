@@ -118,6 +118,7 @@ bool KeyframeDataBase::detectRelocCandidates(const Frame::Ptr& frame,
                 [](const pair<double, Frame::Ptr>& p) {
                   p.second->is_candidate_already_ = false;
                 });
+  return true;
 }
 
 //##############################################################################

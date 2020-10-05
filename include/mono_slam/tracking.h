@@ -1,10 +1,10 @@
 #ifndef MONO_SLAM_FRONT_END_TRACKING_H_
 #define MONO_SLAM_FRONT_END_TRACKING_H_
 
-#include "mono_slam/local_mapping.h"
 #include "mono_slam/common_include.h"
 #include "mono_slam/frame.h"
 #include "mono_slam/initialization.h"
+#include "mono_slam/local_mapping.h"
 #include "mono_slam/map.h"
 #include "mono_slam/system.h"
 #include "mono_slam/viewer.h"
@@ -55,7 +55,7 @@ class Tracking {
   void setMap(Map::Ptr map);
   void setViewer(sptr<Viewer> viewer);
   void setVocabulary(const sptr<Vocabulary>& voc);
-  void setCamera(Camera* cam);
+  void setCamera(Camera::Ptr cam);
 
   void reset();
 
@@ -85,7 +85,7 @@ class Tracking {
   // User specified objects.
   uptr<Initializer> initializer_ = nullptr;          // Initializer.
   sptr<Vocabulary> voc_ = nullptr;                   // Vocabulary.
-  Camera* cam_ = nullptr;                        // Camera.
+  Camera::Ptr cam_ = nullptr;                        // Camera.
   cv::Ptr<cv::FeatureDetector> detector_ = nullptr;  // Feature detector.
 };
 

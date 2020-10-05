@@ -1,8 +1,9 @@
 #include "mono_slam/map_point.h"
-#include "mono_slam/frame.h"
+
 #include "mono_slam/feature.h"
-#include "mono_slam/utils/math_utils.h"
+#include "mono_slam/frame.h"
 #include "mono_slam/matcher.h"
+#include "mono_slam/utils/math_utils.h"
 
 namespace mono_slam {
 
@@ -52,8 +53,8 @@ void MapPoint::updateBestFeature() {
     dists[i][i] = 0;
     // Computing upper triangular suffices.
     for (int j = i + 1; j < num_feats; ++j) {  // col j.
-      const int dist = matcher_utils::computeDescDist(
-          feats[i]->descriptor_, feats[j]->descriptor_);
+      const int dist = matcher_utils::computeDescDist(feats[i]->descriptor_,
+                                                      feats[j]->descriptor_);
       dists[i][j] = dist;
       dists[j][i] = dist;
     }
@@ -63,7 +64,7 @@ void MapPoint::updateBestFeature() {
   int least_median_dist = 256;
   int idx = 0;
   for (int i = 0; i < num_feats; ++i) {
-    vector<int>& dists_row_i(dists[i].begin(), dists[i].end());
+    vector<int> dists_row_i(dists[i].begin(), dists[i].end());
     const int median_dist = math_utils::get_median(dists_row_i);
     if (median_dist < least_median_dist) {
       least_median_dist = median_dist;
@@ -76,18 +77,22 @@ void MapPoint::updateBestFeature() {
 
 void MapPoint::updateMedianViewDirAndScale() {
   u_lock lock(mutex_);
-  vector<Vec3> view_dirs;  // Container for viewing directions.
-  vector<int> levels;      // Container for viewing scales (aka. levels).
+  Vec3 total_view_dir;  // Container for viewing directions.
+  vector<int> levels;   // Container for viewing scales (aka. levels).
+  int n = 0;
   for (const sptr<Feature>& feat : observations_) {
     if (feat->frame_.expired()) continue;
     const auto& frame = feat->frame_.lock();
     const Vec3 unit_bear_vec = frame->cam_->getUnitBearVec(this->pos());
-    view_dirs.push_back(unit_bear_vec);
+    total_view_dir += unit_bear_vec;
     levels.push_back(feat->level_);
+    ++n;
   }
 
   // Obtain median.
-  median_view_dir_ = math_utils::get_median(view_dirs);
+  //! Since the median of circular data is not well-defined, we simply use mean
+  //! to replace it. Hopefully, we will solve it soon.
+  median_view_dir_ = total_view_dir / n;
   median_view_scale_ = math_utils::get_median(levels);
 }
 

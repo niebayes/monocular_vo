@@ -25,7 +25,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
   const int id_;                   // Unique frame identity.
   bool is_keyframe_;               // Is this frame a keyframe?
   Features feats_;                 // Features extracted in this frame.
-  Camera* cam_ = nullptr;          // Linked camera.
+  Camera::Ptr cam_ = nullptr;      // Linked camera.
   DBoW3::BowVector bow_vec_;       // Bag of words vector.
   DBoW3::FeatureVector feat_vec_;  // Feature vector.
 
@@ -46,7 +46,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
   forward_list<Frame::Ptr> co_kfs_;
   forward_list<int> co_weights_;
 
-  Frame(const cv::Mat& img, Camera* cam, const sptr<Vocabulary>& voc,
+  Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
         const cv::Ptr<cv::FeatureDetector>& detector);
 
   inline const SE3& pose() const { return cam_->pose(); }
