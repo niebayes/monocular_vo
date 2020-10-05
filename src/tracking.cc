@@ -6,6 +6,8 @@
 
 namespace mono_slam {
 
+class Optimizer;
+
 Tracking::Tracking() : state_(State::NOT_INITIALIZED_YET) {
   detector_ = cv::ORB::create(Config::max_n_feats());
 }
@@ -192,6 +194,5 @@ void Tracking::setLocalMapper(sptr<LocalMapping> local_mapper) {
 void Tracking::setMap(Map::Ptr map) { map_ = map; }
 void Tracking::setViewer(sptr<Viewer> viewer) { viewer_ = viewer; }
 void Tracking::setVocabulary(const sptr<Vocabulary>& voc) { voc_ = voc; }
-void Tracking::setCamera(Camera::Ptr cam) { cam_ = cam; }
 
 }  // namespace mono_slam

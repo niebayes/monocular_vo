@@ -135,4 +135,8 @@ void Map::insertKeyframe(Frame::Ptr keyframe) {
   keyframes_.push_back(keyframe);
 }
 
+void Map::removeObservation(const Frame::Ptr& keyframe, const Feature::Ptr& feat) {
+  // 
+}
+
 }  // namespace mono_slam

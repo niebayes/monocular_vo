@@ -4,19 +4,19 @@
 
 using namespace mono_slam;
 
-DEFINE_string(config_file, "app/config_kitti.yaml", "Configuration file.");
-
+DEFINE_string(c, "app/config_kitti.yaml", "Configuration file.");
 
 int main(int argc, char** argv) {
-  GFLAGS_NAMESPACE::ParseCommandLineFlags(&argc, &argv, true);
-  if (argc != 1) {
+  GFLAGS_NAMESPACE::ParseCommandLineFlags(&argc, &argv, false);
+  google::InitGoogleLogging(argv[0]);
+  google::LogToStderr();
+  if (argc != 2) {
     LOG(INFO) << "Usage: mono_kitti -c=<config_file>";
     LOG(WARNING) << "Use default configuration.";
   }
-  Tracking::Ptr tracker = make_shared<Tracking>();
-  System::Ptr system = make_shared<System>(FLAGS_config_file);
-  CHECK_EQ(system->Init(), true);
-  system->Run();
+  System::Ptr system = make_shared<System>(FLAGS_c);
+  CHECK_EQ(system->init(), true);
+  system->run();
 
   return EXIT_SUCCESS;
 }

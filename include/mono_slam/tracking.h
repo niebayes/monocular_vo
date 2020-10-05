@@ -54,7 +54,6 @@ class Tracking {
   void setMap(Map::Ptr map);
   void setViewer(sptr<Viewer> viewer);
   void setVocabulary(const sptr<Vocabulary>& voc);
-  void setCamera(Camera::Ptr cam);
 
   void reset();
 

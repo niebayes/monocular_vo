@@ -16,7 +16,7 @@
 
 #define CAMERA_PARAMETER_ID 0
 
-// FIXME Is it necessary forward declare g2o stuff here?
+// FIXME Is it necessary to forward declare g2o stuff here?
 // namespace g2o {
 // class EdgeProjectXYZ2UV;
 // class EdgeSE3ProjectXYZOnlyPose;

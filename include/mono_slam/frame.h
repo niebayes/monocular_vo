@@ -46,6 +46,12 @@ class Frame : public std::enable_shared_from_this<Frame> {
   forward_list<Frame::Ptr> co_kfs_;
   forward_list<int> co_weights_;
 
+  // Image bounds.
+  static double x_min_;
+  static double x_max_;
+  static double y_min_;
+  static double y_max_;
+
   Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
         const cv::Ptr<cv::FeatureDetector>& detector);
 
@@ -100,13 +106,6 @@ class Frame : public std::enable_shared_from_this<Frame> {
   // FIXME Personally, this method should be in map.
   // Erase the links between this frame and other stuff.
   void erase();
-
- private:
-  // Image bounds.
-  static double x_min_;
-  static double x_max_;
-  static double y_min_;
-  static double y_max_;
 };
 
 namespace frame_utils {

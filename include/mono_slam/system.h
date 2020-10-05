@@ -20,7 +20,6 @@ class LocalMapping;
 class Map;
 class Viewer;
 class Dataset;
-class Camera;
 class Initializer;
 
 class System : public std::enable_shared_from_this<System> {

@@ -1,3 +1,8 @@
+#include "mono_slam/geometry_solver/kneip_p3p.h"
+
+namespace mono_slam {
+namespace geometry {
+
 bool P3PSolver::computePoses(const Eigen::Matrix3d& feature_vectors,
                        const Eigen::Matrix3d& world_points,
                        std::vector<Sophus::SE3d>& solutions) {
@@ -223,3 +228,6 @@ int P3PSolver::solveQuartic(const Eigen::Matrix<double, 5, 1>& factors,
 
   return 0;
 }
+
+} // namespace geometry
+} // namespace mono_slam

@@ -13,6 +13,12 @@
 
 namespace mono_slam {
 
+class Camera;
+
+double Camera::fx_, Camera::fy_, Camera::cx_, Camera::cy_;
+Mat33 Camera::K_;
+Vec4 Camera::dist_coeffs_;
+
 System::System(const string& config_file) : config_file_(config_file) {}
 
 bool System::init() {
@@ -51,8 +57,12 @@ bool System::init() {
   const double& p1 = config["p1"];
   const double& p2 = config["p2"];
   const Vec4 dist_coeffs{k1, k2, p1, p2};
-  sptr<Camera> cam = make_shared<Camera>();
-  cam->init(fx, fy, cx, cy, dist_coeffs);
+  Camera::fx_ = fx;
+  Camera::fy_ = fy;
+  Camera::cx_ = cx;
+  Camera::cy_ = cy;
+  Camera::K_ = (Mat33() << fx, 0., cx, 0., fy, cy, 0., 0., 1.).finished();
+  Camera::dist_coeffs_ = dist_coeffs;
 
   // Release the file as soon as possible.
   config.release();
@@ -68,7 +78,6 @@ bool System::init() {
   tracker_->setMap(map_);
   tracker_->setViewer(viewer_);
   tracker_->setVocabulary(voc);
-  tracker_->setCamera(cam);
 
   local_mapper_->setSystem(shared_from_this());
   local_mapper_->setTracker(tracker_);

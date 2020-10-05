@@ -5,6 +5,9 @@
 
 namespace mono_slam {
 
+int Frame::frame_cnt_ = 0;
+double Frame::x_min_, Frame::x_max_, Frame::y_min_, Frame::y_max_;
+
 Frame::Frame(const cv::Mat& img, Camera::Ptr cam, const sptr<Vocabulary>& voc,
              const cv::Ptr<cv::FeatureDetector>& detector)
     : id_(frame_cnt_++), is_keyframe_(false), cam_(cam) {

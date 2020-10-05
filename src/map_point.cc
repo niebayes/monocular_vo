@@ -7,6 +7,8 @@
 
 namespace mono_slam {
 
+int MapPoint::point_cnt_ = 0;
+
 MapPoint::MapPoint(const Vec3& pos) : id_(point_cnt_++), pos_(pos) {}
 
 // TODO(bayes) Compute mean_view_dirs_.

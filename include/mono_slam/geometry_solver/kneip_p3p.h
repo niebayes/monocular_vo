@@ -60,8 +60,8 @@
  *
  */
 #pragma once
-#ifndef UZH_RANSAC_KNEIP_P3P_H_
-#define UZH_RANSAC_KNEIP_P3P_H_
+#ifndef MONO_SLAM_GEOMETRY_SOLVER_KNEIP_P3P_H_
+#define MONO_SLAM_GEOMETRY_SOLVER_KNEIP_P3P_H_
 
 #include <Eigen/Dense>
 #include <math.h>
@@ -131,9 +131,7 @@ public:
   static int solveQuartic(const Eigen::Matrix<double, 5, 1> & factors, Eigen::Matrix<double, 4, 1> & real_roots);
 };
 
-#include "mono_slam/geometry_solver/kneip_p3p.hpp"
-
 }  // namespace geometry
 }  // namespace mono_slam
 
-#endif  // UZH_RANSAC_KNEIP_P3P_H_
+#endif  // MONO_SLAM_GEOMETRY_SOLVER_KNEIP_P3P_H_

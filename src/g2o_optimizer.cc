@@ -14,11 +14,12 @@ class Feature;
 class Frame;
 class MapPoint;
 class Map;
+class Camera;
 
 // FIXME Do we need to add a critical section whenever we access a shared
 // resource?
 
-void globalBA(const Map::Ptr& map, const int n_iters = 20) {
+void Optimizer::globalBA(const Map::Ptr& map, const int n_iters) {
   const list<Frame::Ptr>& kfs = map->getAllKeyframes();
 
   // Setup g2o optimizer.
@@ -93,7 +94,7 @@ void globalBA(const Map::Ptr& map, const int n_iters = 20) {
   }
 }
 
-int optimizePose(const Frame::Ptr& frame, const int n_iters = 10) {
+int Optimizer::optimizePose(const Frame::Ptr& frame, const int n_iters) {
   // Setup g2o optimizer.
   sptr<g2o::SparseOptimizer> optimizer;
   g2o_utils::setupG2oOptimizer(optimizer, frame->cam_->K());
@@ -168,8 +169,8 @@ int optimizePose(const Frame::Ptr& frame, const int n_iters = 10) {
   return final_num_inliers;
 }
 
-void localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
-             const int n_iters = 5) {
+void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
+                        const int n_iters) {
   // Setup g2o optimizer.
   sptr<g2o::SparseOptimizer> optimizer;
   g2o_utils::setupG2oOptimizer(optimizer, keyframe->cam_->K());

@@ -87,36 +87,20 @@ list(APPEND SOURCE_FILES
     src/camera.cc
     src/matcher.cc
     src/geometry_solver.cc 
+    src/geometry_solver/kneip_p3p.cc
     src/g2o_optimizer.cc 
     src/config.cc 
     src/dataset.cc 
     src/viewer.cc 
 )
 
-# add_library(my_slam SHARED 
-#     src/system.cc 
-#     src/front_end_tracking.cc 
-#     src/front_end_map_initialization.cc 
-#     src/back_end_local_mapping.cc 
-#     src/map.cc 
-#     src/frame.cc 
-#     src/map_point.cc 
-#     src/camera.cc
-#     src/matcher.cc
-#     src/geometry_solver.cc 
-#     src/g2o_optimizer.cc 
-#     src/keyframe_database.cc
-#     src/config.cc 
-#     src/dataset.cc 
-#     src/viewer.cc 
-# )
 add_library(my_slam SHARED ${SOURCE_FILES})
 target_compile_options(my_slam PRIVATE -O3 -march=native)
 target_link_libraries(my_slam ${LINK_LIBRARIES})
 
-# add_executable(mono_kitti app/mono_kitti.cc)
-# target_compile_options(mono_kitti PRIVATE -O3 -march=native)
-# target_link_libraries(mono_kitti my_slam ${LINK_LIBRARIES})
+add_executable(mono_kitti app/mono_kitti.cc)
+target_compile_options(mono_kitti PRIVATE -O3 -march=native)
+target_link_libraries(mono_kitti my_slam ${LINK_LIBRARIES})
 
 add_executable(my_test src/my_test.cc)
 target_compile_options(my_test PRIVATE -O3 -march=native)

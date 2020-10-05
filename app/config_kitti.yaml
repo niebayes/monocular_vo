@@ -2,12 +2,16 @@
 # Data related:
 ## Dataset path.
 dataset_path: data/dataset/KITTI/seq_00/
+
 ## Image file name format.
 img_file_name_fmt: 06d
+
 ## Image resize factor. A bigger one speeds up tracking.
 img_resize_factor: 1.0
+
 ## Vocabulary file name.
 voc_file: data/vocabulary/orbvoc.dbow3
+
 ## Timestamp file name.
 timestamp_file: ""  # KITTI dataset does not provide timestamps
 
@@ -17,6 +21,7 @@ fx: 718.856
 fy: 718.856
 cx: 607.1928
 cy: 185.2157
+
 ## Distortion coefficients
 k1: 0.0
 k2: 0.0

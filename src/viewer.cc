@@ -2,6 +2,8 @@
 
 namespace mono_slam {
 
+Viewer::Viewer() {}
+
 void Viewer::reset() {}
 
 void Viewer::setMap(const Map::Ptr& map) { map_ = map; }

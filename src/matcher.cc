@@ -189,7 +189,7 @@ int Matcher::searchByBoW(const Frame::Ptr& keyframe, const Frame::Ptr& frame,
   return n_matches;
 }
 
-int searchForTriangulation(const Frame::Ptr& keyframe_1,
+int Matcher::searchForTriangulation(const Frame::Ptr& keyframe_1,
                            const Frame::Ptr& keyframe_2, vector<int>& matches) {
   const vector<Feature::Ptr>& feats_1 = keyframe_1->feats_;
   const vector<Feature::Ptr>& feats_2 = keyframe_2->feats_;

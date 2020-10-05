@@ -3,7 +3,6 @@
 
 #include "mono_slam/common_include.h"
 #include "mono_slam/frame.h"
-#include "mono_slam/geometry_solver/kneip_p3p.h"
 
 namespace mono_slam {
 
@@ -26,9 +25,9 @@ class GeometrySolver {
   static int evaluateFundamentalScore(const Frame::Features& feats_1,
                                       const Frame::Features& feats_2,
                                       const Mat33& F,
-                                      const vector<pair<int, int>>& matches,
+                                      const vector<pair<int, int>>& valid_matches,
                                       vector<bool>& inlier_mask,
-                                      const double noise_sigma = 1.0);
+                                      const double noise_sigma);
 
   // Find the best relative pose by decomposing essential matrix in a RANSAC
   // scheme.
@@ -48,7 +47,7 @@ class GeometrySolver {
                                vector<bool>& triangulate_mask,
                                double& median_parallax,
                                const double repr_tolerance2,
-                               const double min_parallax = 1.0);
+                               const double min_parallax);
 
   // Find the best relative pose frame relocalization candidate keyframe to
   // quering frame.
