@@ -9,27 +9,32 @@
 namespace mono_slam {
 namespace g2o_utils {
 
-static void setupG2oOptimizer(const sptr<g2o::SparseOptimizer>& optimizer,
-                              const Mat33& K) {
+static void setupG2oOptimizer(g2o::SparseOptimizer* optimizer, const Mat33& K) {
   // Set solver.
+  //! Even though we "new" a lot of things without delete, g2o
+  //! internally takes care of them implicitly. Hence no memory leak.
   auto solver = g2o::make_unique<g2o::OptimizationAlgorithmLevenberg>(
       g2o::make_unique<g2o_types::BlockSolver>(
           g2o::make_unique<g2o_types::LinearSolver>()));
   optimizer->setAlgorithm(solver.get());
   const double &f = K(0, 0), &cx = K(0, 2), &cy = K(1, 2), &b = 0.;
-  auto cam_params = make_unique<g2o::CameraParameters>(f, Vec2{cx, cy}, b);
+  g2o::CameraParameters* cam_params =
+      new g2o::CameraParameters(f, Vec2{cx, cy}, b);
   cam_params->setId(CAMERA_PARAMETER_ID);
-  assert(optimizer->addParameter(cam_params.get()));
+  assert(optimizer->addParameter(cam_params));
 }
 
-static void runG2oOptimizer(const sptr<g2o::SparseOptimizer>& optimizer,
-                            const int n_iters) {
+static void runG2oOptimizer(g2o::SparseOptimizer* optimizer, const int n_iters,
+                            double& init_error, double& final_error) {
   // FIXME Any useful options?
   optimizer->initializeOptimization();
+  optimizer->computeActiveErrors();
+  init_error = optimizer->activeChi2();
   optimizer->optimize(n_iters);
+  final_error = optimizer->activeChi2();
 }
 
-static inline sptr<g2o_types::VertexFrame> createG2oVertexFrame(
+static inline uptr<g2o_types::VertexFrame> createG2oVertexFrame(
     const Frame::Ptr& keyframe, const int id, const bool is_fixed = false) {
   auto v_frame = make_unique<g2o_types::VertexFrame>();
   const SE3& pose = keyframe->pose();
@@ -40,31 +45,28 @@ static inline sptr<g2o_types::VertexFrame> createG2oVertexFrame(
   return v_frame;
 }
 
-static inline sptr<g2o_types::VertexPoint> createG2oVertexPoint(
+static inline uptr<g2o_types::VertexPoint> createG2oVertexPoint(
     const MapPoint::Ptr& point, const int id, const bool is_fixed = false,
     const bool is_marginalized = true) {
   auto v_point = make_unique<g2o_types::VertexPoint>();
   v_point->setEstimate(point->pos());
   v_point->setId(id);
   v_point->setFixed(is_fixed);
-  //! This could be skipped if not using Schur trick (if so, solver type needs
+  //! This could be skipped if don't use Schur trick (if so, solver type needs
   //! to be changed to another).
   v_point->setMarginalized(is_marginalized);
   return v_point;
 }
 
+//! Declared as shared as the edges will be stored in edge container.
 static inline sptr<g2o_types::EdgeObs> createG2oEdgeObs(
-    const sptr<g2o_types::VertexFrame>& v_frame,
-    const sptr<g2o_types::VertexPoint>& v_point, const Vec2& pt,
-    const double weight,
+    g2o_types::VertexFrame* v_frame, g2o_types::VertexPoint* v_point,
+    const Vec2& pt, const double weight,
     const double huber_delta = std::numeric_limits<double>::infinity()) {
-  auto e_obs = make_unique<g2o_types::EdgeObs>();
+  auto e_obs = make_shared<g2o_types::EdgeObs>();
   // FIXME How does the memory of VertexContainer in g2o be allocated?
-  // FIXME Is there errors if I first set vertex 0 and then vertex 1?
-  e_obs->setVertex(1,
-                   dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_frame.get()));
-  e_obs->setVertex(0,
-                   dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_point.get()));
+  e_obs->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_frame));
+  e_obs->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_point));
   e_obs->setMeasurement(pt);
   e_obs->setInformation(weight * Mat22::Identity());
   auto huber_kernel = make_unique<g2o::RobustKernelHuber>();
@@ -78,12 +80,12 @@ static inline sptr<g2o_types::EdgeObs> createG2oEdgeObs(
 }
 
 static inline sptr<g2o_types::EdgePoseOnly> createG2oEdgePoseOnly(
-    const sptr<g2o_types::VertexFrame>& v_frame, const Vec2& pt,
-    const Vec3& pos, const Mat33& K, const double weight,
+    g2o_types::VertexFrame* v_frame, const Vec2& pt, const Vec3& pos,
+    const Mat33& K, const double weight,
     const double huber_delta = std::numeric_limits<double>::infinity()) {
-  auto e_pose_only = make_unique<g2o_types::EdgePoseOnly>();
-  e_pose_only->setVertex(
-      0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_frame.get()));
+  auto e_pose_only = make_shared<g2o_types::EdgePoseOnly>();
+  e_pose_only->setVertex(0,
+                         dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_frame));
   e_pose_only->setMeasurement(pt);
   e_pose_only->setInformation(weight * Mat22::Identity());
   auto huber_kernel = make_unique<g2o::RobustKernelHuber>();

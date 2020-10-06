@@ -19,6 +19,9 @@ class MapPoint {
   static int point_cnt_;  // Global map point counter, starting from 0.
   const int id_;          // Unique map point identity.
   Vec3 pos_;              // Position in world frame.
+  //! TODO(bayes) Use weak_ptr. Although a single-side weak_ptr could resolve
+  //! cyclic reference issue, we still declare Feature of type weak_ptr since in
+  //! our design, Feature is exclusively owned by Frame.
   list<sptr<Feature>> observations_;  // List of observations.
   sptr<Feature> best_feat_;  // Best feature in that its descriptor has the
                              // least median distance against other features.
@@ -45,14 +48,14 @@ class MapPoint {
                              // insertion.
 
   // Temporary g2o point vertex storing the optimized result.
-  sptr<g2o_types::VertexPoint> v_point_ = nullptr;
+  uptr<g2o_types::VertexPoint> v_point_ = nullptr;
 
   bool to_be_deleted_;  // When number of observations below certain threshold,
                         // this map point is going to be deleted soon.
 
   MapPoint(const Vec3& pos);
 
-  MapPoint(const Vec3& pos, const sptr<Feature>& feat);
+  MapPoint(const Vec3& pos, sptr<Feature> feat);
 
   inline const Vec3& pos() const {
     u_lock lock(mutex_);

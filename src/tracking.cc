@@ -57,6 +57,7 @@ void Tracking::computeBoW() {
 void Tracking::trackCurrentFrame() {
   switch (state_) {
     case State::NOT_INITIALIZED_YET:
+      initializer_->setTracker(shared_from_this());
       if (initMap()) {
         last_kf_id_ = curr_frame_->id_;
         local_mapper_->insertKeyframe(last_frame_);

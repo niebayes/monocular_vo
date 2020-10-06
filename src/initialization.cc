@@ -56,13 +56,16 @@ bool Initializer::initialize(const vector<int>& matches) {
                                         inlier_matches_);
   LOG(INFO) << "inlier_matches(ref_frame_, curr_frame_) = "
             << inlier_matches_.size();
-  if (inlier_matches_.size() < Config::init_min_n_inlier_matches())
+  if (inlier_matches_.size() < Config::init_min_n_inlier_matches()) {
+    LOG(INFO) << "Insufficient inlier matches, retry initialization.";
     return false;
+  }
   // Find relative pose from ref_frame_ to curr_frame_.
   if (!GeometrySolver::findRelativePoseRansac(ref_frame_, curr_frame_, F,
                                               inlier_matches_, T_curr_ref_,
-                                              points_, triangulate_mask_))
+                                              points_, triangulate_mask_)) {
     return false;
+  }
 
   // If initialization succeeded, set poses accordingly.
   // Reference frame is fixed as world frame.
@@ -97,6 +100,8 @@ bool Initializer::buildInitMap() {
     // Update map point characteristics.
     point->updateBestFeature();
     point->updateMedianViewDirAndScale();
+    // Insert to map the new created point.
+    tracker_->map_->insertMapPoint(point);
   }
 
   // Update covisible information.
@@ -109,7 +114,10 @@ bool Initializer::buildInitMap() {
   // FIXME What is the rescaling principle under the hood?
   // Rescale the map such that the mean scene depth is equal to 1.0
   const double scene_median_depth = ref_frame_->computeSceneMedianDepth();
-  if (scene_median_depth < 0) return false;
+  if (scene_median_depth < 0) {
+    LOG(INFO) << "Negative scene_median_depth :" << scene_median_depth;
+    return false;
+  }
   const double scale_factor = 1. / scene_median_depth;
   // Scale the baseline between ref_frame_ and curr_frame_.
   SE3 T_c_w_curr = curr_frame_->pose();
@@ -118,14 +126,16 @@ bool Initializer::buildInitMap() {
       (ref_frame_->cam_->pos() +
        scale_factor * (curr_frame_->cam_->pos() - ref_frame_->cam_->pos()));
   curr_frame_->setPose(T_c_w_curr);
-  // Scale the position of map points.
-  // for (const auto& point : points) point->setPos(scale_factor *
-  // point->pos());
+  // Scale the coordinates of map points.
+  const list<MapPoint::Ptr>& points = tracker_->map_->getAllMapPoints();
+  for (const auto& point : points) point->setPos(scale_factor * point->pos());
 
   return true;
 }
 
-void Initializer::setTracker(sptr<Tracking> tracker) { tracker_ = tracker; }
+void Initializer::setTracker(sptr<Tracking> tracker) {
+  if (tracker_ == nullptr) tracker_ = tracker;
+}
 
 void Initializer::reset() {
   stage_ = Stage::NO_FRAME_YET;

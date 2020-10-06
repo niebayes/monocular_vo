@@ -140,6 +140,11 @@ void Map::insertKeyframe(Frame::Ptr keyframe) {
   kfs_.push_back(keyframe);
 }
 
+void Map::insertMapPoint(MapPoint::Ptr point) {
+  u_lock lock(mutex_);
+  points_.push_back(point);
+}
+
 void Map::removeObservation(const Frame::Ptr& keyframe, const Feature::Ptr& feat) {
   // 
 }

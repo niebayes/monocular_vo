@@ -31,7 +31,7 @@ class Frame;
 
 namespace g2o_types {
 
-// Solver type typedefs.
+// typedefs for solvers.
 using BlockSolver = g2o::BlockSolver_6_3;
 using LinearSolver = g2o::LinearSolverCholmod<BlockSolver::PoseMatrixType>;
 

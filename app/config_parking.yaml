@@ -1,0 +1,32 @@
+%YAML:1.0
+# Data related:
+## Dataset path.
+dataset_path: "data/dataset/parking/"
+
+## Image file name format.
+img_file_name_fmt: "img_%05d.png"
+
+## Image resize factor. A bigger one speeds up tracking.
+img_resize_factor: 1.0
+
+## Vocabulary file name.
+voc_file: "data/vocabulary/orbvoc.dbow3"
+
+## Timestamp file name.
+timestamp_file: ""  # KITTI dataset does not provide timestamps
+
+# Camera related:
+## Calibration parameters. 
+fx: 331.37
+fy: 369.568
+cx: 320
+cy: 240
+
+## Distortion coefficients
+k1: 0.0
+k2: 0.0
+p1: 0.0
+p2: 0.0
+
+# Frame per second (fps)
+fps: 10.0

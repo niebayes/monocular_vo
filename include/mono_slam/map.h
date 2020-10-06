@@ -54,6 +54,11 @@ class Map {
 
   void insertKeyframe(Frame::Ptr keyframe);
 
+  //! In the early design, map needs not have to maintain points. But in order
+  //! to making the points not be destoryed once get out of scope, we use map to
+  //! maintain them. 
+  void insertMapPoint(MapPoint::Ptr point);
+
   // TODO(bayes) Implement remove functions, e.g. put outlier map points to
   // trash and empty trash properly. And more function like svo.
   void removeObservation(const Frame::Ptr& keyframe, const Feature::Ptr& feat);
@@ -68,10 +73,16 @@ class Map {
     return kfs_;
   }
 
+  inline const list<MapPoint::Ptr>& getAllMapPoints() const {
+    u_lock lock(mutex_);
+    return points_;
+  }
+
   void clear();
 
  private:
-  list<Frame::Ptr> kfs_;  // Maintained keyframes.
+  list<Frame::Ptr> kfs_;        // Maintained keyframes.
+  list<MapPoint::Ptr> points_;  // Maintained map points;
   int max_kf_id_;  // Maximum id of keyframes inserted so far. Used for
                    // checking for duplication as new keyframe is comming.
 

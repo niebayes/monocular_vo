@@ -5,7 +5,7 @@
 #include "mono_slam/utils/math_utils.h"
 
 namespace mono_slam {
-
+  
 void GeometrySolver::findFundamentalRansac(
     const Frame::Ptr& frame_1, const Frame::Ptr& frame_2,
     const vector<int>& matches, Mat33& F,
@@ -149,6 +149,8 @@ bool GeometrySolver::findRelativePoseRansac(
 
   // Check if the best R|t produces sufficient number of good triangulated
   // points and sufficient parallax.
+  LOG(INFO) << "max(num_good_tri_points) = " << best_score;
+  LOG(INFO) << "best(median_parallax) = " << best_median_parallax;
   if (best_score < min_n_triangulated || best_median_parallax < min_parallax)
     return false;
   // Obtain result.
@@ -181,7 +183,7 @@ int GeometrySolver::evaluatePoseScore(
   const Vec3 C_2 = -R.transpose() * t;  // Right camera center.
 
   // Iterate all inlier matches and accumulate all good points.
-  int num_good_points = 0;
+  int n_good_points = 0;
   for (int i = 0; i < n_inlier_matches; ++i) {
     const Feature::Ptr& feat_1 = feats_1[inlier_matches[i].first];
     const Feature::Ptr& feat_2 = feats_2[inlier_matches[i].second];
@@ -198,7 +200,7 @@ int GeometrySolver::evaluatePoseScore(
     const Vec3 bear_vec_1 = point_1 - C_1, bear_vec_2 = point_1 - C_2;
     const double cos_parallax =
         bear_vec_1.dot(bear_vec_2) / (bear_vec_1.norm() * bear_vec_2.norm());
-    if (cos_parallax < std::cos(math_utils::degree2radian(min_parallax)))
+    if (cos_parallax >= std::cos(math_utils::degree2radian(min_parallax)))
       continue;
     // Test 4: the reprojection error must below the tolerance.
     const double repr_err_1 = geometry::computeReprErr(point_1, feat_1->pt_, K),
@@ -211,18 +213,16 @@ int GeometrySolver::evaluatePoseScore(
                           // world frame.
     triangulate_mask[i] = true;
     cos_parallaxes.push_back(cos_parallax);
-    ++num_good_points;
+    ++n_good_points;
   }
 
-  // Obtain median parallax.
   if (!cos_parallaxes.empty()) {
-    std::stable_sort(cos_parallaxes.begin(), cos_parallaxes.end());
     median_parallax = math_utils::radian2degree(
-        std::acos(cos_parallaxes[num_good_points / 2]));
+        std::acos(math_utils::get_median(cos_parallaxes)));
   } else
     median_parallax = 0.;
 
-  return num_good_points;
+  return n_good_points;
 }
 
 bool GeometrySolver::P3PRansac(const Frame::Ptr& keyframe,
@@ -384,8 +384,8 @@ void decomposeEssential(const Mat33& E, vector<Mat33>& Rs, vector<Vec3>& ts) {
 
   // Check if the decomposed Rs are valid rotation matrix (i.e. det(R) = +1).
   // If not, simply invert the sign.
-  Rs[0] = (Rs[0].determinant() == 1) ? Rs[0].eval() : -Rs[0].eval();
-  Rs[1] = (Rs[1].determinant() == 1) ? Rs[1].eval() : -Rs[1].eval();
+  Rs[0] = (Rs[0].determinant() < 0) ? -Rs[0].eval() : Rs[0].eval();
+  Rs[1] = (Rs[1].determinant() < 0) ? -Rs[1].eval() : Rs[1].eval();
 
   // Translations are encoded in the last column of U.
   // The two possible translations are +u3 and -u3.

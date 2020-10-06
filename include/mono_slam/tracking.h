@@ -20,7 +20,7 @@ class Initializer;
 
 enum class State { NOT_INITIALIZED_YET, GOOD, LOST };
 
-class Tracking {
+class Tracking : public std::enable_shared_from_this<Tracking> {
  public:
   State state_;                      // Tracking state.
   Frame::Ptr last_frame_ = nullptr;  // Last frame.

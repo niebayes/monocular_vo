@@ -1,10 +1,10 @@
 %YAML:1.0
 # Data related:
 ## Dataset path.
-dataset_path: "data/dataset/KITTI/test_piece/"
+dataset_path: "data/dataset/KITTI/seq00/"
 
 ## Image file name format.
-img_file_name_fmt: "06d.png"
+img_file_name_fmt: "%06d.png"
 
 ## Image resize factor. A bigger one speeds up tracking.
 img_resize_factor: 1.0

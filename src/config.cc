@@ -35,16 +35,12 @@ Config::Config()
   std::transform(scale_factors_.begin(), scale_factors_.end(),
                  scale_factors_.begin(),
                  [=](double i) { return std::pow(scale_factor_, i); });
-  for (double i : scale_factors_) cout << " " << i;
-  cout << endl;
 
   // Compute squared noise sigmas for each image pyramid level.
   scale_level_sigma2_.reserve(scale_n_levels_);
   std::transform(scale_factors_.cbegin(), scale_factors_.cend(),
                  std::back_inserter(scale_level_sigma2_),
                  [](const double i) { return i * i; });
-  for (double i : scale_level_sigma2_) cout << " " << i;
-  cout << endl;
 }
 
 Config& Config::getInstance() {

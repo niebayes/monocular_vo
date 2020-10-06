@@ -12,7 +12,7 @@ int MapPoint::point_cnt_ = 0;
 MapPoint::MapPoint(const Vec3& pos) : id_(point_cnt_++), pos_(pos) {}
 
 // TODO(bayes) Compute mean_view_dirs_.
-MapPoint::MapPoint(const Vec3& pos, const sptr<Feature>& feat)
+MapPoint::MapPoint(const Vec3& pos, sptr<Feature> feat)
     : id_(point_cnt_++), pos_(pos), best_feat_(feat) {
   observations_.push_back(feat);
 }
@@ -78,6 +78,7 @@ void MapPoint::updateBestFeature() {
 }
 
 void MapPoint::updateMedianViewDirAndScale() {
+  const Vec3 pos = this->pos();
   u_lock lock(mutex_);
   Vec3 total_view_dir;  // Container for viewing directions.
   vector<int> levels;   // Container for viewing scales (aka. levels).
@@ -85,7 +86,7 @@ void MapPoint::updateMedianViewDirAndScale() {
   for (const sptr<Feature>& feat : observations_) {
     if (feat->frame_.expired()) continue;
     const auto& frame = feat->frame_.lock();
-    const Vec3 unit_bear_vec = frame->cam_->getUnitBearVec(this->pos());
+    const Vec3 unit_bear_vec = frame->cam_->getUnitBearVec(pos);
     total_view_dir += unit_bear_vec;
     levels.push_back(feat->level_);
     ++n;
