@@ -1,17 +1,12 @@
 #ifndef MONO_SLAM_SYSTEM_H_
 #define MONO_SLAM_SYSTEM_H_
 
-#include "mono_slam/camera.h"
 #include "mono_slam/common_include.h"
-#include "mono_slam/config.h"
 #include "mono_slam/dataset.h"
-#include "mono_slam/initialization.h"
 #include "mono_slam/local_mapping.h"
 #include "mono_slam/map.h"
 #include "mono_slam/tracking.h"
 #include "mono_slam/viewer.h"
-
-using namespace std::chrono;
 
 namespace mono_slam {
 
@@ -20,12 +15,10 @@ class LocalMapping;
 class Map;
 class Viewer;
 class Dataset;
-class Initializer;
 
 class System : public std::enable_shared_from_this<System> {
  public:
   using Ptr = sptr<System>;
-
   System(const string& config_file);
 
   // Init the system: load user-provided settings and link system components.
@@ -45,7 +38,7 @@ class System : public std::enable_shared_from_this<System> {
   sptr<Viewer> viewer_ = nullptr;
 
   // User-specified objects.
-  Dataset::Ptr dataset_ = nullptr;
+  uptr<Dataset> dataset_ = nullptr;
   vector<double> timestamps_;
   const string config_file_;
 };

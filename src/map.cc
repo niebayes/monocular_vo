@@ -121,22 +121,34 @@ bool KeyframeDataBase::detectRelocCandidates(const Frame::Ptr& frame,
   return true;
 }
 
+void KeyframeDataBase::clear() {
+  inv_files_.clear();
+  inv_files_.reserve(Config::approx_n_words_pct() * voc_->size());
+}
+
 //##############################################################################
 // Map
 
-Map::Map() : max_keyframe_id_(0) {}
+Map::Map() : max_kf_id_(0) {}
 
 void Map::insertKeyframe(Frame::Ptr keyframe) {
   CHECK_EQ(keyframe->isKeyframe(), true);
   // FIXME Is this check always valid?
-  CHECK_GE(keyframe->id_, max_keyframe_id_);
+  CHECK_GE(keyframe->id_, max_kf_id_);
   u_lock lock(mutex_);
-  max_keyframe_id_ = keyframe->id_;
-  keyframes_.push_back(keyframe);
+  max_kf_id_ = keyframe->id_;
+  kfs_.push_back(keyframe);
 }
 
 void Map::removeObservation(const Frame::Ptr& keyframe, const Feature::Ptr& feat) {
   // 
+}
+
+void Map::clear() {
+  u_lock lock(mutex_);
+  kfs_.clear();
+  max_kf_id_ = 0;
+  kf_db_->clear();
 }
 
 }  // namespace mono_slam

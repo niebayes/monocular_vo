@@ -9,7 +9,6 @@
 namespace mono_slam {
 
 class Frame;
-class MapPoint;
 
 // Keyframe database used for relocalization when tracking is lost.
 class KeyframeDataBase {
@@ -30,10 +29,7 @@ class KeyframeDataBase {
                              list<Frame::Ptr>& candidate_kfs);
 
   // Clear and reset inverted file indices.
-  inline void clear() {
-    inv_files_.clear();
-    inv_files_.reserve(Config::approx_n_words_pct() * voc_->size());
-  }
+  void clear();
 
  private:
   // Inverted file indices such that inv_files_[i] = list of keyframes having
@@ -46,48 +42,40 @@ class KeyframeDataBase {
 };
 
 struct Feature;
+class MapPoint;
 
 class Map {
  public:
   using Ptr = sptr<Map>;
-
   // Keyframe database used for relocalization.
   KeyframeDataBase::Ptr kf_db_ = nullptr;
 
- private:
-  list<Frame::Ptr> keyframes_;  // Maintained keyframes.
-
-  int max_keyframe_id_;  // Maximum id of keyframes inserted so far. Used for
-                         // checking for duplication as new keyframe is comming.
-
-  mutable std::mutex mutex_;
-
- public:
   Map();
 
   void insertKeyframe(Frame::Ptr keyframe);
 
+  // TODO(bayes) Implement remove functions, e.g. put outlier map points to
+  // trash and empty trash properly. And more function like svo.
   void removeObservation(const Frame::Ptr& keyframe, const Feature::Ptr& feat);
 
   void eraseKfById(const int id);
 
-  inline int nKfs() const { return static_cast<int>(keyframes_.size()); }
+  inline int nKfs() const { return static_cast<int>(kfs_.size()); }
 
   // FIXME Return copy or const reference?
-  inline const list<Frame::Ptr>& getAllKeyframes() {
+  inline const list<Frame::Ptr>& getAllKeyframes() const {
     u_lock lock(mutex_);
-    return keyframes_;
+    return kfs_;
   }
 
-  void clear() {
-    u_lock lock(mutex_);
-    keyframes_.clear();
-    max_keyframe_id_ = 0;
-    kf_db_->clear();
-  }
+  void clear();
 
-  // TODO(bayes) Implement remove functions, e.g. put outlier map points to
-  // trash and empty trash properly. And more function like svo.
+ private:
+  list<Frame::Ptr> kfs_;  // Maintained keyframes.
+  int max_kf_id_;  // Maximum id of keyframes inserted so far. Used for
+                   // checking for duplication as new keyframe is comming.
+
+  mutable std::mutex mutex_;
 };
 
 }  // namespace mono_slam

@@ -125,8 +125,8 @@ bool GeometrySolver::findRelativePoseRansac(
   vector<bool> best_triangulate_mask;  // Mark which inlier match produces good
                                        // triangulated point.
   double best_median_parallax = 0.;
-  for (Mat33& R : Rs) {
-    for (Vec3& t : ts) {
+  for (const Mat33& R : Rs) {
+    for (const Vec3& t : ts) {
       // Evaluate score of the current R and t.
       vector<Vec3> points_;
       vector<bool> triangulate_mask_;
@@ -412,9 +412,14 @@ void normalizePoints(const MatXX& pts, MatXX& normalized_pts, Mat33& T) {
 void triangulateLin(const Vec2& pt_1, const Vec2& pt_2, const Mat34& M_1,
                     const Mat34& M_2, Vec3& point) {
   //! A could be [6 x 4] or [4 x 4].
-  MatXX A(6, 4);
-  A.topRows(3) = geometry::to_skew(pt_1.homogeneous()) * M_1;
-  A.bottomRows(3) = geometry::to_skew(pt_2.homogeneous()) * M_2;
+  // MatXX A(6, 4);
+  // A.topRows(3) = geometry::to_skew(pt_1.homogeneous()) * M_1;
+  // A.bottomRows(3) = geometry::to_skew(pt_2.homogeneous()) * M_2;
+  MatXX A(4, 4);
+  A.row(0) = pt_1.x() * M_1.row(2) - M_1.row(0);
+  A.row(1) = pt_1.y() * M_1.row(2) - M_1.row(1);
+  A.row(2) = pt_2.x() * M_2.row(2) - M_2.row(0);
+  A.row(3) = pt_2.y() * M_2.row(2) - M_2.row(1);
 
   // Compute 3D points using SVD.
   auto svd = A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);

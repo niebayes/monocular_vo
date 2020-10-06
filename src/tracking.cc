@@ -14,21 +14,23 @@ Tracking::Tracking() : state_(State::NOT_INITIALIZED_YET) {
 }
 
 void Tracking::addImage(const cv::Mat& img) {
+  // Create a new frame and preprocess it.
   curr_frame_.reset(new Frame(img));
   extractFeatures(img);
   computeBoW();
+
   trackCurrentFrame();
-  // Update constant velocity model, aka. relative motion.
   last_frame_ = curr_frame_;  // Update last frame.
+  // Update constant velocity model, aka. relative motion.
   T_curr_last_ = curr_frame_->pose() * last_frame_->pose().inverse();
-  curr_frame_.reset();        // Reseat to make it ready for next frame.
+  curr_frame_.reset();  // Reseat pointer making it ready for next frame.
 }
 
 void Tracking::extractFeatures(const cv::Mat& img) {
   vector<cv::KeyPoint> kpts;
   cv::Mat descriptors;
   detector_->detectAndCompute(img, cv::Mat{}, kpts, descriptors);
-  if (curr_frame_->cam_->distCoeffs()(0) == 0)
+  if (curr_frame_->cam_->distCoeffs()(0) != 0)  // If having distortion.
     frame_utils::undistortKeypoints(curr_frame_->cam_->K(),
                                     curr_frame_->cam_->distCoeffs(), kpts);
   const int n_kpts = kpts.size();
@@ -44,7 +46,7 @@ void Tracking::computeBoW() {
   // Collect descriptors.
   vector<cv::Mat> descriptor_vec;
   descriptor_vec.reserve(curr_frame_->nObs());
-  std::transform(curr_frame_->feats_.begin(), curr_frame_->feats_.end(),
+  std::transform(curr_frame_->feats_.cbegin(), curr_frame_->feats_.cend(),
                  std::back_inserter(descriptor_vec),
                  [](const Feature::Ptr& feat) { return feat->descriptor_; });
   voc_->transform(descriptor_vec, curr_frame_->bow_vec_, curr_frame_->feat_vec_,
@@ -223,6 +225,5 @@ void Tracking::setLocalMapper(sptr<LocalMapping> local_mapper) {
 }
 void Tracking::setMap(Map::Ptr map) { map_ = map; }
 void Tracking::setViewer(sptr<Viewer> viewer) { viewer_ = viewer; }
-void Tracking::setVocabulary(const sptr<Vocabulary>& voc) { voc_ = voc; }
 
 }  // namespace mono_slam

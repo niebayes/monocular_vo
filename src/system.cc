@@ -1,18 +1,12 @@
 #include "mono_slam/system.h"
 
 #include "mono_slam/camera.h"
-#include "mono_slam/common_include.h"
-#include "mono_slam/config.h"
-#include "mono_slam/dataset.h"
-#include "mono_slam/initialization.h"
-#include "mono_slam/local_mapping.h"
-#include "mono_slam/map.h"
-#include "mono_slam/matcher.h"
-#include "mono_slam/tracking.h"
-#include "mono_slam/viewer.h"
+
+using namespace std::chrono;
 
 namespace mono_slam {
 
+// Forward declaration.
 class Camera;
 
 double Camera::fx_, Camera::fy_, Camera::cx_, Camera::cy_;
@@ -35,8 +29,8 @@ bool System::init() {
   const string& img_file_name_fmt = config["img_file_name_fmt"];
   const double& img_resize_factor = config["img_resize_factor"];
   const int& img_start_idx = config["img_start_idx"];
-  dataset_ = make_unique<Dataset>(dataset_path, img_file_name_fmt,
-                                  img_resize_factor, img_start_idx);
+  dataset_.reset(new Dataset(dataset_path, img_file_name_fmt, img_resize_factor,
+                             img_start_idx));
 
   // Load vocabulary.
   const string& voc_file = config["voc_file"];
@@ -67,22 +61,21 @@ bool System::init() {
   Camera::cy_ = cy;
   Camera::K_ = (Mat33() << fx, 0., cx, 0., fy, cy, 0., 0., 1.).finished();
   Camera::dist_coeffs_ = dist_coeffs;
-  cout << Camera::K_ << '\n';
 
   // Release the file as soon as possible.
   config.release();
 
-  // Prepare and link components.
-  tracker_ = make_shared<Tracking>();
-  local_mapper_ = make_shared<LocalMapping>();
-  map_ = make_shared<Map>();
-  viewer_ = make_shared<Viewer>();
+  // Prepare and link system components.
+  tracker_.reset(new Tracking());
+  local_mapper_.reset(new LocalMapping());
+  map_.reset(new Map());
+  viewer_.reset(new Viewer());
 
   tracker_->setSystem(shared_from_this());
   tracker_->setLocalMapper(local_mapper_);
   tracker_->setMap(map_);
   tracker_->setViewer(viewer_);
-  tracker_->setVocabulary(voc);
+  tracker_->voc_ = voc;
 
   local_mapper_->setSystem(shared_from_this());
   local_mapper_->setTracker(tracker_);
@@ -96,12 +89,14 @@ bool System::init() {
 
 void System::run() {
   LOG(INFO) << "System is running ...";
+  // If timestamp file is not provided, the tracking is performed as soon as
+  // possible.
   if (timestamps_.empty())
     for (;;) tracker_->addImage(dataset_->nextImage());
-  else {
-    const int num_images = timestamps_.size();
-    // Simply discard the last image.
-    for (int i = 0; i < num_images - 1; ++i) {
+  else {  // Otherwise, necessary time delay is adopted.
+    const int n_images = timestamps_.size();
+    // Simply discard the last image for the sake of simplicity.
+    for (int i = 0; i < n_images - 1; ++i) {
       const steady_clock::time_point t1 = steady_clock::now();
 
       // Track one image.

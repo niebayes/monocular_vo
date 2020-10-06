@@ -10,12 +10,13 @@ namespace mono_slam {
 LocalMapping::LocalMapping() { startThread(); }
 
 void LocalMapping::startThread() {
-  is_running_.store(false);
+  is_running_.store(true);
+  // Open up a new thread for local mapping.
   thread_ = std::thread(std::bind(&LocalMapping::LocalMappingLoop, this));
 }
 
 void LocalMapping::stopThread() {
-  is_running_.store(true);
+  is_running_.store(false);
   new_kf_cond_var_.notify_one();  // Release the lock or the halt won't proceed.
   thread_.join();
 }

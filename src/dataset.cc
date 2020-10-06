@@ -12,7 +12,6 @@ Dataset::Dataset(const string& dataset_path, const string& img_file_name_fmt,
 cv::Mat Dataset::nextImage() {
   boost::format fmt(dataset_path_ + "%" + img_file_name_fmt_);
   cv::Mat image = cv::imread((fmt % img_idx_).str(), cv::IMREAD_GRAYSCALE);
-  // Error in reading a single image should not interrupt the system.
   CHECK_EQ(!image.empty(), true);
   cv::Mat resized_image;
   image.copyTo(resized_image);

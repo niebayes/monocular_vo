@@ -1,5 +1,5 @@
-#ifndef MONO_SLAM_FRONT_END_TRACKING_H_
-#define MONO_SLAM_FRONT_END_TRACKING_H_
+#ifndef MONO_SLAM_TRACKING_H_
+#define MONO_SLAM_TRACKING_H_
 
 #include "mono_slam/common_include.h"
 #include "mono_slam/frame.h"
@@ -22,25 +22,21 @@ enum class State { NOT_INITIALIZED_YET, GOOD, LOST };
 
 class Tracking {
  public:
-  using Ptr = sptr<Tracking>;
-
-  State state_;            // Tracking state.
+  State state_;                      // Tracking state.
   Frame::Ptr last_frame_ = nullptr;  // Last frame.
   Frame::Ptr curr_frame_ = nullptr;  // Current frame.
-  SE3 T_curr_last_;  // Rigid transformation from last_frame_ to curr_frame_
-                     // assuming constant velocity.
-  unordered_set<Frame::Ptr>
-      local_co_kfs_;  // Local covisible keyframes having
-                      // visual overlapping with current frame.
+  SE3 T_curr_last_;  // Rigid-body transformation from last_frame_ to
+                     // curr_frame_ assuming constant velocity.
+  // Local covisible keyframes having visual overlapping (i.e. some map points
+  // are observed simultaneously by these frames) with current frame.
+  unordered_set<Frame::Ptr> local_co_kfs_;
   // FIXME Seems the effect of this is not significant. Remove this?
   int last_kf_id_;  // Id of last keyframe. Frequency of keyframe
-                    // insertion is partly limited by this.
+                    // insertion is partly(all?) limited by this.
 
-  // Linked components.
-  sptr<System> system_ = nullptr;              // System.
-  sptr<LocalMapping> local_mapper_ = nullptr;  // Local mapper.
-  Map::Ptr map_ = nullptr;                     // Map.
-  sptr<Viewer> viewer_ = nullptr;              // Viewer.
+  sptr<Vocabulary> voc_ = nullptr;  // Vocabulary.
+
+  Map::Ptr map_ = nullptr;  // Map.
 
   Tracking();
 
@@ -52,14 +48,13 @@ class Tracking {
   void setLocalMapper(sptr<LocalMapping> local_mapper);
   void setMap(Map::Ptr map);
   void setViewer(sptr<Viewer> viewer);
-  void setVocabulary(const sptr<Vocabulary>& voc);
 
   void reset();
 
  private:
   // FIXME Due to errors involved with shared_from_this(), I have to move these
-  // two methods from Frame to Tracking. 
-  // Extract features.
+  // two methods from Frame to Tracking.
+  // Extract features and compute corresponding descriptors.
   void extractFeatures(const cv::Mat& img);
 
   // Compute bag of words representation.
@@ -80,16 +75,18 @@ class Tracking {
   // Update local covisible keyframes to be used in tracking from local map.
   void updateLocalCoKfs();
 
-  // True if the criteria of inserting new keyframe are satisfied.
+  // True if the criteria of inserting a new keyframe are satisfied.
   bool needNewKf();
 
   // Relocalize if tracking is lost.
   bool relocalization();
 
  private:
-  // User specified objects.
+  sptr<System> system_ = nullptr;              // System.
+  sptr<LocalMapping> local_mapper_ = nullptr;  // Local mapper.
+  sptr<Viewer> viewer_ = nullptr;              // Viewer.
+
   uptr<Initializer> initializer_ = nullptr;          // Initializer.
-  sptr<Vocabulary> voc_ = nullptr;                   // Vocabulary.
   cv::Ptr<cv::FeatureDetector> detector_ = nullptr;  // Feature detector.
 };
 

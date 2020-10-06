@@ -12,18 +12,16 @@ class Map;
 
 class Viewer {
  public:
-  using Ptr = sptr<Viewer>;
-
   Viewer();
 
   void reset();
 
-  void setMap(const Map::Ptr& map);
+  void setMap(sptr<Map> map);
 
-  void setSystem(const sptr<System>& system);
+  void setSystem(sptr<System> system);
 
  private:
-  Map::Ptr map_ = nullptr;
+  sptr<Map> map_ = nullptr;
   sptr<System> system_ = nullptr;
 };
 

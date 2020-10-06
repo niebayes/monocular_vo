@@ -14,22 +14,18 @@ struct Feature {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Feature>;
 
-  // Linked 3D map point expressed in world frame.
-  //! A feature links only one map point and will not change any more.
-  wptr<MapPoint> point_;
-
-  // FIXME Should feature be deleted immediately?
-  bool is_outlier_;  // If the observation formed with this feature and the
-                     // point_ is outlier?
-
-  // Feature characteristics.
+  // weak_ptr to avoid cyclic reference which makes memory release unaviable.
   const wptr<Frame> frame_;   // Frame in which the feature is detected.
   const Vec2 pt_;             // 2D image point expressed in pixels.
   const cv::Mat descriptor_;  // Corresponding descriptor.
   const int level_;  // Image pyramid level at which the feature is detected.
+  // FIXME Should feature be deleted immediately?
+  // Linked 3D map point expressed in world frame.
+  //! A feature links only one map point and will not change any more once set.
+  wptr<MapPoint> point_;
+  bool is_outlier_;  // Is the observation formed with this feature and the
+                     // point_ an outlier?
 
-  // FIXME Incomplete type and forward declaration error when initializing
-  // bear_vec_ from frame_.lock()->cam_->pixel2bear(pt).
   Feature(sptr<Frame> frame, const Vec2& pt, const cv::Mat& descriptor,
           const int level)
       : frame_(frame),
@@ -40,6 +36,8 @@ struct Feature {
 };
 
 namespace feat_utils {
+
+// FIXME static and forward declaration conflict with each other?
 
 // FIXME Would it be okay if these two utility functions being member methods?
 static inline sptr<MapPoint> getPoint(const sptr<Feature>& feat) {
@@ -54,7 +52,7 @@ static inline sptr<Frame> getKeyframe(const sptr<Feature>& feat) {
   if (!feat || feat->is_outlier_) return nullptr;
   if (feat->frame_.expired()) return nullptr;
   const sptr<Frame>& keyframe = feat->frame_.lock();
-  // FIXME What fk cause this error?!
+  // FIXME What fk causes this error?!
   // if (!keyframe->isKeyframe()) return nullptr;
   return keyframe;
 }

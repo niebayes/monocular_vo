@@ -16,8 +16,6 @@ class Frame;
 
 class LocalMapping {
  public:
-  using Ptr = std::shared_ptr<LocalMapping>;
-
   LocalMapping();
 
   void startThread();
@@ -44,7 +42,7 @@ class LocalMapping {
   // Setters to link components.
   void setSystem(sptr<System> system);
   void setTracker(sptr<Tracking> tracker);
-  void setMap(sptr<Map> map);
+  void setMap(Map::Ptr map);
 
  protected:
   queue<Frame::Ptr> kfs_queue_;  // Keyframes queue waiting to be processed.
@@ -59,7 +57,7 @@ class LocalMapping {
 
   sptr<System> system_ = nullptr;
   sptr<Tracking> tracker_ = nullptr;
-  sptr<Map> map_ = nullptr;
+  Map::Ptr map_ = nullptr;
 };
 
 }  // namespace mono_slam
