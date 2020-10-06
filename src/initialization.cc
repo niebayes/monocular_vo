@@ -1,22 +1,21 @@
 #include "mono_slam/initialization.h"
 
-#include "mono_slam/frame.h"
 #include "mono_slam/g2o_optimizer.h"
 #include "mono_slam/geometry_solver.h"
 #include "mono_slam/map.h"
 #include "mono_slam/map_point.h"
 #include "mono_slam/matcher.h"
-#include "mono_slam/tracking.h"
 
 namespace mono_slam {
 
 Initializer::Initializer() : stage_(Stage::NO_FRAME_YET) {}
 
 void Initializer::addReferenceFrame(Frame::Ptr ref_frame) {
+  LOG(INFO) << "Start initialization.";
   reset();
-  LOG(INFO) << "Initing: ref_frame's nObs = " << ref_frame->nObs();
   if (ref_frame->nObs() < Config::init_min_n_feats()) return;
   ref_frame_ = ref_frame;
+  LOG(INFO) << "Reference frame selected.";
   stage_ = Stage::HAS_REFERENCE_FRAME;
 }
 
@@ -25,19 +24,28 @@ void Initializer::addCurrentFrame(Frame::Ptr curr_frame) {
     LOG(ERROR) << "No reference frame yet.";
     return;
   }
-  LOG(INFO) << "Initing: curr_frame's nObs = " << curr_frame->nObs();
   if (curr_frame->nObs() < Config::init_min_n_feats()) return;
   curr_frame_ = curr_frame;
+  LOG(INFO) << "Current frame selected.";
   // Matches between reference frame and current frame such that:
   // last_frame_[i] = curr_frame_[matches[i]].
   vector<int> matches;
   const int n_matches =
       Matcher::searchForInitialization(ref_frame_, curr_frame_, matches);
-  LOG(INFO) << "Initing: n_matches = " << n_matches;
-  if (n_matches < Config::init_min_n_matches()) return;
+  LOG(INFO) << "matches(ref_frame_, curr_frame_) = " << n_matches;
+  if (n_matches < Config::init_min_n_matches()) {
+    // Two consecutive good frames are necessary for good initialization.
+    LOG(INFO) << "Halt initialization.";
+    reset();
+    return;
+  }
   if (initialize(matches) && buildInitMap()) {
     // If all criteria are satisfied, initialization is successful.
+    LOG(INFO) << "Initialization succeeded.";
     stage_ = Stage::SUCCESS;
+  } else {
+    LOG(INFO) << "Initialization failed.";
+    reset();
   }
 }
 
@@ -46,7 +54,8 @@ bool Initializer::initialize(const vector<int>& matches) {
   Mat33 F;
   GeometrySolver::findFundamentalRansac(ref_frame_, curr_frame_, matches, F,
                                         inlier_matches_);
-  LOG(INFO) << "Initing: n_inlier_matches = " << inlier_matches_.size();
+  LOG(INFO) << "inlier_matches(ref_frame_, curr_frame_) = "
+            << inlier_matches_.size();
   if (inlier_matches_.size() < Config::init_min_n_inlier_matches())
     return false;
   // Find relative pose from ref_frame_ to curr_frame_.
@@ -55,7 +64,8 @@ bool Initializer::initialize(const vector<int>& matches) {
                                               points_, triangulate_mask_))
     return false;
 
-  // Set pose.
+  // If initialization succeeded, set poses accordingly.
+  // Reference frame is fixed as world frame.
   ref_frame_->setPose(SE3(Mat33::Identity(), Vec3::Zero()));
   curr_frame_->setPose(T_curr_ref_ * ref_frame_->pose());
   return true;

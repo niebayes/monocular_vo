@@ -63,7 +63,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
   void setKeyframe();
 
   // Number of observations (i.e. number of features observed in this frame).
-  inline int nObs() const { return feats_.size(); }
+  inline int nObs() const { return static_cast<int>(feats_.size()); }
 
   // Search features given searching radius and image pyramid level range.
   vector<int> searchFeatures(const Vec2& pt, const int radius,

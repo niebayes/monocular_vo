@@ -10,7 +10,8 @@ int Matcher::searchForInitialization(const Frame::Ptr& ref_frame,
                                      const Frame::Ptr& curr_frame,
                                      vector<int>& matches) {
   const int n_obs_1 = ref_frame->nObs(), n_obs_2 = curr_frame->nObs();
-  matches.assign(n_obs_1, -1);
+  matches.assign(n_obs_1, -1);  // -1 denotes no matching.
+  // Record as well reverse matching to avoid repeat matching.
   vector<bool> matched(n_obs_2, false);
 
   int n_matches = 0;
@@ -23,7 +24,7 @@ int Matcher::searchForInitialization(const Frame::Ptr& ref_frame,
     if (feat_indices_2.empty()) continue;
 
     int min_dist = 256, second_min_dist = 256, best_idx_2 = 0;
-    for (int idx_2 : feat_indices_2) {
+    for (const int idx_2 : feat_indices_2) {
       if (matched[idx_2]) continue;  // Avoid repeat matching.
       const Feature::Ptr& feat_2 = curr_frame->feats_[idx_2];
       const int dist = matcher_utils::computeDescDist(feat_1->descriptor_,
@@ -40,6 +41,7 @@ int Matcher::searchForInitialization(const Frame::Ptr& ref_frame,
     if (min_dist >= Config::match_thresh_relax() ||
         min_dist >= Config::dist_ratio_test_factor() * second_min_dist)
       continue;
+    // Update matches.
     matches[idx_1] = best_idx_2;
     matched[best_idx_2] = true;
     ++n_matches;

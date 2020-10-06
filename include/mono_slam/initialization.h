@@ -19,28 +19,28 @@ class Initializer {
   Stage stage_;  // Initialization stage.
 
  private:
-  sptr<Tracking> tracker_ = nullptr;
-
   Frame::Ptr ref_frame_ = nullptr;   // Reference frame.
   Frame::Ptr curr_frame_ = nullptr;  // Current frame.
 
   SE3 T_curr_ref_;  // Relative pose from reference frame to current frame.
-  //! points_ and triangulate_mask_ are one-to-one correspondent.
-  vector<Vec3> points_;  // Triangulated points in world frame.
   vector<pair<int, int>> inlier_matches_;  // Inlier matches.
+  //! points_ and triangulate_mask_ are one-to-one correspondent.
+  vector<Vec3> points_;            // Triangulated points in world frame.
   vector<bool> triangulate_mask_;  // Mark which inlier match produces good
                                    // triangulated point.
+
+  sptr<Tracking> tracker_ = nullptr;  // Tracker.
 
  public:
   Initializer();
 
   inline const Stage& stage() const { return stage_; }
 
-  void setTracker(sptr<Tracking> tracker);
-
   void addReferenceFrame(Frame::Ptr ref_frame);
 
   void addCurrentFrame(Frame::Ptr curr_frame);
+
+  void setTracker(sptr<Tracking> tracker);
 
  private:
   // Compute relative pose from ref_frame_ to curr_frame_ and triangulate points

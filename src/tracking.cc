@@ -24,12 +24,13 @@ void Tracking::addImage(const cv::Mat& img) {
   // Update constant velocity model, aka. relative motion.
   T_curr_last_ = curr_frame_->pose() * last_frame_->pose().inverse();
   curr_frame_.reset();  // Reseat pointer making it ready for next frame.
+  //! Actually, this makes no sense.
 }
 
 void Tracking::extractFeatures(const cv::Mat& img) {
   vector<cv::KeyPoint> kpts;
   cv::Mat descriptors;
-  detector_->detectAndCompute(img, cv::Mat{}, kpts, descriptors);
+  detector_->detectAndCompute(img, cv::noArray(), kpts, descriptors);
   if (curr_frame_->cam_->distCoeffs()(0) != 0)  // If having distortion.
     frame_utils::undistortKeypoints(curr_frame_->cam_->K(),
                                     curr_frame_->cam_->distCoeffs(), kpts);
@@ -43,7 +44,7 @@ void Tracking::extractFeatures(const cv::Mat& img) {
 }
 
 void Tracking::computeBoW() {
-  // Collect descriptors.
+  // Collect descriptors into vector as DBoW's command.
   vector<cv::Mat> descriptor_vec;
   descriptor_vec.reserve(curr_frame_->nObs());
   std::transform(curr_frame_->feats_.cbegin(), curr_frame_->feats_.cend(),
@@ -97,7 +98,7 @@ bool Tracking::initMap() {
 }
 
 bool Tracking::trackFromLastFrame() {
-  // Set initial pose.
+  // Set initial pose in accordance with constant velocity model.
   curr_frame_->setPose(T_curr_last_ * last_frame_->pose());
   // Search matches by projection (i.e. project map points observed by last
   // frame onto current frame and try matching them against features around
