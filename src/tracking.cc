@@ -4,6 +4,7 @@
 #include "mono_slam/geometry_solver.h"
 #include "mono_slam/matcher.h"
 
+
 namespace mono_slam {
 
 class Optimizer;
@@ -17,7 +18,9 @@ void Tracking::addImage(const cv::Mat& img) {
   // Create a new frame and preprocess it.
   curr_frame_.reset(new Frame(img));
   extractFeatures(img);
+#ifndef DEBUG
   computeBoW();
+#endif
 
   trackCurrentFrame();
   last_frame_ = curr_frame_;  // Update last frame.

@@ -41,6 +41,7 @@ using EdgePoseOnly = g2o::EdgeSE3ProjectXYZOnlyPose;
 using VertexFrame = g2o::VertexSE3Expmap;
 using VertexPoint = g2o::VertexSBAPointXYZ;
 
+// FIXME unique_ptr incurs error here.
 struct EdgeContainer {
   sptr<EdgeObs> e_obs_ = nullptr;
   sptr<Frame> keyframe_ = nullptr;

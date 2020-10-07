@@ -37,6 +37,8 @@
 #include "sophus/se3.hpp"
 #include "sophus/so3.hpp"
 
+#define DEBUG 1
+
 // using declarations.
 using namespace std;
 using namespace std::chrono;

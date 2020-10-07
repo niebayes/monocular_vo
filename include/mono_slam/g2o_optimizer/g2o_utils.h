@@ -13,10 +13,10 @@ static void setupG2oOptimizer(g2o::SparseOptimizer* optimizer, const Mat33& K) {
   // Set solver.
   //! Even though we "new" a lot of things without delete, g2o
   //! internally takes care of them implicitly. Hence no memory leak.
-  auto solver = g2o::make_unique<g2o::OptimizationAlgorithmLevenberg>(
+  auto solver = new g2o::OptimizationAlgorithmLevenberg(
       g2o::make_unique<g2o_types::BlockSolver>(
           g2o::make_unique<g2o_types::LinearSolver>()));
-  optimizer->setAlgorithm(solver.get());
+  optimizer->setAlgorithm(solver);
   const double &f = K(0, 0), &cx = K(0, 2), &cy = K(1, 2), &b = 0.;
   g2o::CameraParameters* cam_params =
       new g2o::CameraParameters(f, Vec2{cx, cy}, b);
@@ -69,9 +69,9 @@ static inline sptr<g2o_types::EdgeObs> createG2oEdgeObs(
   e_obs->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_point));
   e_obs->setMeasurement(pt);
   e_obs->setInformation(weight * Mat22::Identity());
-  auto huber_kernel = make_unique<g2o::RobustKernelHuber>();
+  g2o::RobustKernelHuber* huber_kernel = new g2o::RobustKernelHuber();
   huber_kernel->setDelta(huber_delta);
-  e_obs->setRobustKernel(huber_kernel.get());
+  e_obs->setRobustKernel(huber_kernel);
   // Set corresponding camera parameters.
   //! The first parameter 0 is the index of the parameter in the g2o parameters
   //! container. It does not correlate the vertex id.
@@ -88,9 +88,9 @@ static inline sptr<g2o_types::EdgePoseOnly> createG2oEdgePoseOnly(
                          dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_frame));
   e_pose_only->setMeasurement(pt);
   e_pose_only->setInformation(weight * Mat22::Identity());
-  auto huber_kernel = make_unique<g2o::RobustKernelHuber>();
+  auto huber_kernel = new g2o::RobustKernelHuber();
   huber_kernel->setDelta(huber_delta);
-  e_pose_only->setRobustKernel(huber_kernel.get());
+  e_pose_only->setRobustKernel(huber_kernel);
   // Set initial pose to speed-up convergence.
   e_pose_only->Xw = pos;
   // Set camera parameters.

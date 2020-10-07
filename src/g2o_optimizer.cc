@@ -37,7 +37,7 @@ void Optimizer::globalBA(const Map::Ptr& map, const int n_iters) {
   list<g2o_types::EdgeContainer> edge_container;
 
   // Iterate all keyframes in the map.
-  int v_id = 0;                                     // Vertex id.
+  int v_id = 0;  // Vertex id.
   for (const Frame::Ptr& kf : kfs) {
     // Create frame vertex. Fixed if it's the first frame.
     //! unique_ptr's "=" operator is overloaded as if:
@@ -58,10 +58,10 @@ void Optimizer::globalBA(const Map::Ptr& map, const int n_iters) {
       // Low weight of high level features since high image pyramid level
       // (possibly) corrsponds to large error.
       //! "1. / (1 << level)" to account the level 0 case.
-      const auto& e_obs = g2o_utils::createG2oEdgeObs(
+      auto e_obs = g2o_utils::createG2oEdgeObs(
           kf->v_frame_.get(), point->v_point_.get(), feat->pt_,
           1. / (1 << feat->level_), std::sqrt(chi2_thresh));
-      optimizer.addEdge(e_obs.get());
+      assert(optimizer.addEdge(e_obs.get()));
       edge_container.emplace_back(e_obs, kf, feat);
     }
   }
@@ -77,7 +77,6 @@ void Optimizer::globalBA(const Map::Ptr& map, const int n_iters) {
     SE3 estimate_(kf->v_frame_->estimate().rotation(),
                   kf->v_frame_->estimate().translation());
     kf->setPose(estimate_);
-    // FIXME reset or set to nullptr?
     kf->v_frame_.reset();
     for (const Feature::Ptr& feat : kf->feats_) {
       const MapPoint::Ptr& point = feat_utils::getPoint(feat);
@@ -131,7 +130,7 @@ int Optimizer::optimizePose(const Frame::Ptr& frame, const int n_iters) {
     const MapPoint::Ptr& point = feat_utils::getPoint(feat);
     if (!point) continue;
     // Create g2o pose-only unary edge.
-    const auto& e_pose_only = g2o_utils::createG2oEdgePoseOnly(
+    auto e_pose_only = g2o_utils::createG2oEdgePoseOnly(
         frame->v_frame_.get(), feat->pt_, point->pos_, frame->cam_->K(),
         1. / (1 << feat->level_), std::sqrt(chi2_thresh));
     assert(optimizer.addEdge(e_pose_only.get()));
@@ -254,7 +253,7 @@ void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
       }
 
       // Creata g2o edge for each valid observation.
-      const auto& e_obs = g2o_utils::createG2oEdgeObs(
+      auto e_obs = g2o_utils::createG2oEdgeObs(
           kf->v_frame_.get(), point->v_point_.get(), feat->pt_,
           1. / (1 << feat->level_), std::sqrt(chi2_thresh));
       edge_container.emplace_back(e_obs, kf, feat);
@@ -292,7 +291,7 @@ void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
     point->v_point_.reset();
   }
   // Reset fixed keyframes' temporary g2o frame vertex.
-  for (const Frame::Ptr& kf : fixed_kfs) kf->v_frame_.reset();
+  for (const Frame::Ptr& kf : fixed_kfs) kf->v_frame_ = nullptr;
 
   // Remove observations with too large reprojection error.
   for (const auto& edge : edge_container)

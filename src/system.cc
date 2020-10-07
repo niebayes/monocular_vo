@@ -32,9 +32,11 @@ bool System::init() {
   dataset_.reset(new Dataset(dataset_path, img_file_name_fmt, img_resize_factor,
                              img_start_idx));
 
+#ifndef DEBUG
   // Load vocabulary.
   const string& voc_file = config["voc_file"];
   sptr<Vocabulary> voc = make_shared<Vocabulary>(voc_file);
+#endif
 
   // Load timestamps.
   const string& timestamp_file = config["timestamp_file"];
@@ -75,7 +77,9 @@ bool System::init() {
   tracker_->setLocalMapper(local_mapper_);
   tracker_->setMap(map_);
   tracker_->setViewer(viewer_);
+#ifndef DEBUG
   tracker_->voc_ = voc;
+#endif
 
   local_mapper_->setSystem(shared_from_this());
   local_mapper_->setTracker(tracker_);

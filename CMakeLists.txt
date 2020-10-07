@@ -95,11 +95,13 @@ list(APPEND SOURCE_FILES
 )
 
 add_library(my_slam SHARED ${SOURCE_FILES})
+# target_compile_options(my_slam PRIVATE -O0)
 target_compile_options(my_slam PRIVATE -O0 -march=native)
 target_link_libraries(my_slam ${LINK_LIBRARIES})
 
 add_executable(mono_kitti app/mono_kitti.cc)
-target_compile_options(mono_kitti PRIVATE -O0 -march=native)
+# target_compile_options(mono_kitti PRIVATE -O0)
+target_compile_options(my_slam PRIVATE -O0 -march=native)
 target_link_libraries(mono_kitti my_slam ${LINK_LIBRARIES})
 
 add_executable(my_test src/my_test.cc)

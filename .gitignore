@@ -5,6 +5,10 @@ build
 # Built libraries. 
 lib
 
+# Dataset 
+KITTI 
+parking
+
 # Implementation detail.
 implementation_detail
 
