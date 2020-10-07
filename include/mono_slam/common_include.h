@@ -37,7 +37,10 @@
 #include "sophus/se3.hpp"
 #include "sophus/so3.hpp"
 
-#define DEBUG 1
+// #define DEBUG 1
+#define NO_BA 1
+#define NO_LOCAL_MAP 1
+#define ENABLE_RESET 1
 
 // using declarations.
 using namespace std;

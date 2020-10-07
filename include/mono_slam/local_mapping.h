@@ -32,6 +32,7 @@ class LocalMapping {
 
   void removeRedundantKfs();
 
+  // FIXME Seems this checking is redundant?
   inline bool isIdle() const {
     u_lock lock(mutex_);
     return is_idle_;
@@ -46,7 +47,8 @@ class LocalMapping {
 
  protected:
   queue<Frame::Ptr> kfs_queue_;  // Keyframes queue waiting to be processed.
-  Frame::Ptr curr_keyframe_;     // The keyframe currently under processing.
+  Frame::Ptr curr_keyframe_ =
+      nullptr;  // The keyframe currently under processing.
 
   // Multi-threading stuff.
   std::thread thread_;

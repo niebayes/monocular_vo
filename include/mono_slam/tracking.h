@@ -18,6 +18,7 @@ class Frame;
 class Viewer;
 class Initializer;
 
+// FIXME RESETTING state seems redundant.
 enum class State { NOT_INITIALIZED_YET, GOOD, LOST };
 
 class Tracking : public std::enable_shared_from_this<Tracking> {

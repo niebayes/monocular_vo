@@ -9,11 +9,12 @@ namespace mono_slam {
 
 int MapPoint::point_cnt_ = 0;
 
-MapPoint::MapPoint(const Vec3& pos) : id_(point_cnt_++), pos_(pos) {}
+MapPoint::MapPoint(const Vec3& pos)
+    : id_(point_cnt_++), pos_(pos), to_be_deleted_(false) {}
 
 // TODO(bayes) Compute mean_view_dirs_.
 MapPoint::MapPoint(const Vec3& pos, sptr<Feature> feat)
-    : id_(point_cnt_++), pos_(pos), best_feat_(feat) {
+    : id_(point_cnt_++), pos_(pos), best_feat_(feat), to_be_deleted_(false) {
   observations_.push_back(feat);
 }
 
@@ -40,11 +41,12 @@ void MapPoint::eraseObservation(const sptr<Feature>& feat) {
 }
 
 void MapPoint::updateBestFeature() {
+  const list<sptr<Feature>>& observations = this->getObservations();
   if (to_be_deleted_) return;
   // Container of all available features.
   vector<sptr<Feature>> feats;
-  feats.reserve(this->nObs());
-  for (const sptr<Feature>& feat : observations_) {
+  feats.reserve(observations.size());
+  for (const sptr<Feature>& feat : observations) {
     feats.push_back(feat);
   }
 
@@ -73,8 +75,10 @@ void MapPoint::updateBestFeature() {
       idx = i;
     }
   }
-
-  best_feat_ = feats[idx];
+  {
+    u_lock lock(mutex_);
+    best_feat_ = feats[idx];
+  }
 }
 
 void MapPoint::updateMedianViewDirAndScale() {

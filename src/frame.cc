@@ -30,10 +30,9 @@ void Frame::setPose(const SE3& T_c_w) { cam_->setPose(T_c_w); }
 void Frame::setKeyframe() { is_keyframe_ = true; }
 
 vector<int> Frame::searchFeatures(const Vec2& pt, const int radius,
-                                  const int level_low,
-                                  const int level_high) const {
-  // FIXME Would it be better if we clamp this rather than throw an error?
-  CHECK(level_low >= 0 && level_high >= level_low);
+                                  int level_low, int level_high) const {
+  level_low = std::clamp(level_low, 0, Config::scale_n_levels());
+  level_high = std::clamp(level_high, 0, Config::scale_n_levels());
   const int num_obs = this->nObs();
   vector<int> feat_indices;
   feat_indices.reserve(num_obs);
@@ -69,11 +68,12 @@ void Frame::deleteConnection(const Frame::Ptr& keyframe) {
 void Frame::updateCoKfsAndWeights() {
   // Filter out those keyframes that the number of shared map points below
   // certain threshold.
-  map<int, Frame::Ptr> co_weight_kfs;  // Map structure is internally sorted.
+  // multimap structure is internally sorted.
+  multimap<int, Frame::Ptr> co_weight_kfs;
   for (auto it = co_kf_weights_.cbegin(), it_end = co_kf_weights_.cend();
        it != it_end; ++it) {
     if (it->second <= Config::co_kf_weight_thresh()) continue;
-    co_weight_kfs[it->second] = it->first;
+    co_weight_kfs.insert({it->second, it->first});
     // FIXME Need to enable shared_from_this() ?
     it->first->addConnection(shared_from_this(), it->second);
   }
@@ -88,6 +88,7 @@ void Frame::updateCoKfsAndWeights() {
   }
 }
 
+// FIXME This method and those it called incur many errors (bus error etc.).
 void Frame::updateCoInfo() {
   // Covisible keyframe voter with the key being the covisible keyframe and the
   // weights being the number of shared map points.
@@ -123,7 +124,7 @@ double Frame::computeSceneMedianDepth() {
   return math_utils::get_median(depths);
 }
 
-bool Frame::isObservable(const sptr<MapPoint>& point) const {
+bool Frame::isObservable(const sptr<MapPoint>& point, const int level) const {
   // Test 1: has positive depth.
   const Vec3& p_w = point->pos();
   const Vec3 p_c = cam_->world2camera(p_w);
@@ -133,13 +134,14 @@ bool Frame::isObservable(const sptr<MapPoint>& point) const {
   if (!(repr_pt.x() >= x_min_ && repr_pt.x() <= x_max_ &&
         repr_pt.y() >= y_min_ && repr_pt.y() <= y_max_))
     return false;
-  // Test 3: predicted scale is consistent with median scale (i.e. within +- 1).
-  const double dist = cam_->getDistToCenter(p_w);
-  const int level = math_utils::predictLevel(dist);
+  // FIXME Is the logic right?
+  // Test 3: the image pyramid level of the feature is consistent with median
+  // scale at which the point is observed. (i.e. within +- 1).
   if (!(level >= point->median_view_scale_ - 1 &&
         level <= point->median_view_scale_ + 1))
     return false;
   // Test 4: viewing direction is consistent with mean viewing direction.
+  const double dist = cam_->getDistToCenter(p_w);
   const double cos_view_dir =
       (p_w - cam_->getCamCenter()).dot(point->median_view_dir_) / dist;
   if (cos_view_dir < std::cos(math_utils::degree2radian(60.))) return false;

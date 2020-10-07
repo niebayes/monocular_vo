@@ -60,14 +60,18 @@ int Matcher::searchByProjection(const unordered_set<Frame::Ptr>& local_co_kfs,
   if (local_co_kfs.empty()) return 0;
   int n_matches = 0;
 
-  // Iterate each keyframe->feature->map_point to find best match between the
-  // map_point and features in curr_frame.
+  // Iterate each keyframe->feature->map_point to find the best matches between
+  // the map_point and features in curr_frame.
+
+  // Helper container used to reset the marker.
+  unordered_set<MapPoint::Ptr> shared_points;
   for (const Frame::Ptr& kf : local_co_kfs) {
     for (const Feature::Ptr& feat : kf->feats_) {
       const MapPoint::Ptr& point = feat_utils::getPoint(feat);
       if (!point || point->curr_tracked_frame_id_ == curr_frame->id_) continue;
       point->curr_tracked_frame_id_ = curr_frame->id_;
-      if (!curr_frame->isObservable(point)) continue;
+      shared_points.insert(point);
+      if (!curr_frame->isObservable(point, feat->level_)) continue;
 
       // Perform 3D-2D searching.
       // Search radius is enlarged at larger scale and also influenced by
@@ -107,8 +111,9 @@ int Matcher::searchByProjection(const unordered_set<Frame::Ptr>& local_co_kfs,
 
       // Perform thresholding, distance ratio test, and scale consistency test,
       if (min_dist >= Config::match_thresh_relax() ||
-          min_dist >= Config::dist_ratio_test_factor() * second_min_dist ||
-          best_level != second_best_level)
+          min_dist >= Config::dist_ratio_test_factor() * second_min_dist)
+          // ||
+          // best_level != second_best_level)
         continue;
 
       // Update linked map point.
@@ -120,6 +125,10 @@ int Matcher::searchByProjection(const unordered_set<Frame::Ptr>& local_co_kfs,
       ++n_matches;
     }
   }
+  // Reset the marker making it ready for the next searching.
+  std::for_each(
+      shared_points.cbegin(), shared_points.cend(),
+      [](const MapPoint::Ptr& point) { point->curr_tracked_frame_id_ = -1; });
   return n_matches;
 }
 

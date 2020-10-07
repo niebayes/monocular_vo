@@ -17,7 +17,8 @@ class Frame : public std::enable_shared_from_this<Frame> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Frame>;
-  using Features = vector<sptr<Feature>>;  // weak_ptr to avoid cyclic ref.
+  //FIXME Use unique_ptr for features since they're exclusively owned by frame.
+  using Features = vector<sptr<Feature>>; 
 
   // FIXME Should frame has a member denoting self a frame to be deleted?
 
@@ -70,7 +71,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
                              const int level_low, const int level_high) const;
 
   // Check if the given map point is Observable by this frame.
-  bool isObservable(const sptr<MapPoint>& point) const;
+  bool isObservable(const sptr<MapPoint>& point, const int level) const;
 
   void addConnection(Frame::Ptr keyframe, const int weight);
 
@@ -91,6 +92,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
                                     std::next(co_kfs_.cbegin(), n));
   }
 
+  // FIXME This method is deprecated!
   // Compute number of tracked map points (i.e. ones that are observed by more
   // than min_n_obs frames).
   int computeTrackedPoints(const int min_n_obs) const;

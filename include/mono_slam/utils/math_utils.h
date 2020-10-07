@@ -48,17 +48,6 @@ inline T get_median(std::vector<T>& data_vec) {
   return *it;
 }
 
-// Estimate the image pyramid level of the feature in the given frame
-// corresponding to this map point.
-// FIXME
-inline int predictLevel(const double dist) {
-  // const double level =
-  //     std::log(max_scale_invariance_ / dist) /
-  //     std::log(Config::scale_factor());
-  // return std::round(std::clamp(level, 0, Config::scale_n_levels()));
-  return 0;
-}
-
 }  // namespace math_utils
 
 #endif  // MONO_SLAM_UTILS_MATH_UTILS_H_

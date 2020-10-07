@@ -13,7 +13,7 @@ class Frame;
 // Keyframe database used for relocalization when tracking is lost.
 class KeyframeDataBase {
  public:
-  using Ptr = sptr<KeyframeDataBase>;
+  using Ptr = uptr<KeyframeDataBase>;
 
   KeyframeDataBase(sptr<Vocabulary> voc);
 
@@ -50,13 +50,13 @@ class Map {
   // Keyframe database used for relocalization.
   KeyframeDataBase::Ptr kf_db_ = nullptr;
 
-  Map();
+  Map(sptr<Vocabulary> voc);
 
   void insertKeyframe(Frame::Ptr keyframe);
 
   //! In the early design, map needs not have to maintain points. But in order
   //! to making the points not be destoryed once get out of scope, we use map to
-  //! maintain them. 
+  //! maintain them.
   void insertMapPoint(MapPoint::Ptr point);
 
   // TODO(bayes) Implement remove functions, e.g. put outlier map points to
@@ -81,10 +81,29 @@ class Map {
   void clear();
 
  private:
+  //! Class correlations:
+  //
+  //! Features are detected in frame and no where else, thus frame owns features
+  //! exclusively: frame -> unique_ptr -> feature.
+  //
+  //! Map points are observed by frame through features, but they don't have to
+  //! own each other, knowing the existence suffices. Therefore, feature ->
+  //! weak_ptr -> map point, and map point -> weak_ptr -> feature.
+  //
+  //! Frames may be owned by tracker, initializer and map and also keyframe
+  //! database simultaneously, even though it can be declared of type
+  //! unique_ptr in some classes, but it involves many move / release operations
+  //! which are tedious and cubersome. Hence it's designed as of type shared_ptr
+  //! for the sake of simplicity.
+  //
+  //! For map points, it must be someone owning them which is the map we choosed
+  //! as intuition.
+
   list<Frame::Ptr> kfs_;        // Maintained keyframes.
   list<MapPoint::Ptr> points_;  // Maintained map points;
   int max_kf_id_;  // Maximum id of keyframes inserted so far. Used for
                    // checking for duplication as new keyframe is comming.
+  sptr<Vocabulary> voc_ = nullptr;
 
   mutable std::mutex mutex_;
 };

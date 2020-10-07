@@ -37,6 +37,11 @@ class Config {
     return getInstance().init_min_n_inlier_matches_;
   }
 
+  // Number of minimum good triangulated points during initialization.
+  static int& init_min_n_triangulated() {
+    return getInstance().init_min_n_triangulated_;
+  }
+
   // Number of iterations P3P solving is performed during relocalization.
   static int& reloc_n_iters_p3p() { return getInstance().reloc_n_iters_p3p_; }
 
@@ -129,6 +134,7 @@ class Config {
   int init_min_n_feats_;
   int init_min_n_matches_;
   int init_min_n_inlier_matches_;
+  int init_min_n_triangulated_;
   int reloc_n_iters_p3p_;
   int reloc_min_n_matches_;
   int reloc_min_n_inlier_matches_;

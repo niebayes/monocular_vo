@@ -78,6 +78,8 @@ bool Initializer::buildInitMap() {
   // Insert initial keyframes.
   ref_frame_->setKeyframe();
   curr_frame_->setKeyframe();
+  // FIXME Seems data racing issue. Sometimes only one keyframe is successfully
+  // inserted.
   tracker_->map_->insertKeyframe(ref_frame_);
   tracker_->map_->insertKeyframe(curr_frame_);
 
@@ -108,8 +110,10 @@ bool Initializer::buildInitMap() {
   ref_frame_->updateCoInfo();
   curr_frame_->updateCoInfo();
 
+#ifndef NO_BA
   // Global bundle adjustment.
   Optimizer::globalBA(tracker_->map_);
+#endif
 
   // FIXME What is the rescaling principle under the hood?
   // Rescale the map such that the mean scene depth is equal to 1.0

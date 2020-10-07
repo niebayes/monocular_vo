@@ -7,57 +7,69 @@
 
 namespace mono_slam {
 
-LocalMapping::LocalMapping() { startThread(); }
+LocalMapping::LocalMapping() : is_idle_(true) { startThread(); }
 
 void LocalMapping::startThread() {
   is_running_.store(true);
   // Open up a new thread for local mapping.
   thread_ = std::thread(std::bind(&LocalMapping::LocalMappingLoop, this));
+  LOG(INFO) << "Local mapper is running on thread " << thread_.get_id();
 }
 
 void LocalMapping::stopThread() {
+  LOG(INFO) << "Request stopping local mapper ...";
   is_running_.store(false);
   new_kf_cond_var_.notify_one();  // Release the lock or the halt won't proceed.
+  // FIXME What blocks this thread?!
   thread_.join();
+  LOG(INFO) << "Local mapper stopped.";
 }
 
 void LocalMapping::insertKeyframe(Frame::Ptr keyframe) {
   CHECK_EQ(keyframe->isKeyframe(), true);
   u_lock lock(mutex_);
   kfs_queue_.push(keyframe);
+  new_kf_cond_var_.notify_one();
 }
 
 void LocalMapping::LocalMappingLoop() {
   while (is_running_.load()) {
     u_lock lock(mutex_);
     new_kf_cond_var_.wait(lock);
+    // FIXME Simply accumulate unprocessed keyframes? Perhaps a method
+    // checkNewKfs() is applicable for this purpose.
+    is_idle_ = false;  // Don't let tracker interupt me!
+    // FIXME Unlock now? Bus error!
+    // lock.unlock();
     processFrontKeyframe();
     triangulateNewPoints();
     // Run local BA if keyframe queue is empty at this momment and the map
-    // maintains more thant 2 keyframes as well.
+    // is maintaining more thant 2 keyframes as well.
+#ifndef NO_BA
     if (kfs_queue_.empty() && map_->nKfs() > 2)
       Optimizer::localBA(curr_keyframe_, map_);
+#endif
     removeRedundantKfs();
+    is_idle_ = true;
   }
 }
 
 void LocalMapping::processFrontKeyframe() {
-  u_lock lock(mutex_);
+  // FIXME Can this method successfully get the mutex_ inside the thread loop?
+  // u_lock lock(mutex_);
   curr_keyframe_ = kfs_queue_.front();
   kfs_queue_.pop();
 
   // Update links between current keyframe and map points.
   for (const Feature::Ptr& feat : curr_keyframe_->feats_) {
     const MapPoint::Ptr& point = feat_utils::getPoint(feat);
-    if (!point || point->isObservedBy(curr_keyframe_)) continue;
+    if (!point || !point->isObservedBy(curr_keyframe_)) continue;
     point->addObservation(feat);
     point->updateBestFeature();
     point->updateMedianViewDirAndScale();
   }
-
   // Update covisibility information.
   curr_keyframe_->updateCoInfo();
-
   // Insert to map the new keyframe.
   map_->insertKeyframe(curr_keyframe_);
 }
@@ -138,7 +150,6 @@ void LocalMapping::triangulateNewPoints() {
       MapPoint::Ptr point = make_shared<MapPoint>(point_1);
       point->addObservation(feat_1);
       point->addObservation(feat_2);
-
       // Update observation information.
       point->updateBestFeature();
       point->updateMedianViewDirAndScale();
@@ -165,7 +176,7 @@ void LocalMapping::removeRedundantKfs() {
       const list<Feature::Ptr>& observations = point->getObservations();
       for (const Feature::Ptr& feat : observations) {
         const Frame::Ptr& kf = feat_utils::getKeyframe(feat);
-        if (!kf || kf == kf_) continue;
+        if (!kf || kf == kf_) continue;  // Self is of course excluded.
         // Features must be detected in neighbor scales.
         if (feat->level_ >= feat_->level_ - 1 &&
             feat->level_ <= feat_->level_ + 1)
@@ -183,7 +194,9 @@ void LocalMapping::removeRedundantKfs() {
 
 void LocalMapping::reset() {
   u_lock lock(mutex_);
+  stopThread();
   while (!kfs_queue_.empty()) kfs_queue_.pop();
+  curr_keyframe_.reset();
 }
 
 void LocalMapping::setSystem(sptr<System> system) { system_ = system; }

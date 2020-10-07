@@ -1,11 +1,12 @@
 #include "mono_slam/geometry_solver.h"
 
 #include "eigen3/unsupported/Eigen/KroneckerProduct"
+#include "mono_slam/config.h"
 #include "mono_slam/geometry_solver/kneip_p3p.h"
 #include "mono_slam/utils/math_utils.h"
 
 namespace mono_slam {
-  
+
 void GeometrySolver::findFundamentalRansac(
     const Frame::Ptr& frame_1, const Frame::Ptr& frame_2,
     const vector<int>& matches, Mat33& F,
@@ -151,7 +152,8 @@ bool GeometrySolver::findRelativePoseRansac(
   // points and sufficient parallax.
   LOG(INFO) << "max(num_good_tri_points) = " << best_score;
   LOG(INFO) << "best(median_parallax) = " << best_median_parallax;
-  if (best_score < min_n_triangulated || best_median_parallax < min_parallax)
+  if (best_score < Config::init_min_n_triangulated() ||
+      best_median_parallax < min_parallax)
     return false;
   // Obtain result.
   relative_pose = SE3(best_R, best_t);

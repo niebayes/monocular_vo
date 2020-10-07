@@ -35,7 +35,11 @@ bool System::init() {
 #ifndef DEBUG
   // Load vocabulary.
   const string& voc_file = config["voc_file"];
+  const steady_clock::time_point t1 = steady_clock::now();
   sptr<Vocabulary> voc = make_shared<Vocabulary>(voc_file);
+  const steady_clock::time_point t2 = steady_clock::now();
+  const double time_span = duration_cast<duration<double>>(t2 - t1).count();
+  LOG(INFO) << "Loaded vocabulary in " << time_span << "seconds.";
 #endif
 
   // Load timestamps.
@@ -70,7 +74,7 @@ bool System::init() {
   // Prepare and link system components.
   tracker_.reset(new Tracking());
   local_mapper_.reset(new LocalMapping());
-  map_.reset(new Map());
+  map_.reset(new Map(voc));
   viewer_.reset(new Viewer());
 
   tracker_->setSystem(shared_from_this());
@@ -120,10 +124,12 @@ void System::run() {
 }
 
 void System::reset() {
+  LOG(INFO) << "Resetting system ...";
   tracker_->reset();
   local_mapper_->reset();
   map_->clear();
   viewer_->reset();
+  LOG(INFO) << "Reset system.";
 }
 
 }  // namespace mono_slam

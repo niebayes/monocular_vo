@@ -37,6 +37,8 @@ void KeyframeDataBase::erase(const Frame::Ptr& keyframe) {
 
 bool KeyframeDataBase::detectRelocCandidates(const Frame::Ptr& frame,
                                              list<Frame::Ptr>& candidate_kfs) {
+  LOG(INFO) << "Start detecting relocalization candiates ...";
+  const steady_clock::time_point t1 = steady_clock::now();
   // FIXME Is this okay not putting parenthese critical section?
   u_lock lock(mutex_);
 
@@ -46,7 +48,7 @@ bool KeyframeDataBase::detectRelocCandidates(const Frame::Ptr& frame,
   auto it = bow_vec.cbegin(), it_end = bow_vec.cend();
   for (; it != it_end; ++it) {
     if (!inv_files_.count(it->first)) continue;
-    list<Frame::Ptr>& kfs = inv_files_.at(it->first);
+    const list<Frame::Ptr>& kfs = inv_files_.at(it->first);
     for (const Frame::Ptr& kf : kfs) {
       // If not queried yet.
       if (kf->query_frame_id_ != frame->id_) {
@@ -88,7 +90,7 @@ bool KeyframeDataBase::detectRelocCandidates(const Frame::Ptr& frame,
 
     // Traverse the covisible keyframes and accumulate the similarity score.
     double max_score_i = kf->bow_simi_score_, accu_score_i = max_score_i;
-    Frame::Ptr best_kf_i = nullptr;
+    Frame::Ptr best_kf_i = kf;
     for (const Frame::Ptr& kf_ : co_kfs) {
       // Only the keyframes visited before are considered having contribution.
       if (kf_->query_frame_id_ != frame->id_) continue;
@@ -106,13 +108,21 @@ bool KeyframeDataBase::detectRelocCandidates(const Frame::Ptr& frame,
   const double score_thresh = 0.80 * max_accu_score;
 
   // Get the candidate keyframes.
+  int n_can_kfs = 0;
   for (auto it = score_of_best_kfs.cbegin(), it_end = score_of_best_kfs.cend();
        it != it_end; ++it) {
     if (it->first <= score_thresh || it->second->is_candidate_already_)
       continue;
     candidate_kfs.push_back(it->second);
     it->second->is_candidate_already_ = true;
+    ++n_can_kfs;
   }
+  const steady_clock::time_point t2 = steady_clock::now();
+  const double time_span = duration_cast<duration<double>>(t2 - t1).count();
+  LOG(INFO) << n_can_kfs << " relocalization candidates detected.";
+  LOG(INFO) << "Relocalization candidates detection finished in " << time_span
+            << " seconds.";
+
   // Reset the keyframes.
   std::for_each(score_of_best_kfs.cbegin(), score_of_best_kfs.cend(),
                 [](const pair<double, Frame::Ptr>& p) {
@@ -129,15 +139,20 @@ void KeyframeDataBase::clear() {
 //##############################################################################
 // Map
 
-Map::Map() : max_kf_id_(0) {}
+Map::Map(sptr<Vocabulary> voc) : voc_(voc), max_kf_id_(0) {
+  kf_db_.reset(new KeyframeDataBase(voc_));
+}
 
 void Map::insertKeyframe(Frame::Ptr keyframe) {
   CHECK_EQ(keyframe->isKeyframe(), true);
-  // FIXME Is this check always valid?
-  CHECK_GE(keyframe->id_, max_kf_id_);
+  if (keyframe->id_ <= max_kf_id_) {
+    LOG(WARNING) << "Keyframe being inserted is already in the map.";
+    return;
+  }
   u_lock lock(mutex_);
   max_kf_id_ = keyframe->id_;
   kfs_.push_back(keyframe);
+  kf_db_->add(keyframe);  // Also add to keyframe database.
 }
 
 void Map::insertMapPoint(MapPoint::Ptr point) {
@@ -145,8 +160,9 @@ void Map::insertMapPoint(MapPoint::Ptr point) {
   points_.push_back(point);
 }
 
-void Map::removeObservation(const Frame::Ptr& keyframe, const Feature::Ptr& feat) {
-  // 
+void Map::removeObservation(const Frame::Ptr& keyframe,
+                            const Feature::Ptr& feat) {
+  //
 }
 
 void Map::clear() {
