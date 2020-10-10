@@ -25,6 +25,9 @@ void Initializer::addCurrentFrame(Frame::Ptr curr_frame) {
     return;
   }
   if (curr_frame->nObs() < Config::init_min_n_feats()) return;
+  // Ensure the baseline between the two frames used for initialization is
+  // sufficient large or the initialization quality is bad.
+  if (curr_frame->id_ < ref_frame_->id_ + Config::new_kf_interval()) return;
   curr_frame_ = curr_frame;
   LOG(INFO) << "Current frame selected.";
   // Matches between reference frame and current frame such that:

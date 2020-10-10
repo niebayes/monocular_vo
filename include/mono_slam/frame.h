@@ -17,8 +17,8 @@ class Frame : public std::enable_shared_from_this<Frame> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Frame>;
-  //FIXME Use unique_ptr for features since they're exclusively owned by frame.
-  using Features = vector<sptr<Feature>>; 
+  // FIXME Use unique_ptr for features since they're exclusively owned by frame.
+  using Features = vector<sptr<Feature>>;
 
   // FIXME Should frame has a member denoting self a frame to be deleted?
 
@@ -55,16 +55,25 @@ class Frame : public std::enable_shared_from_this<Frame> {
 
   Frame(const cv::Mat& img);
 
-  inline const SE3& pose() const { return cam_->pose(); }
+  inline const SE3& pose() const {
+    lock_g lock(mut_);
+    return cam_->pose();
+  }
 
   void setPose(const SE3& T_c_w);
 
-  inline bool isKeyframe() const { return is_keyframe_; }
+  inline bool isKeyframe() const {
+    lock_g lock(mut_);
+    return is_keyframe_;
+  }
 
   void setKeyframe();
 
   // Number of observations (i.e. number of features observed in this frame).
-  inline int nObs() const { return static_cast<int>(feats_.size()); }
+  inline int nObs() const {
+    lock_g lock(mut_);
+    return static_cast<int>(feats_.size());
+  }
 
   // Search features given searching radius and image pyramid level range.
   vector<int> searchFeatures(const Vec2& pt, const int radius,
@@ -85,6 +94,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
 
   inline forward_list<Frame::Ptr> getCoKfs(
       const int n = std::numeric_limits<int>::max()) const {
+    lock_g lock(co_mut_);
     const int n_kfs =
         static_cast<int>(std::distance(co_kfs_.cbegin(), co_kfs_.cend()));
     if (n > n_kfs) return co_kfs_;
@@ -100,6 +110,12 @@ class Frame : public std::enable_shared_from_this<Frame> {
   // FIXME Personally, this method should be in map.
   // Erase the links between this frame and other stuff.
   void erase();
+
+ private:
+  // Mutexes.
+  mutable std::mutex mut_;  // General data guardian.
+  // Protect concurrent modification on covisible info.
+  mutable std::mutex co_mut_;
 };
 
 namespace frame_utils {

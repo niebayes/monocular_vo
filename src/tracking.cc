@@ -9,7 +9,7 @@ namespace mono_slam {
 class Optimizer;
 
 Tracking::Tracking() : state_(State::NOT_INITIALIZED_YET) {
-  initializer_.reset(new Initializer());
+  initializer_.reset(new Initializer);
   detector_ = cv::ORB::create(Config::max_n_feats());
   LOG(INFO) << "Tracker is runninng on thread " << std::this_thread::get_id();
 }
@@ -37,8 +37,11 @@ void Tracking::trackCurrentFrame() {
       initializer_->setTracker(shared_from_this());
       if (initMap()) {
         last_kf_id_ = curr_frame_->id_;
-        local_mapper_->insertKeyframe(last_frame_);
-        local_mapper_->insertKeyframe(curr_frame_);
+        // local_mapper_->insertKeyframe(last_frame_);
+        // local_mapper_->insertKeyframe(curr_frame_);
+        // FIXME Should I inform local_mapper_ right now?
+        // Asure that the update is performed after both the keyframes are inserted.
+        // local_mapper_->informUpdate();
         state_ = State::GOOD;
       }
       break;
@@ -50,8 +53,8 @@ void Tracking::trackCurrentFrame() {
         if (needNewKf()) {
           last_kf_id_ = curr_frame_->id_;
           curr_frame_->setKeyframe();
-          // FIXME Can these two methods mergerd into a single one?
           local_mapper_->insertKeyframe(curr_frame_);
+          local_mapper_->informUpdate();
         }
       }
       break;
@@ -61,6 +64,7 @@ void Tracking::trackCurrentFrame() {
         last_kf_id_ = curr_frame_->id_;
         curr_frame_->setKeyframe();
         local_mapper_->insertKeyframe(curr_frame_);
+        local_mapper_->informUpdate();
         state_ = State::GOOD;
       }
 #ifdef ENABLE_RESET
@@ -180,7 +184,7 @@ bool Tracking::needNewKf() {
   bool need_new_kf = true;
   // TODO(bayes) Use a more complicated strategy.
   const int n_kfs = map_->nKfs();
-  LOG(INFO) << "Number of " << n_kfs << " in map right now.";
+  LOG(INFO) << n_kfs << " keyframes are in map right now.";
   // Cannot exceed maximal number of keyframes in map at one moment.
   if (n_kfs > Config::max_n_kfs_in_map()) need_new_kf = false;
   // Frequently creating new keyframe is forbidden.
@@ -240,11 +244,12 @@ bool Tracking::relocalization() {
 
 void Tracking::reset() {
   state_ = State::NOT_INITIALIZED_YET;
+  initializer_.reset(new Initializer);
   last_frame_.reset();
   curr_frame_.reset();
   T_curr_last_ = SE3();
   local_co_kfs_.clear();
-  last_kf_id_ = 0;
+  // last_kf_id_ = 0;
 }
 
 void Tracking::extractFeatures(const cv::Mat& img) {

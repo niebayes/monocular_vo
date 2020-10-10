@@ -26,7 +26,7 @@ Config::Config()
       dist_ratio_test_factor_(0.8),
       redun_factor_(0.9),
       weight_factor_(0.8),
-      new_kf_interval_(5),
+      new_kf_interval_(3),
       max_n_kfs_in_map_(50),
       approx_n_words_pct_(0.2),
       co_kf_weight_thresh_(15) {

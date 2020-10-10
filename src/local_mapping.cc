@@ -26,21 +26,34 @@ void LocalMapping::stopThread() {
 }
 
 void LocalMapping::insertKeyframe(Frame::Ptr keyframe) {
+  LOG(INFO) << "Try inserting keyframe " << keyframe->id_
+            << " to local mapper ...";
   CHECK_EQ(keyframe->isKeyframe(), true);
   u_lock lock(mutex_);
   kfs_queue_.push(keyframe);
+  LOG(INFO) << "Inserted keyframe " << keyframe->id_ << " to local mapper.";
+}
+
+void LocalMapping::informUpdate() {
+  // Racing the mutex or the notification won't be performed.
+  u_lock lock(mutex_);
   new_kf_cond_var_.notify_one();
 }
 
 void LocalMapping::LocalMappingLoop() {
   while (is_running_.load()) {
-    u_lock lock(mutex_);
-    new_kf_cond_var_.wait(lock);
-    // FIXME Simply accumulate unprocessed keyframes? Perhaps a method
-    // checkNewKfs() is applicable for this purpose.
-    is_idle_ = false;  // Don't let tracker interupt me!
-    // FIXME Unlock now? Bus error!
-    // lock.unlock();
+    {  //! Don't hold lock to do time-consuming workload.
+      u_lock lock(mutex_);
+      new_kf_cond_var_.wait(lock);
+      // FIXME Check curr_keyframe_ == nullptr here?
+      // FIXME Simply accumulate unprocessed keyframes? Perhaps a method
+      // checkNewKfs() is applicable for this purpose.
+      if (kfs_queue_.empty()) continue;
+      is_idle_ = false;  // Don't let tracker interupt me!
+      curr_keyframe_ = kfs_queue_.front();
+      kfs_queue_.pop();
+    }
+    LOG(INFO) << "Local mapper is processing keyframe " << curr_keyframe_->id_;
     processFrontKeyframe();
     triangulateNewPoints();
     // Run local BA if keyframe queue is empty at this momment and the map
@@ -50,16 +63,14 @@ void LocalMapping::LocalMappingLoop() {
       Optimizer::localBA(curr_keyframe_, map_);
 #endif
     removeRedundantKfs();
+    LOG(INFO) << "Local mapper finished processing keyframe "
+              << curr_keyframe_->id_;
+    curr_keyframe_.reset();  // Always reseat shared_ptr once we don't need it.
     is_idle_ = true;
   }
 }
 
 void LocalMapping::processFrontKeyframe() {
-  // FIXME Can this method successfully get the mutex_ inside the thread loop?
-  // u_lock lock(mutex_);
-  curr_keyframe_ = kfs_queue_.front();
-  kfs_queue_.pop();
-
   // Update links between current keyframe and map points.
   for (const Feature::Ptr& feat : curr_keyframe_->feats_) {
     const MapPoint::Ptr& point = feat_utils::getPoint(feat);
@@ -79,6 +90,7 @@ void LocalMapping::triangulateNewPoints() {
   const forward_list<Frame::Ptr>& co_kfs = curr_keyframe_->getCoKfs(10);
 
   // Iterate all covisible keyframes.
+  int n_new_points = 0;
   for (const Frame::Ptr& kf : co_kfs) {
     // Test if this keyframe and current keyframe under processing are able to
     // triangulate new good points.
@@ -153,13 +165,16 @@ void LocalMapping::triangulateNewPoints() {
       // Update observation information.
       point->updateBestFeature();
       point->updateMedianViewDirAndScale();
+      ++n_new_points;
     }
   }
+  LOG(INFO) << "Triangulated " << n_new_points << " new map points.";
 }
 
 void LocalMapping::removeRedundantKfs() {
   // Iterate all covisible keyframes.
   const forward_list<Frame::Ptr>& co_kfs = curr_keyframe_->co_kfs_;
+  int n_redun_kfs = 0;
   for (const Frame::Ptr& kf_ : co_kfs) {
     int n_points = 0;            // Number of effective map points.
     int n_redundant_obs = 0;     // Number of redundant observations;
@@ -188,13 +203,15 @@ void LocalMapping::removeRedundantKfs() {
 
     if (n_redundant_obs >= Config::redun_factor() * n_points) {
       // TODO(bayes) Mark this keyframe to be deleted.
+      ++n_redun_kfs;
     }
   }
+  LOG(INFO) << "Removed " << n_redun_kfs << " redundant keyframes.";
 }
 
 void LocalMapping::reset() {
-  u_lock lock(mutex_);
   stopThread();
+  u_lock lock(mutex_);
   while (!kfs_queue_.empty()) kfs_queue_.pop();
   curr_keyframe_.reset();
 }

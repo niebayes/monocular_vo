@@ -13,7 +13,6 @@ KeyframeDataBase::KeyframeDataBase(sptr<Vocabulary> voc) : voc_(voc) {
 }
 
 void KeyframeDataBase::add(Frame::Ptr keyframe) {
-  CHECK_EQ(keyframe->isKeyframe(), true);
   u_lock lock(mutex_);
   const DBoW3::BowVector& bow_vec = keyframe->bow_vec_;
   auto it = bow_vec.cbegin(), it_end = bow_vec.cend();
@@ -21,8 +20,7 @@ void KeyframeDataBase::add(Frame::Ptr keyframe) {
 }
 
 void KeyframeDataBase::erase(const Frame::Ptr& keyframe) {
-  CHECK_EQ(keyframe->isKeyframe(), false);
-  u_lock lock(mutex_);
+  lock_g lock(mutex_);
   const DBoW3::BowVector& bow_vec = keyframe->bow_vec_;
   auto it = bow_vec.cbegin(), it_end = bow_vec.cend();
   for (; it != it_end; ++it) {
@@ -39,24 +37,24 @@ bool KeyframeDataBase::detectRelocCandidates(const Frame::Ptr& frame,
                                              list<Frame::Ptr>& candidate_kfs) {
   LOG(INFO) << "Start detecting relocalization candiates ...";
   const steady_clock::time_point t1 = steady_clock::now();
-  // FIXME Is this okay not putting parenthese critical section?
-  u_lock lock(mutex_);
-
   // Obtain keyframes sharing words with currently quering frame.
   list<Frame::Ptr> kfs_sharing_words;  // Keframes sharing words.
   const DBoW3::BowVector& bow_vec = frame->bow_vec_;
   auto it = bow_vec.cbegin(), it_end = bow_vec.cend();
-  for (; it != it_end; ++it) {
-    if (!inv_files_.count(it->first)) continue;
-    const list<Frame::Ptr>& kfs = inv_files_.at(it->first);
-    for (const Frame::Ptr& kf : kfs) {
-      // If not queried yet.
-      if (kf->query_frame_id_ != frame->id_) {
-        kf->query_frame_id_ = frame->id_;
-        kf->n_sharing_words_ = 0;
-        kfs_sharing_words.push_back(kf);
+  {
+    lock_g lock(mutex_);
+    for (; it != it_end; ++it) {
+      if (!inv_files_.count(it->first)) continue;
+      const list<Frame::Ptr>& kfs = inv_files_.at(it->first);
+      for (const Frame::Ptr& kf : kfs) {
+        // If not queried yet.
+        if (kf->query_frame_id_ != frame->id_) {
+          kf->query_frame_id_ = frame->id_;
+          kf->n_sharing_words_ = 0;
+          kfs_sharing_words.push_back(kf);
+        }
+        kf->n_sharing_words_++;
       }
-      kf->n_sharing_words_++;
     }
   }
   if (kfs_sharing_words.empty()) return false;
@@ -144,12 +142,12 @@ Map::Map(sptr<Vocabulary> voc) : voc_(voc), max_kf_id_(0) {
 }
 
 void Map::insertKeyframe(Frame::Ptr keyframe) {
+  lock_g lock(mutex_);
   CHECK_EQ(keyframe->isKeyframe(), true);
   if (keyframe->id_ <= max_kf_id_) {
     LOG(WARNING) << "Keyframe being inserted is already in the map.";
     return;
   }
-  u_lock lock(mutex_);
   max_kf_id_ = keyframe->id_;
   kfs_.push_back(keyframe);
   kf_db_->add(keyframe);  // Also add to keyframe database.

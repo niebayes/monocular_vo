@@ -25,9 +25,15 @@ Frame::Frame(const cv::Mat& img) : id_(frame_cnt_++), is_keyframe_(false) {
   }
 }
 
-void Frame::setPose(const SE3& T_c_w) { cam_->setPose(T_c_w); }
+void Frame::setPose(const SE3& T_c_w) {
+  lock_g lock(mut_);
+  cam_->setPose(T_c_w);
+}
 
-void Frame::setKeyframe() { is_keyframe_ = true; }
+void Frame::setKeyframe() {
+  lock_g lock(mut_);
+  is_keyframe_ = true;
+}
 
 vector<int> Frame::searchFeatures(const Vec2& pt, const int radius,
                                   int level_low, int level_high) const {
@@ -50,22 +56,34 @@ vector<int> Frame::searchFeatures(const Vec2& pt, const int radius,
 // Covisibility graph related.
 
 void Frame::addConnection(Frame::Ptr keyframe, const int weight) {
+  LOG(INFO) << cv::format("add_connection(add frame: %d, to frame: %d)",
+                          keyframe->id_, id_);
   bool need_update = false;
-  if (!co_kf_weights_.count(keyframe) || co_kf_weights_[keyframe] != weight)
-    need_update = true;
+  {
+    lock_g lock(co_mut_);
+    if (!co_kf_weights_.count(keyframe) || co_kf_weights_[keyframe] != weight)
+      need_update = true;
+  }
   if (need_update) updateCoKfsAndWeights();
 }
 
 void Frame::deleteConnection(const Frame::Ptr& keyframe) {
+  LOG(INFO) << cv::format("delete_connection(delete frame: %d, from frame: %d)",
+                          keyframe->id_, id_);
   bool need_update = false;
-  if (co_kf_weights_.count(keyframe)) {
-    co_kf_weights_.erase(keyframe);
-    need_update = true;
+  {
+    lock_g lock(co_mut_);
+    if (co_kf_weights_.count(keyframe)) {
+      co_kf_weights_.erase(keyframe);
+      need_update = true;
+    }
   }
   if (need_update) updateCoKfsAndWeights();
 }
 
 void Frame::updateCoKfsAndWeights() {
+  LOG(INFO) << cv::format("update_co_kfs_and_weights(for frame: %d)", id_);
+  lock_g lock(co_mut_);
   // Filter out those keyframes that the number of shared map points below
   // certain threshold.
   // multimap structure is internally sorted.
@@ -88,8 +106,8 @@ void Frame::updateCoKfsAndWeights() {
   }
 }
 
-// FIXME This method and those it called incur many errors (bus error etc.).
 void Frame::updateCoInfo() {
+  LOG(INFO) << cv::format("update_co_info(for frame: %d)", id_);
   // Covisible keyframe voter with the key being the covisible keyframe and the
   // weights being the number of shared map points.
   unordered_map<Frame::Ptr, int> co_kf_weights;
@@ -109,6 +127,7 @@ void Frame::updateCoInfo() {
   if (co_kf_weights.empty()) return;
   co_kf_weights_ = co_kf_weights;
   updateCoKfsAndWeights();
+  LOG(INFO) << "Updated covisible info for keyframe " << this->id_;
 }
 
 double Frame::computeSceneMedianDepth() {
@@ -167,6 +186,7 @@ int Frame::computeTrackedPoints(const int min_n_obs = 0) const {
 void Frame::erase() {
   if (id_ == 0) return;  // The first frame is the datum which cannot be erased.
 
+  lock_g lock(co_mut_);
   // Erase covisibility connections.
   auto it = co_kf_weights_.cbegin(), it_end = co_kf_weights_.cend();
   for (; it != it_end; ++it) it->first->deleteConnection(shared_from_this());

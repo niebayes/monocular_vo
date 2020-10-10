@@ -63,7 +63,9 @@ template <typename T>
 using wptr = std::weak_ptr<T>;
 
 // typedef for multi-threading
+//! Since C++17, the template arguments could be deduced by compiler.
 using u_lock = std::unique_lock<std::mutex>;
+using lock_g = std::lock_guard<std::mutex>;
 
 // typedefs for eigen
 // double matricies

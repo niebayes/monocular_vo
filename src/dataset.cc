@@ -18,7 +18,7 @@ cv::Mat Dataset::nextImage() {
   if (img_resize_factor_ != 1.0)
     cv::resize(image, resized_image, {}, img_resize_factor_, img_resize_factor_,
                cv::INTER_AREA);
-  LOG(INFO) << "Processing image " << img_idx_;
+  LOG(INFO) << "Get image " << img_idx_;
   ++img_idx_;
   return resized_image;
 }

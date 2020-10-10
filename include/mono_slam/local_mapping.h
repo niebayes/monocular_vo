@@ -24,6 +24,8 @@ class LocalMapping {
 
   void insertKeyframe(Frame::Ptr keyframe);
 
+  void informUpdate();
+
   void LocalMappingLoop();
 
   void processFrontKeyframe();
@@ -53,7 +55,7 @@ class LocalMapping {
   // Multi-threading stuff.
   std::thread thread_;
   std::condition_variable new_kf_cond_var_;
-  std::atomic<bool> is_running_;
+  volatile std::atomic<bool> is_running_;
   bool is_idle_;
   mutable std::mutex mutex_;
 
