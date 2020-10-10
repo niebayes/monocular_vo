@@ -210,7 +210,6 @@ void LocalMapping::removeRedundantKfs() {
 }
 
 void LocalMapping::reset() {
-  stopThread();
   u_lock lock(mutex_);
   while (!kfs_queue_.empty()) kfs_queue_.pop();
   curr_keyframe_.reset();

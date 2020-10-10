@@ -99,6 +99,7 @@ void System::run() {
   LOG(INFO) << "System is running ...";
   // If timestamp file is not provided, the tracking is performed as soon as
   // possible.
+  // FIXME Catch empty image exception and exit system.
   if (timestamps_.empty())
     for (;;) tracker_->addImage(dataset_->nextImage());
   else {  // Otherwise, necessary time delay is adopted.
