@@ -9,7 +9,7 @@ namespace mono_slam {
 class Optimizer;
 
 Tracking::Tracking() : state_(State::NOT_INITIALIZED_YET) {
-  initializer_.reset(new Initializer);
+  initializer_.reset(new Initializer());
   detector_ = cv::ORB::create(Config::max_n_feats());
   LOG(INFO) << "Tracker is runninng on thread " << std::this_thread::get_id();
 }
@@ -22,11 +22,17 @@ void Tracking::addImage(const cv::Mat& img) {
   computeBoW();
 #endif
   trackCurrentFrame();
-  if (curr_frame_ == nullptr)
-    return;  // This could only happen when relocalization was failed just now.
-  last_frame_ = curr_frame_;  // Update last frame.
+  // This could only happen when relocalization was failed just now.
+  if (curr_frame_ == nullptr) return;
+  // If the system was just initialized, set last_frame_ to datum_frame_.
+  if (datum_frame_) {
+    last_frame_ = datum_frame_;
+    datum_frame_.reset();
+  }
   // Update constant velocity model, aka. relative motion.
-  T_curr_last_ = curr_frame_->pose() * last_frame_->pose().inverse();
+  if (last_frame_)
+    T_curr_last_ = curr_frame_->pose() * last_frame_->pose().inverse();
+  last_frame_ = curr_frame_;  // Update last frame.
   curr_frame_.reset();  // Reseat pointer making it ready for next frame.
   //! Decrease the reference counter once an object doesn't own it any more.
 }
@@ -37,13 +43,15 @@ void Tracking::trackCurrentFrame() {
       initializer_->setTracker(shared_from_this());
       if (initMap()) {
         last_kf_id_ = curr_frame_->id_;
+        datum_frame_ = initializer_->ref_frame_;
         // local_mapper_->insertKeyframe(last_frame_);
         // local_mapper_->insertKeyframe(curr_frame_);
         // FIXME Should I inform local_mapper_ right now?
-        // Asure that the update is performed after both the keyframes are inserted.
-        // local_mapper_->informUpdate();
+        // Asure that the update is performed after both the keyframes are
+        // inserted. local_mapper_->informUpdate();
         state_ = State::GOOD;
-      }
+      } else
+        datum_frame_.reset();
       break;
 
     case State::GOOD:

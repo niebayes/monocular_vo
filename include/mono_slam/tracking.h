@@ -24,6 +24,7 @@ enum class State { NOT_INITIALIZED_YET, GOOD, LOST };
 class Tracking : public std::enable_shared_from_this<Tracking> {
  public:
   State state_;                      // Tracking state.
+  Frame::Ptr datum_frame_ = nullptr;  // The datum frame fixed as world frame.
   Frame::Ptr last_frame_ = nullptr;  // Last frame.
   Frame::Ptr curr_frame_ = nullptr;  // Current frame.
   SE3 T_curr_last_;  // Rigid-body transformation from last_frame_ to

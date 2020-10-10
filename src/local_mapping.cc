@@ -11,7 +11,7 @@ LocalMapping::LocalMapping() : is_idle_(true) { startThread(); }
 
 void LocalMapping::startThread() {
   is_running_.store(true);
-  // Open up a new thread for local mapping.
+  // Spawn a new thread for local mapping.
   thread_ = std::thread(std::bind(&LocalMapping::LocalMappingLoop, this));
   LOG(INFO) << "Local mapper is running on thread " << thread_.get_id();
 }
@@ -20,7 +20,6 @@ void LocalMapping::stopThread() {
   LOG(INFO) << "Request stopping local mapper ...";
   is_running_.store(false);
   new_kf_cond_var_.notify_one();  // Release the lock or the halt won't proceed.
-  // FIXME What blocks this thread?!
   thread_.join();
   LOG(INFO) << "Local mapper stopped.";
 }

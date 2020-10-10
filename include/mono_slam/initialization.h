@@ -17,11 +17,10 @@ class Initializer {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   Stage stage_;  // Initialization stage.
-
- private:
   Frame::Ptr ref_frame_ = nullptr;   // Reference frame.
   Frame::Ptr curr_frame_ = nullptr;  // Current frame.
 
+ private:
   SE3 T_curr_ref_;  // Relative pose from reference frame to current frame.
   vector<pair<int, int>> inlier_matches_;  // Inlier matches.
   //! points_ and triangulate_mask_ are one-to-one correspondent.

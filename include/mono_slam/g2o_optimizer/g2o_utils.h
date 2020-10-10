@@ -36,7 +36,7 @@ static void runG2oOptimizer(g2o::SparseOptimizer* optimizer, const int n_iters,
 
 static inline uptr<g2o_types::VertexFrame> createG2oVertexFrame(
     const Frame::Ptr& keyframe, const int id, const bool is_fixed = false) {
-  auto v_frame = make_unique<g2o_types::VertexFrame>();
+  auto v_frame = std::make_unique<g2o_types::VertexFrame>();
   const SE3& pose = keyframe->pose();
   v_frame->setEstimate(
       g2o::SE3Quat(pose.unit_quaternion(), pose.translation()));
@@ -48,7 +48,7 @@ static inline uptr<g2o_types::VertexFrame> createG2oVertexFrame(
 static inline uptr<g2o_types::VertexPoint> createG2oVertexPoint(
     const MapPoint::Ptr& point, const int id, const bool is_fixed = false,
     const bool is_marginalized = true) {
-  auto v_point = make_unique<g2o_types::VertexPoint>();
+  auto v_point = std::make_unique<g2o_types::VertexPoint>();
   v_point->setEstimate(point->pos());
   v_point->setId(id);
   v_point->setFixed(is_fixed);
