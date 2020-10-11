@@ -45,6 +45,7 @@ using VertexPoint = g2o::VertexSBAPointXYZ;
 
 // FIXME unique_ptr incurs error here.
 struct EdgeContainer {
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   sptr<EdgeObs> e_obs_ = nullptr;
   sptr<Frame> keyframe_ = nullptr;
   sptr<Feature> feat_ = nullptr;
@@ -53,6 +54,7 @@ struct EdgeContainer {
 };
 
 struct EdgeContainerPoseOnly {
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   sptr<EdgePoseOnly> e_pose_only_ = nullptr;
   sptr<Feature> feat_ = nullptr;
   EdgeContainerPoseOnly(sptr<EdgePoseOnly> e_pose_only, sptr<Feature> feat)
