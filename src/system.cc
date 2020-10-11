@@ -1,8 +1,10 @@
 #include "mono_slam/system.h"
 
+#include "DBoW3/DBoW3.h"
+#include "armadillo"
 #include "mono_slam/camera.h"
 
-using namespace std::chrono;
+using DBoW3::Vocabulary;
 
 namespace mono_slam {
 

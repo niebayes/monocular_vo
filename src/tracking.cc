@@ -114,9 +114,6 @@ bool Tracking::trackFromLastFrame() {
 }
 
 bool Tracking::trackFromLocalMap() {
-  // #ifdef NO_LOCAL_MAP
-  //   return true;
-  // #endif
   LOG(INFO) << "trackFromLocalMap ...";
   updateLocalCoKfs();
   const int n_matches = Matcher::searchByProjection(local_co_kfs_, curr_frame_);

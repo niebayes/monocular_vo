@@ -1,5 +1,8 @@
 #include "mono_slam/dataset.h"
 
+#include "boost/format.hpp"
+#include "opencv2/imgcodecs.hpp"
+
 namespace mono_slam {
 
 Dataset::Dataset(const string& dataset_path, const string& img_file_name_fmt,

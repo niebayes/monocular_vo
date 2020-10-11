@@ -2,6 +2,7 @@
 
 #include "mono_slam/feature.h"
 #include "mono_slam/utils/math_utils.h"
+#include "opencv2/calib3d.hpp"  // cv::undistortPoints.
 
 namespace mono_slam {
 

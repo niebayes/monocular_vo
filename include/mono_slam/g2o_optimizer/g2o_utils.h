@@ -9,7 +9,7 @@
 namespace mono_slam {
 namespace g2o_utils {
 
-void setupG2oOptimizer(g2o::SparseOptimizer* optimizer, const Mat33& K) {
+void setupG2oOptimizer(g2o::SparseOptimizer* optimizer) {
   // Set solver.
   //! Even though we "new" a lot of things without delete, g2o
   //! internally takes care of them implicitly. Hence no memory leak.
@@ -57,10 +57,10 @@ g2o_types::VertexPoint* createG2oVertexPoint(
 //! Declared as shared as the edges will be stored in edge container.
 g2o_types::EdgeObs* createG2oEdgeObs(
     g2o_types::VertexFrame* v_frame, g2o_types::VertexPoint* v_point,
-    const Vec2& pt, const double weight,
+    const Vec2& pt, const Mat33& K, const double weight,
     const double huber_delta = std::numeric_limits<double>::infinity()) {
   auto e_obs = new g2o_types::EdgeObs();
-  // FIXME How does the memory of VertexContainer in g2o be allocated?
+  // Link edge with corresponding vertices.
   e_obs->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_frame));
   e_obs->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_point));
   e_obs->setMeasurement(pt);
@@ -68,10 +68,11 @@ g2o_types::EdgeObs* createG2oEdgeObs(
   g2o::RobustKernelHuber* huber_kernel = new g2o::RobustKernelHuber();
   huber_kernel->setDelta(huber_delta);
   e_obs->setRobustKernel(huber_kernel);
-  // Set corresponding camera parameters.
-  //! The first parameter 0 is the index of the parameter in the g2o parameters
-  //! container. It does not correlate the vertex id.
-  // e_obs->setParameterId(0, CAMERA_PARAMETER_ID);
+  // Set camera intrinsics.
+  e_obs->fx = K(0, 0);
+  e_obs->fy = K(1, 1);
+  e_obs->cx = K(0, 2);
+  e_obs->cy = K(1, 2);
   return e_obs;
 }
 
@@ -80,6 +81,7 @@ g2o_types::EdgePoseOnly* createG2oEdgePoseOnly(
     const Mat33& K, const double weight,
     const double huber_delta = std::numeric_limits<double>::infinity()) {
   auto e_pose_only = new g2o_types::EdgePoseOnly();
+  // Link edge with the pose vertex.
   e_pose_only->setVertex(0,
                          dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_frame));
   e_pose_only->setMeasurement(pt);

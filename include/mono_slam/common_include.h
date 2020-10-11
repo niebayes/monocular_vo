@@ -12,6 +12,7 @@
 #include <map>
 #include <memory>
 #include <numeric>
+#include <queue>
 #include <random>
 #include <set>
 #include <string>
@@ -20,40 +21,35 @@
 #include <vector>
 // multi-threading related
 #include <atomic>              // std::atomic
-#include <condition_variable>  // std::condition_variable
-#include <mutex>               // std::mutex, std::unique_lock
+#include <condition_variable>  // std::condition_variable, notify_one.
+#include <mutex>               // std::mutex, std::lock_guard, std::unique_lock
 #include <thread>              // std::thread
 
-#include "DBoW3/DBoW3.h"
-#include "Eigen/Dense"
+#include "Eigen/Core"
+#include "Eigen/Geometry"
 #include "Eigen/StdVector"
 #define ARMA_ALLOW_FAKE_CLANG
-#include "armadillo"
-#include "boost/format.hpp"
-#include "gflags/gflags.h"
 #include "glog/logging.h"
-#include "manif/manif.h"
+#include "opencv2/core.hpp"
 #include "opencv2/core/eigen.hpp"
-#include "opencv2/opencv.hpp"
+#include "opencv2/features2d.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/calib3d.hpp"
 #include "sophus/se3.hpp"
-#include "sophus/so3.hpp"
 
-// #define DEBUG 1
 // #define NO_BA 1
-#define NO_LOCAL_MAP 1
 #define ENABLE_RESET 1
 
 // using declarations.
 using namespace std;
 using namespace std::chrono;
 using namespace Eigen;
-using namespace DBoW3;
 using SE3 = Sophus::SE3d;
-using SO3 = Sophus::SO3d;
 
 // alias templates for smart pointers.
 // TODO(bayes) Use C++20 feature std::atomic_shared_ptr to achieve real thread
 // safe.
+// FIXME These template deduction significantly slow down compilation. Maybe we could optimize it.
 template <typename T>
 using uptr = std::unique_ptr<T>;
 

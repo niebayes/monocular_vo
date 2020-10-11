@@ -1,5 +1,6 @@
 #include "mono_slam/matcher.h"
 
+#include "DBoW3/DBoW3.h"
 #include "mono_slam/config.h"
 #include "mono_slam/feature.h"
 #include "mono_slam/geometry_solver.h"
@@ -112,8 +113,8 @@ int Matcher::searchByProjection(const unordered_set<Frame::Ptr>& local_co_kfs,
       // Perform thresholding, distance ratio test, and scale consistency test,
       if (min_dist >= Config::match_thresh_relax() ||
           min_dist >= Config::dist_ratio_test_factor() * second_min_dist)
-          // ||
-          // best_level != second_best_level)
+        // ||
+        // best_level != second_best_level)
         continue;
 
       // Update linked map point.

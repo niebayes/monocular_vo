@@ -14,16 +14,6 @@
 #include "mono_slam/feature.h"
 #include "mono_slam/frame.h"
 
-#define CAMERA_PARAMETER_ID 0
-
-// FIXME Is it necessary to forward declare g2o stuff here?
-// namespace g2o {
-// class EdgeProjectXYZ2UV;
-// class EdgeSE3ProjectXYZOnlyPose;
-// class VertexSE3Expmap;
-// class VertexSBAPointXYZ;
-// }
-
 namespace mono_slam {
 
 struct Feature;
@@ -33,11 +23,9 @@ namespace g2o_types {
 
 // typedefs for solvers.
 using BlockSolver = g2o::BlockSolver_6_3;
-// using LinearSolver = g2o::LinearSolverCholmod<BlockSolver::PoseMatrixType>;
 using LinearSolver = g2o::LinearSolverCholmod<BlockSolver::PoseMatrixType>;
 
 // Edge and vertex typedefs.
-// using EdgeObs = g2o::EdgeProjectXYZ2UV;
 using EdgeObs = g2o::EdgeSE3ProjectXYZ;
 using EdgePoseOnly = g2o::EdgeSE3ProjectXYZOnlyPose;
 using VertexFrame = g2o::VertexSE3Expmap;
@@ -45,16 +33,18 @@ using VertexPoint = g2o::VertexSBAPointXYZ;
 
 // FIXME unique_ptr incurs error here.
 struct EdgeContainer {
-  EdgeObs* e_obs_ = nullptr;
-  sptr<Frame> keyframe_ = nullptr;
-  sptr<Feature> feat_ = nullptr;
+  //! No memeory leak since it's freed as g2o::OptimizableGraph is cleared.
+  EdgeObs* e_obs_{nullptr};
+  sptr<Frame> keyframe_{nullptr};
+  sptr<Feature> feat_{nullptr};
   EdgeContainer(EdgeObs* e_obs, sptr<Frame> keyframe, sptr<Feature> feat)
       : e_obs_(e_obs), keyframe_(keyframe), feat_(feat) {}
 };
 
 struct EdgeContainerPoseOnly {
-  EdgePoseOnly* e_pose_only_ = nullptr;
-  sptr<Feature> feat_ = nullptr;
+  //! No memeory leak since it's freed as g2o::OptimizableGraph is cleared.
+  EdgePoseOnly* e_pose_only_{nullptr};
+  sptr<Feature> feat_{nullptr};
   EdgeContainerPoseOnly(EdgePoseOnly* e_pose_only, sptr<Feature> feat)
       : e_pose_only_(e_pose_only), feat_(feat) {}
 };

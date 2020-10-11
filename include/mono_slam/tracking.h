@@ -8,6 +8,9 @@
 #include "mono_slam/map.h"
 #include "mono_slam/system.h"
 #include "mono_slam/viewer.h"
+#include "DBoW3/DBoW3.h"
+
+using DBoW3::Vocabulary;
 
 namespace mono_slam {
 

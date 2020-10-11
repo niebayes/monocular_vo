@@ -5,6 +5,9 @@
 #include "mono_slam/config.h"
 #include "mono_slam/frame.h"
 #include "mono_slam/map_point.h"
+#include "DBoW3/DBoW3.h"
+
+using DBoW3::Vocabulary;
 
 namespace mono_slam {
 

@@ -23,28 +23,24 @@ void Optimizer::globalBA(const Map::Ptr& map, const int n_iters) {
   LOG(INFO) << "Start globalBA: n_iters = " << n_iters;
   const steady_clock::time_point t1 = steady_clock::now();
 
-  // Get keyframes whose poses are going to be optimized jointly.
-  const list<Frame::Ptr>& kfs = map->getAllKeyframes();
-
   // Setup g2o optimizer.
   g2o::SparseOptimizer optimizer;
-  g2o_utils::setupG2oOptimizer(&optimizer, kfs.front()->cam_->K());
+  g2o_utils::setupG2oOptimizer(&optimizer);
 
   // Chi-square test threshold used as the width of the robust huber kernel and
   // rejection of outliers in post-processing.
   const double chi2_thresh = 5.991;
   // Edges container used for post-processing.
   list<g2o_types::EdgeContainer> edge_container;
+  // Get keyframes whose poses are going to be optimized jointly.
+  const list<Frame::Ptr>& kfs = map->getAllKeyframes();
 
   // Iterate all keyframes in the map.
   int v_id = 0;  // Vertex id.
   for (const Frame::Ptr& kf : kfs) {
     // Create frame vertex. Fixed if it's the first frame.
-    //! unique_ptr's "=" operator is overloaded as if:
-    //! ptr_1.reset(ptr_2.release()), transfers ownership from ptr_2 to ptr_1.
-    auto v_frame = g2o_utils::createG2oVertexFrame(kf, v_id++, kf->id_ == 0);
-    kf->v_frame_ = v_frame;
-    assert(optimizer.addVertex(v_frame));
+    kf->v_frame_ = g2o_utils::createG2oVertexFrame(kf, v_id++, kf->id_ == 0);
+    assert(optimizer.addVertex(kf->v_frame_));
     // Iterate all features and linked map points observed by this keyframe.
     // FIXME .lock() changes state?
     // FIXME Frequent weak_ptr.lock() operations incur large overhead?
@@ -53,21 +49,15 @@ void Optimizer::globalBA(const Map::Ptr& map, const int n_iters) {
       if (!point) continue;
       if (point->v_point_ == nullptr) {
         // FIXME Does g2o need contiguous ids?
-        auto v_point = g2o_utils::createG2oVertexPoint(point, v_id++);
-        point->v_point_ = v_point;
-        assert(optimizer.addVertex(v_point));
+        point->v_point_ = g2o_utils::createG2oVertexPoint(point, v_id++);
+        assert(optimizer.addVertex(point->v_point_));
       }
       // Low weight of high level features since high image pyramid level
       // (possibly) corrsponds to large error.
       //! "1. / (1 << level)" to account the level 0 case.
       auto e_obs = g2o_utils::createG2oEdgeObs(
-          kf->v_frame_, point->v_point_, feat->pt_,
+          kf->v_frame_, point->v_point_, feat->pt_, kf->cam_->K(),
           1. / (1 << feat->level_), std::sqrt(chi2_thresh));
-      const Mat33& K = kf->cam_->K();
-      e_obs->fx = K(0, 0);
-      e_obs->fy = K(1, 1);
-      e_obs->cx = K(0, 2);
-      e_obs->cy = K(1, 2);
       assert(optimizer.addEdge(e_obs));
       edge_container.emplace_back(e_obs, kf, feat);
     }
@@ -120,7 +110,7 @@ int Optimizer::optimizePose(const Frame::Ptr& frame, const int n_iters) {
 
   // Setup g2o optimizer.
   g2o::SparseOptimizer optimizer;
-  g2o_utils::setupG2oOptimizer(&optimizer, frame->cam_->K());
+  g2o_utils::setupG2oOptimizer(&optimizer);
 
   // Chi-square test threshold used as the width of the robust huber kernel and
   // for rejection of outliers during post-processing.
@@ -207,7 +197,7 @@ void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
 
   // Setup g2o optimizer.
   g2o::SparseOptimizer optimizer;
-  g2o_utils::setupG2oOptimizer(&optimizer, keyframe->cam_->K());
+  g2o_utils::setupG2oOptimizer(&optimizer);
 
   // Obtain covisible keyframes which are then going to be optimized.
   const forward_list<Frame::Ptr>& co_kfs = keyframe->getCoKfs();
@@ -261,7 +251,7 @@ void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
 
       // Creata g2o edge for each valid observation.
       auto e_obs = g2o_utils::createG2oEdgeObs(
-          kf->v_frame_, point->v_point_, feat->pt_,
+          kf->v_frame_, point->v_point_, feat->pt_, kf->cam_->K(),
           1. / (1 << feat->level_), std::sqrt(chi2_thresh));
       edge_container.emplace_back(e_obs, kf, feat);
     }

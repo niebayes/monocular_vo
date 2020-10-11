@@ -1,6 +1,7 @@
 #ifndef MONO_SLAM_FRAME_H_
 #define MONO_SLAM_FRAME_H_
 
+#include "DBoW3/DBoW3.h"
 #include "mono_slam/camera.h"
 #include "mono_slam/common_include.h"
 #include "mono_slam/feature.h"
@@ -25,7 +26,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
   const int id_;                   // Unique frame identity.
   bool is_keyframe_;               // Is this frame a keyframe?
   Features feats_;                 // Features extracted in this frame.
-  Camera::Ptr cam_ = nullptr;      // Linked camera.
+  Camera::Ptr cam_{nullptr};      // Linked camera.
   DBoW3::BowVector bow_vec_;       // Bag of words vector.
   DBoW3::FeatureVector feat_vec_;  // Feature vector.
 
@@ -39,8 +40,8 @@ class Frame : public std::enable_shared_from_this<Frame> {
                                // candidate already?
 
   // Temporary g2o keyframe vertex storing the optimized result.
-  g2o_types::VertexFrame* v_frame_ = nullptr;
-  // g2o_types::VertexFrame* v_frame_ = nullptr;
+  //! No memeory leak since it's freed as the g2o::OptimizableGraph is cleared.
+  g2o_types::VertexFrame* v_frame_{nullptr};
 
   // Variables used for covisibility graph.
   unordered_map<Frame::Ptr, int> co_kf_weights_;

@@ -48,7 +48,8 @@ class MapPoint {
                              // insertion.
 
   // Temporary g2o point vertex storing the optimized result.
-  g2o_types::VertexPoint* v_point_ = nullptr;
+  //! No memeory leak since it's freed as the g2o::OptimizableGraph is cleared.
+  g2o_types::VertexPoint* v_point_{nullptr};
   // g2o_types::VertexPoint* v_point_ = nullptr;
 
   bool to_be_deleted_;  // When number of observations below certain threshold,
