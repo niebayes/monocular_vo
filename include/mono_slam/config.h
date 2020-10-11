@@ -12,7 +12,7 @@ namespace mono_slam {
 // that only one instance exists.
 class Config {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  // EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   static Config& getInstance();
 
   // Maximum number of features to be detected when a new frame is created.

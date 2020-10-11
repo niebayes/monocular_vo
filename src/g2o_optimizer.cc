@@ -42,8 +42,9 @@ void Optimizer::globalBA(const Map::Ptr& map, const int n_iters) {
     // Create frame vertex. Fixed if it's the first frame.
     //! unique_ptr's "=" operator is overloaded as if:
     //! ptr_1.reset(ptr_2.release()), transfers ownership from ptr_2 to ptr_1.
-    kf->v_frame_ = g2o_utils::createG2oVertexFrame(kf, v_id++, kf->id_ == 0);
-    assert(optimizer.addVertex(kf->v_frame_.get()));
+    auto v_frame = g2o_utils::createG2oVertexFrame(kf, v_id++, kf->id_ == 0);
+    kf->v_frame_ = v_frame;
+    assert(optimizer.addVertex(v_frame.get()));
     // Iterate all features and linked map points observed by this keyframe.
     // FIXME .lock() changes state?
     // FIXME Frequent weak_ptr.lock() operations incur large overhead?
@@ -52,8 +53,9 @@ void Optimizer::globalBA(const Map::Ptr& map, const int n_iters) {
       if (!point) continue;
       if (point->v_point_ == nullptr) {
         // FIXME Does g2o need contiguous ids?
-        point->v_point_ = g2o_utils::createG2oVertexPoint(point, v_id++);
-        assert(optimizer.addVertex(point->v_point_.get()));
+        auto v_point = g2o_utils::createG2oVertexPoint(point, v_id++);
+        point->v_point_ = v_point;
+        assert(optimizer.addVertex(v_point.get()));
       }
       // Low weight of high level features since high image pyramid level
       // (possibly) corrsponds to large error.

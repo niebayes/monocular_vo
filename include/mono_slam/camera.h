@@ -8,7 +8,7 @@ namespace mono_slam {
 class Camera {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using Ptr = sptr<Camera>;
+  using Ptr = uptr<Camera>;
 
   // Camera intrinsics.
   static double fx_;

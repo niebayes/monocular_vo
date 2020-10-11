@@ -15,7 +15,6 @@ class MapPoint;
 
 class Frame : public std::enable_shared_from_this<Frame> {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Frame>;
   // FIXME Use unique_ptr for features since they're exclusively owned by frame.
   using Features = vector<sptr<Feature>>;
@@ -40,7 +39,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
                                // candidate already?
 
   // Temporary g2o keyframe vertex storing the optimized result.
-  uptr<g2o_types::VertexFrame> v_frame_ = nullptr;
+  sptr<g2o_types::VertexFrame> v_frame_ = nullptr;
   // g2o_types::VertexFrame* v_frame_ = nullptr;
 
   // Variables used for covisibility graph.

@@ -9,7 +9,7 @@ int Frame::frame_cnt_ = 0;
 double Frame::x_min_, Frame::x_max_, Frame::y_min_, Frame::y_max_;
 
 Frame::Frame(const cv::Mat& img) : id_(frame_cnt_++), is_keyframe_(false) {
-  cam_ = make_unique<Camera>();
+  cam_.reset(new Camera());
   // TODO(bayes) Optimize when no distortion.
   // Compute image bounds (computed once in the first frame).
   if (id_ == 0) {

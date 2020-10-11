@@ -8,7 +8,7 @@ namespace mono_slam {
 
 class Matcher {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  // EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   // Search feature correspondences between the two views used for
   // initialization.
   static int searchForInitialization(const Frame::Ptr& frame_1,

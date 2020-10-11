@@ -48,7 +48,7 @@ class MapPoint {
                              // insertion.
 
   // Temporary g2o point vertex storing the optimized result.
-  uptr<g2o_types::VertexPoint> v_point_ = nullptr;
+  sptr<g2o_types::VertexPoint> v_point_ = nullptr;
   // g2o_types::VertexPoint* v_point_ = nullptr;
 
   bool to_be_deleted_;  // When number of observations below certain threshold,

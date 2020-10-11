@@ -34,9 +34,9 @@ static void runG2oOptimizer(g2o::SparseOptimizer* optimizer, const int n_iters,
   final_error = optimizer->activeChi2();
 }
 
-static inline uptr<g2o_types::VertexFrame> createG2oVertexFrame(
+static inline sptr<g2o_types::VertexFrame> createG2oVertexFrame(
     const Frame::Ptr& keyframe, const int id, const bool is_fixed = false) {
-  auto v_frame = std::make_unique<g2o_types::VertexFrame>();
+  auto v_frame = std::make_shared<g2o_types::VertexFrame>();
   const SE3& pose = keyframe->pose();
   v_frame->setEstimate(
       g2o::SE3Quat(pose.unit_quaternion(), pose.translation()));
@@ -45,10 +45,10 @@ static inline uptr<g2o_types::VertexFrame> createG2oVertexFrame(
   return v_frame;
 }
 
-static inline uptr<g2o_types::VertexPoint> createG2oVertexPoint(
+static inline sptr<g2o_types::VertexPoint> createG2oVertexPoint(
     const MapPoint::Ptr& point, const int id, const bool is_fixed = false,
     const bool is_marginalized = true) {
-  auto v_point = std::make_unique<g2o_types::VertexPoint>();
+  auto v_point = std::make_shared<g2o_types::VertexPoint>();
   v_point->setEstimate(point->pos());
   v_point->setId(id);
   v_point->setFixed(is_fixed);
@@ -63,7 +63,7 @@ static inline sptr<g2o_types::EdgeObs> createG2oEdgeObs(
     g2o_types::VertexFrame* v_frame, g2o_types::VertexPoint* v_point,
     const Vec2& pt, const double weight,
     const double huber_delta = std::numeric_limits<double>::infinity()) {
-  auto e_obs = make_shared<g2o_types::EdgeObs>();
+  auto e_obs = std::make_shared<g2o_types::EdgeObs>();
   // FIXME How does the memory of VertexContainer in g2o be allocated?
   e_obs->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_frame));
   e_obs->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_point));
