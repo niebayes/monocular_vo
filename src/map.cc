@@ -159,11 +159,37 @@ void Map::insertMapPoint(MapPoint::Ptr point) {
   points_.push_back(point);
 }
 
+void Map::removeKeyframe(const Frame::Ptr& keyframe) {
+  lock_g lock(mut_);
+  kfs_.remove(keyframe);  // Just call list::remove and that's it!
+}
+
+void Map::removeBadMapPoints() {
+  lock_g lock(mut_);
+  // Just call list::remove_if and that's it!
+  points_.remove_if(
+      [](const MapPoint::Ptr& point) { return point->to_be_deleted_; });
+}
+
 void Map::removeBadObservations(const Frame::Ptr& keyframe,
                                 Feature::Ptr& feat) {
   // Avoid repeat removal of map points since a single map point could be
   // observed by many features.
   if (feat->point_.expired()) return;
+  {  // Lock since we're changing the state of map points.
+    lock_g lock(mut_);
+    // If less than 3 frames observing this map point and the observations is
+    // marked bad, this map point is removed from map.
+    if (feat->point_.lock()->nObs() < 3)
+      feat->point_.lock()->to_be_deleted_ = true;
+  }
+  // Erase observation.
+  //! Since map point only "obseres" feature (through weak_ptr) and each feature
+  //! is uniquely owned by a keyframe, simply reseat the feature pointer is
+  //! sufficient to finish the removal of observation.
+  feat.reset();
+  // Remove bad map points.
+  removeBadMapPoints();  // Remove those marked as to_be_deleted_.
 }
 
 void Map::clear() {

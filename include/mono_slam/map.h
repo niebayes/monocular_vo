@@ -59,11 +59,14 @@ class Map {
 
   void insertMapPoint(MapPoint::Ptr point);
 
+  void removeKeyframe(const Frame::Ptr& keyframe);
+
+  void removeBadMapPoints();
+
   // TODO(bayes) Implement remove functions, e.g. put outlier map points to
   // trash and empty trash properly. And more function like svo.
-  void removeBadObservation(const Frame::Ptr& keyframe, Feature::Ptr& feat);
+  void removeBadObservations(const Frame::Ptr& keyframe, Feature::Ptr& feat);
 
-  void eraseKfById(const int id);
 
   inline int nKfs() const {
     lock_g lock(mut_);

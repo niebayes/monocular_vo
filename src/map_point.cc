@@ -12,7 +12,6 @@ int MapPoint::point_cnt_ = 0;
 MapPoint::MapPoint(const Vec3& pos)
     : id_(point_cnt_++), pos_(pos), to_be_deleted_(false) {}
 
-// TODO(bayes) Compute mean_view_dirs_.
 MapPoint::MapPoint(const Vec3& pos, sptr<Feature> feat)
     : id_(point_cnt_++), pos_(pos), best_feat_(feat), to_be_deleted_(false) {
   observations_.push_back(feat);

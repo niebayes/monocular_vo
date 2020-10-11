@@ -197,7 +197,7 @@ void LocalMapping::removeRedundantKfs() {
     }
 
     if (n_redundant_obs >= Config::redun_factor() * n_points) {
-      // TODO(bayes) Mark this keyframe to be deleted.
+      map_->removeKeyframe(kf_);  // Remove redundant keyframe from map.
       ++n_redun_kfs;
     }
   }

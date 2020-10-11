@@ -1,6 +1,7 @@
 #ifndef MONO_SLAM_MAP_POINT_H_
 #define MONO_SLAM_MAP_POINT_H_
 
+#include "Eigen/Dense"
 #include "mono_slam/common_include.h"
 #include "mono_slam/feature.h"
 #include "mono_slam/frame.h"
@@ -14,6 +15,7 @@ struct Feature;
 class MapPoint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  // FIXME Change shared_ptr to unique_ptr.
   using Ptr = sptr<MapPoint>;
 
   static int point_cnt_;  // Global map point counter, starting from 0.

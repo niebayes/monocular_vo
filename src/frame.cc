@@ -9,7 +9,8 @@ namespace mono_slam {
 int Frame::frame_cnt_ = 0;
 double Frame::x_min_, Frame::x_max_, Frame::y_min_, Frame::y_max_;
 
-Frame::Frame(const cv::Mat& img) : id_(frame_cnt_++), is_keyframe_(false), is_datum_(false) {
+Frame::Frame(const cv::Mat& img)
+    : id_(frame_cnt_++), is_keyframe_(false), is_datum_(false) {
   cam_.reset(new Camera());
   // TODO(bayes) Optimize when no distortion.
   // Compute image bounds (computed once in the first frame).
@@ -126,9 +127,14 @@ void Frame::updateCoInfo() {
     }
   }
   if (co_kf_weights.empty()) return;
-  co_kf_weights_ = co_kf_weights;
+  {
+    lock_g lock(co_mut_);
+    co_kf_weights_ = co_kf_weights;
+  }
   updateCoKfsAndWeights();
-  LOG(INFO) << "Updated covisible info for keyframe " << this->id_;
+  LOG(INFO) << "Updated covisible info for keyframe " << id_;
+  LOG(INFO) << cv::format("Keyframe %d now has %lu covisible keyframes.", id_,
+                          co_kf_weights_.size());
 }
 
 double Frame::computeSceneMedianDepth() {

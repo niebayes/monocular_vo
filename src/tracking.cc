@@ -21,7 +21,8 @@ void Tracking::addImage(const cv::Mat& img) {
   trackCurrentFrame();
   // This could only happen when relocalization was failed just now.
   if (curr_frame_ == nullptr) return;
-  // If the system was just initialized, last_frame_ is selected as the datum frame.
+  // If the system was just initialized, last_frame_ is selected as the datum
+  // frame.
   if (datum_frame_) {
     last_frame_ = datum_frame_;
     last_frame_->is_datum_ = true;  // Datun frame won't be optimized out.
@@ -31,7 +32,7 @@ void Tracking::addImage(const cv::Mat& img) {
   if (last_frame_)
     T_curr_last_ = curr_frame_->pose() * last_frame_->pose().inverse();
   last_frame_ = curr_frame_;  // Update last frame.
-  curr_frame_.reset();  // Reseat pointer making it ready for next frame.
+  curr_frame_.reset();        // Reseat pointer making it ready for next frame.
   //! Decrease the reference counter once an object doesn't own it any more.
 }
 
@@ -104,7 +105,12 @@ bool Tracking::trackFromLastFrame() {
     return false;
   }
   const int n_inlier_matches = Optimizer::optimizePose(curr_frame_);
-  if (n_inlier_matches < Config::min_n_inlier_matches()) return false;
+  LOG(INFO) << cv::format("trackFromLastFrame(n_inlier_matches: %d).",
+                          n_inlier_matches);
+  if (n_inlier_matches < Config::min_n_inlier_matches()) {
+    LOG(INFO) << "trackFromLastFrame failed.";
+    return false;
+  }
   LOG(INFO) << "trackFromLastFrame succeeded.";
   return true;
 }
@@ -119,7 +125,12 @@ bool Tracking::trackFromLocalMap() {
     return false;
   }
   const int n_inlier_matches = Optimizer::optimizePose(curr_frame_);
-  if (n_inlier_matches < Config::min_n_inlier_matches()) return false;
+  LOG(INFO) << cv::format("trackFromLocalMap(n_inlier_matches: %d).",
+                          n_inlier_matches);
+  if (n_inlier_matches < Config::min_n_inlier_matches()) {
+    LOG(INFO) << "trackFromLocalMap failed.";
+    return false;
+  }
   LOG(INFO) << "trackFromLocalMap succeeded.";
   return true;
 }
@@ -154,6 +165,7 @@ void Tracking::updateLocalCoKfs() {
   //! into it in progress.
   for (const Frame::Ptr& kf_ : unordered_set<Frame::Ptr>(local_co_kfs_)) {
     // Get top 10 keyframes ranked wrt. number of covisible map points.
+    // FIXME How could this frame get co_kfs_ right now?
     const forward_list<Frame::Ptr>& co_kfs = kf_->getCoKfs(10);
     if (co_kfs.empty()) continue;
     for (const Frame::Ptr& kf : co_kfs) {

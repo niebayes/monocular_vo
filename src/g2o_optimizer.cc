@@ -86,7 +86,7 @@ void Optimizer::globalBA(const Map::Ptr& map, const int n_iters) {
   }
 
   // Remove bad observations (i.e. ones incur large reprojection error).
-  for (const auto& edge : edge_container) {
+  for (auto& edge : edge_container) {
     if (edge.e_obs_->chi2() <= chi2_thresh) continue;
     map->removeBadObservations(edge.keyframe_, edge.feat_);
   }
@@ -161,6 +161,7 @@ int Optimizer::optimizePose(const Frame::Ptr& frame, const int n_iters) {
       } else {
         edge.feat_->is_outlier_ = false;
         edge.e_pose_only_->setLevel(0);
+        ++final_num_inliers;
       }
 
       // Only use robust kernel in the first two optimizations since
@@ -250,6 +251,7 @@ void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
       auto e_obs = g2o_utils::createG2oEdgeObs(
           kf->v_frame_, point->v_point_, feat->pt_, kf->cam_->K(),
           1. / (1 << feat->level_), std::sqrt(chi2_thresh));
+      assert(optimizer.addEdge(e_obs));
       edge_container.emplace_back(e_obs, kf, feat);
     }
   }
@@ -284,6 +286,7 @@ void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
     kf->v_frame_ = nullptr;
   }
   for (const MapPoint::Ptr& point : points) {
+    if (point->v_point_ == nullptr) cout << "Bad" << '\n';
     point->setPos(point->v_point_->estimate());
     point->v_point_ = nullptr;
   }
@@ -291,7 +294,7 @@ void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
   for (const Frame::Ptr& kf : fixed_kfs) kf->v_frame_ = nullptr;
 
   // Remove bad observations with too large reprojection error.
-  for (const auto& edge : edge_container) {
+  for (auto& edge : edge_container) {
     if (edge.e_obs_->chi2() <= chi2_thresh) continue;
     map->removeBadObservations(edge.keyframe_, edge.feat_);
   }
