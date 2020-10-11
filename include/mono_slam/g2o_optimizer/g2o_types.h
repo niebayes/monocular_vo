@@ -1,7 +1,6 @@
 #ifndef MONO_SLAM_G2O_OPTIMIZER_TYPES_H_
 #define MONO_SLAM_G2O_OPTIMIZER_TYPES_H_
 
-// FIXME which definition is in which file?
 #include "g2o/core/block_solver.h"
 #include "g2o/core/optimization_algorithm_levenberg.h"
 #include "g2o/core/robust_kernel_impl.h"

@@ -1,6 +1,7 @@
 #include "mono_slam/system.h"
 
 #include "DBoW3/DBoW3.h"
+#define ARMA_ALLOW_FAKE_CLANG
 #include "armadillo"
 #include "mono_slam/camera.h"
 
@@ -34,7 +35,6 @@ bool System::init() {
   dataset_.reset(new Dataset(dataset_path, img_file_name_fmt, img_resize_factor,
                              img_start_idx));
 
-#ifndef DEBUG
   // Load vocabulary.
   const string& voc_file = config["voc_file"];
   const steady_clock::time_point t1 = steady_clock::now();
@@ -42,7 +42,6 @@ bool System::init() {
   const steady_clock::time_point t2 = steady_clock::now();
   const double time_span = duration_cast<duration<double>>(t2 - t1).count();
   LOG(INFO) << "Loaded vocabulary in " << time_span << "seconds.";
-#endif
 
   // Load timestamps.
   const string& timestamp_file = config["timestamp_file"];
@@ -83,9 +82,7 @@ bool System::init() {
   tracker_->setLocalMapper(local_mapper_);
   tracker_->setMap(map_);
   tracker_->setViewer(viewer_);
-#ifndef DEBUG
   tracker_->voc_ = voc;
-#endif
 
   local_mapper_->setSystem(shared_from_this());
   local_mapper_->setTracker(tracker_);

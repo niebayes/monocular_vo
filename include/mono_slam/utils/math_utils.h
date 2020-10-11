@@ -38,7 +38,6 @@ inline Mat34 kRt2mat(const Mat33& K, const Mat33& R, const Vec3& t) {
   return K * Rt;
 }
 
-// FIXME Should this function "sort" data vector in place?
 template <typename T>
 inline T get_median(std::vector<T>& data_vec) {
   CHECK_EQ(data_vec.empty(), false);

@@ -1,7 +1,8 @@
 #ifndef MONO_SLAM_CONFIG_H_
 #define MONO_SLAM_CONFIG_H_
 
-#include "mono_slam/common_include.h"
+#include <vector>
+using std::vector;
 
 namespace mono_slam {
 

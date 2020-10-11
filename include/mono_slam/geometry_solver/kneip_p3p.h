@@ -63,10 +63,12 @@
 #ifndef MONO_SLAM_GEOMETRY_SOLVER_KNEIP_P3P_H_
 #define MONO_SLAM_GEOMETRY_SOLVER_KNEIP_P3P_H_
 
-#include <Eigen/Dense>
-#include <math.h>
-#include <stdlib.h>
+#include <cmath>
+#include <cstdlib>
 #include <vector>
+
+#include "Eigen/Core"
+#include "Eigen/Geometry"
 #include "sophus/se3.hpp"
 
 namespace mono_slam {

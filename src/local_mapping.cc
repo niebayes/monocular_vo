@@ -13,9 +13,9 @@ void LocalMapping::startThread() {
   is_running_.store(true);
   // Spawn a new thread for local mapping.
   thread_ = std::thread(std::bind(&LocalMapping::LocalMappingLoop, this));
-  LOG(INFO) << "Local mapper is running on thread " << thread_.get_id();
 }
 
+//! Not used currently.
 void LocalMapping::stopThread() {
   LOG(INFO) << "Request stopping local mapper ...";
   is_running_.store(false);
@@ -27,24 +27,22 @@ void LocalMapping::stopThread() {
 void LocalMapping::insertKeyframe(Frame::Ptr keyframe) {
   LOG(INFO) << "Try inserting keyframe " << keyframe->id_
             << " to local mapper ...";
-  CHECK_EQ(keyframe->isKeyframe(), true);
   u_lock lock(mutex_);
   kfs_queue_.push(keyframe);
   LOG(INFO) << "Inserted keyframe " << keyframe->id_ << " to local mapper.";
 }
 
 void LocalMapping::informUpdate() {
-  // Racing the mutex or the notification won't be performed.
+  // Racing the mutex or the notification may not be performed.
   u_lock lock(mutex_);
   new_kf_cond_var_.notify_one();
 }
 
 void LocalMapping::LocalMappingLoop() {
   while (is_running_.load()) {
-    {  //! Don't hold lock to do time-consuming workload.
+    {  // Don't hold lock to do time-consuming workload.
       u_lock lock(mutex_);
       new_kf_cond_var_.wait(lock);
-      // FIXME Check curr_keyframe_ == nullptr here?
       // FIXME Simply accumulate unprocessed keyframes? Perhaps a method
       // checkNewKfs() is applicable for this purpose.
       if (kfs_queue_.empty()) continue;
@@ -56,11 +54,9 @@ void LocalMapping::LocalMappingLoop() {
     processFrontKeyframe();
     triangulateNewPoints();
     // Run local BA if keyframe queue is empty at this momment and the map
-    // is maintaining more thant 2 keyframes as well.
-#ifndef NO_BA
+    // is maintaining more than 2 keyframes as well.
     if (kfs_queue_.empty() && map_->nKfs() > 2)
       Optimizer::localBA(curr_keyframe_, map_);
-#endif
     removeRedundantKfs();
     LOG(INFO) << "Local mapper finished processing keyframe "
               << curr_keyframe_->id_;

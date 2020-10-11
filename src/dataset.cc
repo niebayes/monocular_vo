@@ -1,7 +1,10 @@
 #include "mono_slam/dataset.h"
 
-#include "boost/format.hpp"
-#include "opencv2/imgcodecs.hpp"
+#include "boost/format.hpp" // boost::format
+#include "opencv2/imgcodecs.hpp"  // cv::imread
+#include "opencv2/imgproc.hpp"  // cv::INTER_AREA
+#include "glog/logging.h"  
+#include "opencv2/core.hpp"  
 
 namespace mono_slam {
 

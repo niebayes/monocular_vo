@@ -1,11 +1,11 @@
 #ifndef MONO_SLAM_MAP_H_
 #define MONO_SLAM_MAP_H_
 
+#include "DBoW3/DBoW3.h"
 #include "mono_slam/common_include.h"
 #include "mono_slam/config.h"
 #include "mono_slam/frame.h"
 #include "mono_slam/map_point.h"
-#include "DBoW3/DBoW3.h"
 
 using DBoW3::Vocabulary;
 
@@ -39,9 +39,9 @@ class KeyframeDataBase {
   // the word with id i (i = 0, 1, ..., length(vocabulary)-1).
   unordered_map<int, list<Frame::Ptr>> inv_files_;
 
-  const sptr<Vocabulary> voc_;  // Vocabulary.
+  const sptr<Vocabulary> voc_{nullptr};  // Vocabulary.
 
-  std::mutex mutex_;
+  std::mutex mut_;
 };
 
 struct Feature;
@@ -51,64 +51,46 @@ class Map {
  public:
   using Ptr = sptr<Map>;
   // Keyframe database used for relocalization.
-  KeyframeDataBase::Ptr kf_db_ = nullptr;
+  KeyframeDataBase::Ptr kf_db_{nullptr};
 
   Map(sptr<Vocabulary> voc);
 
   void insertKeyframe(Frame::Ptr keyframe);
 
-  //! In the early design, map needs not have to maintain points. But in order
-  //! to making the points not be destoryed once get out of scope, we use map to
-  //! maintain them.
   void insertMapPoint(MapPoint::Ptr point);
 
   // TODO(bayes) Implement remove functions, e.g. put outlier map points to
   // trash and empty trash properly. And more function like svo.
-  void removeObservation(const Frame::Ptr& keyframe, const Feature::Ptr& feat);
+  void removeBadObservation(const Frame::Ptr& keyframe, Feature::Ptr& feat);
 
   void eraseKfById(const int id);
 
-  inline int nKfs() const { return static_cast<int>(kfs_.size()); }
+  inline int nKfs() const {
+    lock_g lock(mut_);
+    return static_cast<int>(kfs_.size());
+  }
 
   // FIXME Return copy or const reference?
   inline const list<Frame::Ptr>& getAllKeyframes() const {
-    u_lock lock(mutex_);
+    lock_g lock(mut_);
     return kfs_;
   }
 
   inline const list<MapPoint::Ptr>& getAllMapPoints() const {
-    u_lock lock(mutex_);
+    lock_g lock(mut_);
     return points_;
   }
 
   void clear();
 
  private:
-  //! Class correlations:
-  //
-  //! Features are detected in frame and no where else, thus frame owns features
-  //! exclusively: frame -> unique_ptr -> feature.
-  //
-  //! Map points are observed by frame through features, but they don't have to
-  //! own each other, knowing the existence suffices. Therefore, feature ->
-  //! weak_ptr -> map point, and map point -> weak_ptr -> feature.
-  //
-  //! Frames may be owned by tracker, initializer and map and also keyframe
-  //! database simultaneously, even though it can be declared of type
-  //! unique_ptr in some classes, but it involves many move / release operations
-  //! which are tedious and cubersome. Hence it's designed as of type shared_ptr
-  //! for the sake of simplicity.
-  //
-  //! For map points, it must be someone owning them which is the map we choosed
-  //! as intuition.
-
   list<Frame::Ptr> kfs_;        // Maintained keyframes.
   list<MapPoint::Ptr> points_;  // Maintained map points;
   int max_kf_id_;  // Maximum id of keyframes inserted so far. Used for
                    // checking for duplication as new keyframe is comming.
-  sptr<Vocabulary> voc_ = nullptr;
+  sptr<Vocabulary> voc_{nullptr};
 
-  mutable std::mutex mutex_;
+  mutable std::mutex mut_;
 };
 
 }  // namespace mono_slam

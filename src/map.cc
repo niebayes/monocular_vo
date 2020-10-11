@@ -13,14 +13,14 @@ KeyframeDataBase::KeyframeDataBase(sptr<Vocabulary> voc) : voc_(voc) {
 }
 
 void KeyframeDataBase::add(Frame::Ptr keyframe) {
-  u_lock lock(mutex_);
+  u_lock lock(mut_);
   const DBoW3::BowVector& bow_vec = keyframe->bow_vec_;
   auto it = bow_vec.cbegin(), it_end = bow_vec.cend();
   for (; it != it_end; ++it) inv_files_[it->first].push_back(keyframe);
 }
 
 void KeyframeDataBase::erase(const Frame::Ptr& keyframe) {
-  lock_g lock(mutex_);
+  lock_g lock(mut_);
   const DBoW3::BowVector& bow_vec = keyframe->bow_vec_;
   auto it = bow_vec.cbegin(), it_end = bow_vec.cend();
   for (; it != it_end; ++it) {
@@ -37,12 +37,13 @@ bool KeyframeDataBase::detectRelocCandidates(const Frame::Ptr& frame,
                                              list<Frame::Ptr>& candidate_kfs) {
   LOG(INFO) << "Start detecting relocalization candiates ...";
   const steady_clock::time_point t1 = steady_clock::now();
+
   // Obtain keyframes sharing words with currently quering frame.
   list<Frame::Ptr> kfs_sharing_words;  // Keframes sharing words.
   const DBoW3::BowVector& bow_vec = frame->bow_vec_;
   auto it = bow_vec.cbegin(), it_end = bow_vec.cend();
   {
-    lock_g lock(mutex_);
+    lock_g lock(mut_);
     for (; it != it_end; ++it) {
       if (!inv_files_.count(it->first)) continue;
       const list<Frame::Ptr>& kfs = inv_files_.at(it->first);
@@ -115,11 +116,11 @@ bool KeyframeDataBase::detectRelocCandidates(const Frame::Ptr& frame,
     it->second->is_candidate_already_ = true;
     ++n_can_kfs;
   }
+
   const steady_clock::time_point t2 = steady_clock::now();
   const double time_span = duration_cast<duration<double>>(t2 - t1).count();
   LOG(INFO) << n_can_kfs << " relocalization candidates detected.";
-  LOG(INFO) << "Relocalization candidates detection finished in " << time_span
-            << " seconds.";
+  LOG(INFO) << "Relocalization finished in " << time_span << " seconds.";
 
   // Reset the keyframes.
   std::for_each(score_of_best_kfs.cbegin(), score_of_best_kfs.cend(),
@@ -142,7 +143,7 @@ Map::Map(sptr<Vocabulary> voc) : voc_(voc), max_kf_id_(0) {
 }
 
 void Map::insertKeyframe(Frame::Ptr keyframe) {
-  lock_g lock(mutex_);
+  lock_g lock(mut_);
   CHECK_EQ(keyframe->isKeyframe(), true);
   if (keyframe->id_ <= max_kf_id_) {
     LOG(WARNING) << "Keyframe being inserted is already in the map.";
@@ -154,17 +155,19 @@ void Map::insertKeyframe(Frame::Ptr keyframe) {
 }
 
 void Map::insertMapPoint(MapPoint::Ptr point) {
-  u_lock lock(mutex_);
+  lock_g lock(mut_);
   points_.push_back(point);
 }
 
-void Map::removeObservation(const Frame::Ptr& keyframe,
-                            const Feature::Ptr& feat) {
-  //
+void Map::removeBadObservations(const Frame::Ptr& keyframe,
+                                Feature::Ptr& feat) {
+  // Avoid repeat removal of map points since a single map point could be
+  // observed by many features.
+  if (feat->point_.expired()) return;
 }
 
 void Map::clear() {
-  u_lock lock(mutex_);
+  lock_g lock(mut_);
   kfs_.clear();
   max_kf_id_ = 0;
   kf_db_->clear();

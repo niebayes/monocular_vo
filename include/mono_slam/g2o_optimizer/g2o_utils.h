@@ -1,7 +1,6 @@
 #ifndef MONO_SLAM_G2O_OPTIMIZER_UTILS_H_
 #define MONO_SLAM_G2O_OPTIMIZER_UTILS_H_
 
-#include "mono_slam/camera.h"
 #include "mono_slam/common_include.h"
 #include "mono_slam/frame.h"
 #include "mono_slam/g2o_optimizer/g2o_types.h"
@@ -20,18 +19,20 @@ void setupG2oOptimizer(g2o::SparseOptimizer* optimizer) {
 }
 
 void runG2oOptimizer(g2o::SparseOptimizer* optimizer, const int n_iters,
-                            double& init_error, double& final_error) {
+                     double& init_error, double& final_error,
+                     const bool is_verbose = false) {
   // FIXME Any useful options?
   optimizer->initializeOptimization();
-  optimizer->setVerbose(true);
+  optimizer->setVerbose(is_verbose);
   optimizer->computeActiveErrors();
   init_error = optimizer->activeChi2();
   optimizer->optimize(n_iters);
   final_error = optimizer->activeChi2();
 }
 
-g2o_types::VertexFrame* createG2oVertexFrame(
-    const Frame::Ptr& keyframe, const int id, const bool is_fixed = false) {
+g2o_types::VertexFrame* createG2oVertexFrame(const Frame::Ptr& keyframe,
+                                             const int id,
+                                             const bool is_fixed = false) {
   auto v_frame = new g2o_types::VertexFrame();
   const SE3& pose = keyframe->pose();
   v_frame->setEstimate(

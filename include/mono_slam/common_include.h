@@ -18,6 +18,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>  // std::pair
 #include <vector>
 // multi-threading related
 #include <atomic>              // std::atomic
@@ -28,13 +29,12 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "Eigen/StdVector"
-#define ARMA_ALLOW_FAKE_CLANG
 #include "glog/logging.h"
+#include "opencv2/calib3d.hpp"
 #include "opencv2/core.hpp"
 #include "opencv2/core/eigen.hpp"
 #include "opencv2/features2d.hpp"
 #include "opencv2/imgproc.hpp"
-#include "opencv2/calib3d.hpp"
 #include "sophus/se3.hpp"
 
 // #define NO_BA 1
@@ -49,7 +49,8 @@ using SE3 = Sophus::SE3d;
 // alias templates for smart pointers.
 // TODO(bayes) Use C++20 feature std::atomic_shared_ptr to achieve real thread
 // safe.
-// FIXME These template deduction significantly slow down compilation. Maybe we could optimize it.
+// FIXME These template deduction significantly slow down compilation. Maybe we
+// could optimize it.
 template <typename T>
 using uptr = std::unique_ptr<T>;
 

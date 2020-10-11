@@ -16,7 +16,7 @@ class Initializer {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  Stage stage_;  // Initialization stage.
+  Stage stage_;                      // Initialization stage.
   Frame::Ptr ref_frame_ = nullptr;   // Reference frame.
   Frame::Ptr curr_frame_ = nullptr;  // Current frame.
 
@@ -24,7 +24,8 @@ class Initializer {
   SE3 T_curr_ref_;  // Relative pose from reference frame to current frame.
   vector<pair<int, int>> inlier_matches_;  // Inlier matches.
   //! points_ and triangulate_mask_ are one-to-one correspondent.
-  vector<Vec3, Eigen::aligned_allocator<Vec3>> points_;            // Triangulated points in world frame.
+  // Triangulated points in world frame.
+  vector<Vec3, Eigen::aligned_allocator<Vec3>> points_;
   vector<bool> triangulate_mask_;  // Mark which inlier match produces good
                                    // triangulated point.
 

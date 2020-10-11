@@ -25,6 +25,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
   static int frame_cnt_;           // Global frame counter, starting from 0.
   const int id_;                   // Unique frame identity.
   bool is_keyframe_;               // Is this frame a keyframe?
+  bool is_datum_;                  // Is this frame fixed as datum?
   Features feats_;                 // Features extracted in this frame.
   Camera::Ptr cam_{nullptr};      // Linked camera.
   DBoW3::BowVector bow_vec_;       // Bag of words vector.

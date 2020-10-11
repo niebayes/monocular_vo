@@ -1,7 +1,11 @@
 #ifndef MONO_SLAM_DATASET_H_
 #define MONO_SLAM_DATASET_H_
 
-#include "mono_slam/common_include.h"
+#include <string>
+
+#include "opencv2/core.hpp"
+using cv::Mat;
+using std::string;
 
 namespace mono_slam {
 

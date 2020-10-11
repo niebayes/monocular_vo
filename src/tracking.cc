@@ -11,22 +11,20 @@ class Optimizer;
 Tracking::Tracking() : state_(State::NOT_INITIALIZED_YET) {
   initializer_.reset(new Initializer());
   detector_ = cv::ORB::create(Config::max_n_feats());
-  LOG(INFO) << "Tracker is runninng on thread " << std::this_thread::get_id();
 }
 
 void Tracking::addImage(const cv::Mat& img) {
   // Create a new frame and preprocess it.
   curr_frame_.reset(new Frame(img));
   extractFeatures(img);
-#ifndef DEBUG
   computeBoW();
-#endif
   trackCurrentFrame();
   // This could only happen when relocalization was failed just now.
   if (curr_frame_ == nullptr) return;
-  // If the system was just initialized, set last_frame_ to datum_frame_.
+  // If the system was just initialized, last_frame_ is selected as the datum frame.
   if (datum_frame_) {
     last_frame_ = datum_frame_;
+    last_frame_->is_datum_ = true;  // Datun frame won't be optimized out.
     datum_frame_.reset();
   }
   // Update constant velocity model, aka. relative motion.
@@ -105,10 +103,8 @@ bool Tracking::trackFromLastFrame() {
     LOG(INFO) << "trackFromLastFrame failed.";
     return false;
   }
-#ifndef NO_BA
   const int n_inlier_matches = Optimizer::optimizePose(curr_frame_);
   if (n_inlier_matches < Config::min_n_inlier_matches()) return false;
-#endif
   LOG(INFO) << "trackFromLastFrame succeeded.";
   return true;
 }
@@ -122,10 +118,8 @@ bool Tracking::trackFromLocalMap() {
     LOG(INFO) << "trackFromLocalMap failed.";
     return false;
   }
-#ifndef NO_BA
   const int n_inlier_matches = Optimizer::optimizePose(curr_frame_);
   if (n_inlier_matches < Config::min_n_inlier_matches()) return false;
-#endif
   LOG(INFO) << "trackFromLocalMap succeeded.";
   return true;
 }

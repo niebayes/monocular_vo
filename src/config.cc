@@ -1,5 +1,9 @@
 #include "mono_slam/config.h"
 
+#include <algorithm>  // std::transform
+#include <numeric>    // std::iota
+#include <cmath>      // std::pow
+
 namespace mono_slam {
 
 Config::Config()
