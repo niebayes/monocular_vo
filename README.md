@@ -11,7 +11,4 @@ operations which are tedious and cumbersome. Hence it's designed as of
 type shared_ptr for the sake of simplicity.
 4. For map points, it must be someone owning them which is the map we choosed
 as intuition. 
-5. Based on this design, with the help of smart pointers (especially the unowning weak_ptr), the removal of keyframes, features and map points is very simple.
-  1. To delete a keyframe, simply remove it from map.
-  2. To delete a feature, simply erase it from the frame in which it's detected.
-  3. To delete a map point, simply remove it from map.
+5. Based on this design, with the help of smart pointers (especially the unowning weak_ptr), the removal of keyframes, features and map points is very simple. To delete a keyframe, simply remove it from map; to delete a feature, simply erase it from the frame in which it's detected; to delete a map point, simply remove it from map.
