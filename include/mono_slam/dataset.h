@@ -7,7 +7,6 @@ namespace mono_slam {
 
 class Dataset {
  public:
-//   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Dataset(const string& dataset_path, const string& img_file_name_fmt,
           const double img_resize_factor, const int img_start_idx);
 

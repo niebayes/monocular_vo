@@ -18,7 +18,6 @@ class Dataset;
 
 class System : public std::enable_shared_from_this<System> {
  public:
-  // EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<System>;
   System(const string& config_file);
 

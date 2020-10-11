@@ -23,7 +23,7 @@ enum class State { NOT_INITIALIZED_YET, GOOD, LOST };
 
 class Tracking : public std::enable_shared_from_this<Tracking> {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  // EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   State state_;                      // Tracking state.
   Frame::Ptr datum_frame_ = nullptr;  // The datum frame fixed as world frame.
   Frame::Ptr last_frame_ = nullptr;  // Last frame.

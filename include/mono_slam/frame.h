@@ -39,7 +39,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
                                // candidate already?
 
   // Temporary g2o keyframe vertex storing the optimized result.
-  sptr<g2o_types::VertexFrame> v_frame_ = nullptr;
+  g2o_types::VertexFrame* v_frame_ = nullptr;
   // g2o_types::VertexFrame* v_frame_ = nullptr;
 
   // Variables used for covisibility graph.

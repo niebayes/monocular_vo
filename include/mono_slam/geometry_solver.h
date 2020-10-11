@@ -14,7 +14,6 @@ class MapPoint;
 
 class GeometrySolver {
  public:
-//   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   // Find fundamental matrix using eight-point algorithm in a RANSAC scheme.
   static void findFundamentalRansac(const Frame::Ptr& frame_1,
                                     const Frame::Ptr& frame_2,

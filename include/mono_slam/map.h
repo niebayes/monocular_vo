@@ -13,7 +13,6 @@ class Frame;
 // Keyframe database used for relocalization when tracking is lost.
 class KeyframeDataBase {
  public:
-  // EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = uptr<KeyframeDataBase>;
 
   KeyframeDataBase(sptr<Vocabulary> voc);
@@ -47,7 +46,6 @@ class MapPoint;
 
 class Map {
  public:
-  // EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = sptr<Map>;
   // Keyframe database used for relocalization.
   KeyframeDataBase::Ptr kf_db_ = nullptr;

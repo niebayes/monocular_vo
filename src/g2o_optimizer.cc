@@ -44,7 +44,7 @@ void Optimizer::globalBA(const Map::Ptr& map, const int n_iters) {
     //! ptr_1.reset(ptr_2.release()), transfers ownership from ptr_2 to ptr_1.
     auto v_frame = g2o_utils::createG2oVertexFrame(kf, v_id++, kf->id_ == 0);
     kf->v_frame_ = v_frame;
-    assert(optimizer.addVertex(v_frame.get()));
+    assert(optimizer.addVertex(v_frame));
     // Iterate all features and linked map points observed by this keyframe.
     // FIXME .lock() changes state?
     // FIXME Frequent weak_ptr.lock() operations incur large overhead?
@@ -55,20 +55,20 @@ void Optimizer::globalBA(const Map::Ptr& map, const int n_iters) {
         // FIXME Does g2o need contiguous ids?
         auto v_point = g2o_utils::createG2oVertexPoint(point, v_id++);
         point->v_point_ = v_point;
-        assert(optimizer.addVertex(v_point.get()));
+        assert(optimizer.addVertex(v_point));
       }
       // Low weight of high level features since high image pyramid level
       // (possibly) corrsponds to large error.
       //! "1. / (1 << level)" to account the level 0 case.
       auto e_obs = g2o_utils::createG2oEdgeObs(
-          kf->v_frame_.get(), point->v_point_.get(), feat->pt_,
+          kf->v_frame_, point->v_point_, feat->pt_,
           1. / (1 << feat->level_), std::sqrt(chi2_thresh));
       const Mat33& K = kf->cam_->K();
       e_obs->fx = K(0, 0);
       e_obs->fy = K(1, 1);
       e_obs->cx = K(0, 2);
       e_obs->cy = K(1, 2);
-      assert(optimizer.addEdge(e_obs.get()));
+      assert(optimizer.addEdge(e_obs));
       edge_container.emplace_back(e_obs, kf, feat);
     }
   }
@@ -84,13 +84,13 @@ void Optimizer::globalBA(const Map::Ptr& map, const int n_iters) {
     SE3 estimate_(kf->v_frame_->estimate().rotation(),
                   kf->v_frame_->estimate().translation());
     kf->setPose(estimate_);
-    kf->v_frame_.reset();
+    kf->v_frame_ = nullptr;
     for (const Feature::Ptr& feat : kf->feats_) {
       const MapPoint::Ptr& point = feat_utils::getPoint(feat);
       if (!point || point->v_point_ == nullptr)
         continue;  // If map point was updated before.
       point->setPos(point->v_point_->estimate());
-      point->v_point_.reset();
+      point->v_point_ = nullptr;
     }
   }
 
@@ -130,7 +130,7 @@ int Optimizer::optimizePose(const Frame::Ptr& frame, const int n_iters) {
 
   // Create g2o Frame vertex.
   frame->v_frame_ = g2o_utils::createG2oVertexFrame(frame, frame->id_);
-  assert(optimizer.addVertex(frame->v_frame_.get()));
+  assert(optimizer.addVertex(frame->v_frame_));
 
   // Iterate all frame->features->map_points.
   for (const Feature::Ptr& feat : frame->feats_) {
@@ -138,9 +138,9 @@ int Optimizer::optimizePose(const Frame::Ptr& frame, const int n_iters) {
     if (!point) continue;
     // Create g2o pose-only unary edge.
     auto e_pose_only = g2o_utils::createG2oEdgePoseOnly(
-        frame->v_frame_.get(), feat->pt_, point->pos_, frame->cam_->K(),
+        frame->v_frame_, feat->pt_, point->pos_, frame->cam_->K(),
         1. / (1 << feat->level_), std::sqrt(chi2_thresh));
-    assert(optimizer.addEdge(e_pose_only.get()));
+    assert(optimizer.addEdge(e_pose_only));
     edge_container.emplace_back(e_pose_only, feat);
   }
 
@@ -192,7 +192,7 @@ int Optimizer::optimizePose(const Frame::Ptr& frame, const int n_iters) {
   SE3 estimate_(frame->v_frame_->estimate().rotation(),
                 frame->v_frame_->estimate().translation());
   frame->setPose(estimate_);
-  frame->v_frame_.reset();
+  frame->v_frame_ = nullptr;
   const steady_clock::time_point t2 = steady_clock::now();
   const double time_span = duration_cast<duration<double>>(t2 - t1).count();
   LOG(INFO) << "optimizePose finished in " << time_span << " seconds.";
@@ -231,7 +231,7 @@ void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
   for (const Frame::Ptr& kf : co_kfs) {
     // Fixed if it's the first frame.
     kf->v_frame_ = g2o_utils::createG2oVertexFrame(kf, v_id++, kf->id_ == 0);
-    assert(optimizer.addVertex(kf->v_frame_.get()));
+    assert(optimizer.addVertex(kf->v_frame_));
 
     // Iterate all map points observed by this keyframe.
     for (const Feature::Ptr& feat : kf->feats_) {
@@ -239,7 +239,7 @@ void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
       if (!point || point->curr_ba_keyframe_id_ == kf->id_) continue;
       point->curr_ba_keyframe_id_ = kf->id_;
       point->v_point_ = g2o_utils::createG2oVertexPoint(point, v_id++);
-      assert(optimizer.addVertex(point->v_point_.get()));
+      assert(optimizer.addVertex(point->v_point_));
       points.push_back(point);
       //! Delay the iteration of observations of each map point to avoid many
       //! repeat comparisons.
@@ -255,13 +255,13 @@ void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
       if (kf->v_frame_ == nullptr) {
         // If does not have a frame yet, kf is selected as afixed keyframe.
         kf->v_frame_ = g2o_utils::createG2oVertexFrame(kf, v_id++, true);
-        assert(optimizer.addVertex(kf->v_frame_.get()));
+        assert(optimizer.addVertex(kf->v_frame_));
         fixed_kfs.push_back(kf);
       }
 
       // Creata g2o edge for each valid observation.
       auto e_obs = g2o_utils::createG2oEdgeObs(
-          kf->v_frame_.get(), point->v_point_.get(), feat->pt_,
+          kf->v_frame_, point->v_point_, feat->pt_,
           1. / (1 << feat->level_), std::sqrt(chi2_thresh));
       edge_container.emplace_back(e_obs, kf, feat);
     }
@@ -291,11 +291,11 @@ void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
     SE3 estimate_(kf->v_frame_->estimate().rotation(),
                   kf->v_frame_->estimate().translation());
     kf->setPose(estimate_);
-    kf->v_frame_.reset();
+    kf->v_frame_ = nullptr;
   }
   for (const MapPoint::Ptr& point : points) {
     point->setPos(point->v_point_->estimate());
-    point->v_point_.reset();
+    point->v_point_ = nullptr;
   }
   // Reset fixed keyframes' temporary g2o frame vertex.
   for (const Frame::Ptr& kf : fixed_kfs) kf->v_frame_ = nullptr;

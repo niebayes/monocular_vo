@@ -16,7 +16,6 @@ class Frame;
 
 class LocalMapping {
  public:
-  // EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   LocalMapping();
 
   void startThread();

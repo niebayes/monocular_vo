@@ -12,7 +12,6 @@ class Map;
 
 class Optimizer {
  public:
-  // EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   // Global bundle adjustment.
   static void globalBA(const Map::Ptr& map, const int n_iters = 20);
 
