@@ -24,7 +24,7 @@ class Initializer {
   SE3 T_curr_ref_;  // Relative pose from reference frame to current frame.
   vector<pair<int, int>> inlier_matches_;  // Inlier matches.
   //! points_ and triangulate_mask_ are one-to-one correspondent.
-  vector<Vec3> points_;            // Triangulated points in world frame.
+  vector<Vec3, Eigen::aligned_allocator<Vec3>> points_;            // Triangulated points in world frame.
   vector<bool> triangulate_mask_;  // Mark which inlier match produces good
                                    // triangulated point.
 

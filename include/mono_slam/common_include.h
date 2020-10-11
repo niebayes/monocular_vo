@@ -26,6 +26,7 @@
 
 #include "DBoW3/DBoW3.h"
 #include "Eigen/Dense"
+#include "Eigen/StdVector"
 #define ARMA_ALLOW_FAKE_CLANG
 #include "armadillo"
 #include "boost/format.hpp"

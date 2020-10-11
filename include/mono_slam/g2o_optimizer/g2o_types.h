@@ -33,10 +33,12 @@ namespace g2o_types {
 
 // typedefs for solvers.
 using BlockSolver = g2o::BlockSolver_6_3;
+// using LinearSolver = g2o::LinearSolverCholmod<BlockSolver::PoseMatrixType>;
 using LinearSolver = g2o::LinearSolverCholmod<BlockSolver::PoseMatrixType>;
 
 // Edge and vertex typedefs.
-using EdgeObs = g2o::EdgeProjectXYZ2UV;
+// using EdgeObs = g2o::EdgeProjectXYZ2UV;
+using EdgeObs = g2o::EdgeSE3ProjectXYZ;
 using EdgePoseOnly = g2o::EdgeSE3ProjectXYZOnlyPose;
 using VertexFrame = g2o::VertexSE3Expmap;
 using VertexPoint = g2o::VertexSBAPointXYZ;

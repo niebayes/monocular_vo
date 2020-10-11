@@ -108,7 +108,7 @@ int GeometrySolver::evaluateFundamentalScore(
 bool GeometrySolver::findRelativePoseRansac(
     const Frame::Ptr& frame_1, const Frame::Ptr& frame_2, const Mat33& F,
     const vector<pair<int, int>>& inlier_matches, SE3& relative_pose,
-    vector<Vec3>& points, vector<bool>& triangulate_mask,
+    vector<Vec3, Eigen::aligned_allocator<Vec3>>& points, vector<bool>& triangulate_mask,
     const double noise_sigma, const int min_n_triangulated,
     const double min_parallax) {
   // Obtain essential matrix.
@@ -123,14 +123,14 @@ bool GeometrySolver::findRelativePoseRansac(
   Mat33 best_R;              // R corresponding to the highest score.
   Vec3 best_t;               // t corresponding to the highest score.
   int best_score = 0;        // Number of good triangulated points.
-  vector<Vec3> best_points;  // Points corresponding to the highest score.
+  vector<Vec3, Eigen::aligned_allocator<Vec3>> best_points;  // Points corresponding to the highest score.
   vector<bool> best_triangulate_mask;  // Mark which inlier match produces good
                                        // triangulated point.
   double best_median_parallax = 0.;    // Median parallax of set of points.
   for (const Mat33& R : Rs) {
     for (const Vec3& t : ts) {
       // Evaluate score of the current R and t.
-      vector<Vec3> points_;
+      vector<Vec3, Eigen::aligned_allocator<Vec3>> points_;
       vector<bool> triangulate_mask_;
       double median_parallax;
       const int score = GeometrySolver::evaluatePoseScore(
@@ -166,7 +166,7 @@ int GeometrySolver::evaluatePoseScore(
     const Mat33& R, const Vec3& t, const Frame::Features& feats_1,
     const Frame::Features& feats_2,
     const vector<pair<int, int>>& inlier_matches, const Mat33& K,
-    vector<Vec3>& points, vector<bool>& triangulate_mask,
+    vector<Vec3, Eigen::aligned_allocator<Vec3>>& points, vector<bool>& triangulate_mask,
     double& median_parallax, const double repr_tolerance2,
     const double min_parallax) {
   // Initialize variables.

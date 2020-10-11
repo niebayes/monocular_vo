@@ -32,6 +32,7 @@ find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
 # find_package(manif REQUIRED) 
 find_package(Sophus REQUIRED)
+find_package(CHOLMOD REQUIRED)
 find_package(G2O REQUIRED)
 find_package(DBoW3 REQUIRED)
 find_package(GLOG REQUIRED)
@@ -51,6 +52,8 @@ include_directories(BEFORE
     # ${manif_INCLUDE_DIRS}
     ${Sophus_INCLUDE_DIRS}
     # ${PCL_INCLUDE_DIRS}
+    /usr/local/include/g2o/solvers/slam2d_linear/
+    ${CHOLMOD_INCLUDE_DIR}
     ${G2O_INCLUDE_DIR}
     ${DBoW3_INCLUDE_DIRS}
     ${Pangolin_INCLUDE_DIRS}
@@ -66,11 +69,14 @@ list(APPEND LINK_LIBRARIES
     ${PCL_LIBRARIES}
     ${DBoW3_LIBRARIES}
     ${Pangolin_LIBRARIES}
+    ${CHOLMOD_LIBRARIES}
     ${G2O_CORE_LIBRARY}
     ${G2O_STUFF_LIBRARY}
     ${G2O_SOLVER_CHOLMOD}
     ${G2O_TYPES_SBA} 
     cholmod 
+    # ${G2O_SOLVER_CSPARSE}
+    # csparse
     ${GLOG_LIBRARIES}
     ${GFLAGS_LIBRARIES}
 )
@@ -104,9 +110,9 @@ add_executable(mono_kitti app/mono_kitti.cc)
 target_compile_options(my_slam PRIVATE -O0 -march=native)
 target_link_libraries(mono_kitti my_slam ${LINK_LIBRARIES})
 
-add_executable(my_test src/my_test.cc)
-target_compile_options(my_test PRIVATE -O3 -march=native)
-target_link_libraries(my_test ${LINK_LIBRARIES})
+# add_executable(my_test src/my_test.cc)
+# target_compile_options(my_test PRIVATE -O3 -march=native)
+# target_link_libraries(my_test ${LINK_LIBRARIES})
 
 
 

@@ -75,7 +75,7 @@ static inline sptr<g2o_types::EdgeObs> createG2oEdgeObs(
   // Set corresponding camera parameters.
   //! The first parameter 0 is the index of the parameter in the g2o parameters
   //! container. It does not correlate the vertex id.
-  e_obs->setParameterId(0, CAMERA_PARAMETER_ID);
+  // e_obs->setParameterId(0, CAMERA_PARAMETER_ID);
   return e_obs;
 }
 

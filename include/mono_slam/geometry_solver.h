@@ -36,7 +36,7 @@ class GeometrySolver {
   static bool findRelativePoseRansac(
       const Frame::Ptr& frame_1, const Frame::Ptr& frame_2, const Mat33& F,
       const vector<pair<int, int>>& inlier_matches, SE3& relative_pose,
-      vector<Vec3>& points, vector<bool>& triangulate_mask,
+      vector<Vec3, Eigen::aligned_allocator<Vec3>>& points, vector<bool>& triangulate_mask,
       const double noise_sigma = 3.0, const int min_n_triangulated = 50,
       const double min_parallax = 1.0);
 
@@ -45,7 +45,7 @@ class GeometrySolver {
                                const Frame::Features& feats_1,
                                const Frame::Features& feats_2,
                                const vector<pair<int, int>>& inlier_matches,
-                               const Mat33& K, vector<Vec3>& points,
+                               const Mat33& K, vector<Vec3, Eigen::aligned_allocator<Vec3>>& points,
                                vector<bool>& triangulate_mask,
                                double& median_parallax,
                                const double repr_tolerance2,

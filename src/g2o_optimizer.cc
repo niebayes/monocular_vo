@@ -61,6 +61,11 @@ void Optimizer::globalBA(const Map::Ptr& map, const int n_iters) {
       auto e_obs = g2o_utils::createG2oEdgeObs(
           kf->v_frame_.get(), point->v_point_.get(), feat->pt_,
           1. / (1 << feat->level_), std::sqrt(chi2_thresh));
+      const Mat33& K = kf->cam_->K();
+      e_obs->fx = K(0, 0);
+      e_obs->fy = K(1, 1);
+      e_obs->cx = K(0, 2);
+      e_obs->cy = K(1, 2);
       assert(optimizer.addEdge(e_obs.get()));
       edge_container.emplace_back(e_obs, kf, feat);
     }
