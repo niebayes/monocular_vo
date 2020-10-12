@@ -1,17 +1,28 @@
 #include "mono_slam/viewer.h"
 
+#include "utils/opencv_drawer_utils.h"
+#include "utils/pcl_viewer_utils.h"
+
 // Our own scoped_lock class meeting BasicLockable requirement despite locking
 // only two mutexes at a time.
 class scoped_lock2 {
+  // Mutexes are of course maintained by references.
   std::mutex& mut_1_;
   std::mutex& mut_2_;
 
  public:
+  //! Follow the RAII idiom, acquire resources during construction and
+  //! deallocate resources upon destruction.
   scoped_lock2(std::mutex& mut_1, std::mutex& mut_2)
       : mut_1_(mut_1), mut_2_(mut_2) {
     lock();
   }
   ~scoped_lock2() { unlock(); }
+  //! Disable both copy constructor and assignment operator.
+  //! The preference of doing this is that since C++11 move semantics shall
+  //! always be perfered over ctor and assignment. By disable both, we're
+  //! enforced to implement more efficient codes where there's need to copy or
+  //! assign instances.
   scoped_lock2(const scoped_lock2&) = delete;
   scoped_lock2& operator=(const scoped_lock2&) = delete;
   void lock() { std::lock(mut_1_, mut_2_); }
@@ -44,6 +55,8 @@ void Viewer::informUpdate() {
 }
 
 void Viewer::drawingLoop() {
+  cv::String winname{};
+  cv::namedWindow(winname, cv::WINDOW_AUTOSIZE)
   while (is_running_.load()) {
     {
       scoped_lock2 lock(mut_, tracker_->mut_);

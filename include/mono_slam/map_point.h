@@ -79,6 +79,7 @@ class MapPoint {
   // Add an observation.
   void addObservation(sptr<Feature> feat);
 
+  // FIXME Seems useless based on our design.
   // Erase an observation.
   void eraseObservation(const sptr<Feature>& feat);
 
@@ -95,8 +96,6 @@ class MapPoint {
   // FIXME Incomplete type & forward declaration error if put definition here.
   // FIXME Does inline still work if definition is not here?
   bool isObservedBy(const sptr<Frame>& frame) const;
-
-  // TODO(bayes) Implement delete funtions like svo.
 
  private:
   mutable std::mutex mutex_;
