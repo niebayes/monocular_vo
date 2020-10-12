@@ -143,7 +143,7 @@ int Optimizer::optimizePose(const Frame::Ptr& frame, const int n_iters) {
     // Run g2o optimizer.
     g2o_utils::runG2oOptimizer(&optimizer, n_iters, init_error, final_error);
     LOG(INFO) << cv::format(
-        "optimizePose(%d): (init_error: %.4f, final_error: %.4f).", i,
+        "optimizePose(%d): (init_error: %.4f, final_error: %.4f).", i + 1,
         init_error, final_error);
 
     final_num_inliers = 0;  // Reset at each optimization.
@@ -225,6 +225,7 @@ void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
       const MapPoint::Ptr& point = feat_utils::getPoint(feat);
       // Avoid repeat point vertex creation.
       if (!point || point->curr_ba_keyframe_id_ == kf->id_) continue;
+      if (point->curr_ba_keyframe_id_ == kf->id_) continue;
       point->curr_ba_keyframe_id_ = kf->id_;
       point->v_point_ = g2o_utils::createG2oVertexPoint(point, v_id++);
       assert(optimizer.addVertex(point->v_point_));
@@ -278,6 +279,12 @@ void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
   LOG(INFO) << cv::format("localBA(2): (init_error: %.4f, final_error: %.4f).",
                           init_error, final_error);
 
+  // Remove bad observations with too large reprojection error.
+  for (auto& edge : edge_container) {
+    if (edge.e_obs_->chi2() <= chi2_thresh) continue;
+    map->removeBadObservations(edge.keyframe_, edge.feat_);
+  }
+
   // Update structure and motion.
   for (const Frame::Ptr& kf : co_kfs) {
     const SE3 estimate_(kf->v_frame_->estimate().rotation(),
@@ -286,18 +293,13 @@ void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
     kf->v_frame_ = nullptr;
   }
   for (const MapPoint::Ptr& point : points) {
-    if (point->v_point_ == nullptr) cout << "Bad" << '\n';
+    // FIXME Have no idea why this would happen.
+    if (point->v_point_ == nullptr) continue;
     point->setPos(point->v_point_->estimate());
     point->v_point_ = nullptr;
   }
   // Reset fixed keyframes' temporary g2o frame vertices.
   for (const Frame::Ptr& kf : fixed_kfs) kf->v_frame_ = nullptr;
-
-  // Remove bad observations with too large reprojection error.
-  for (auto& edge : edge_container) {
-    if (edge.e_obs_->chi2() <= chi2_thresh) continue;
-    map->removeBadObservations(edge.keyframe_, edge.feat_);
-  }
 
   const steady_clock::time_point t2 = steady_clock::now();
   const double time_span = duration_cast<duration<double>>(t2 - t1).count();

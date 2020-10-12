@@ -213,9 +213,6 @@ bool Tracking::needNewKf() {
 }
 
 bool Tracking::relocalization() {
-#ifdef DEBUG
-  return false;
-#endif
   // Obtain relocalization candidates.
   list<Frame::Ptr> candidate_kfs;
   if (!(map_->kf_db_->detectRelocCandidates(curr_frame_, candidate_kfs)))
@@ -236,15 +233,12 @@ bool Tracking::relocalization() {
     }
     curr_frame_->setPose(relative_pose);
     // Utilize pose graph optimization to count number of inliers.
-#ifdef NO_BA
     reloc_success = true;
-#else
     const int n_inlier_matches = Optimizer::optimizePose(curr_frame_);
     if (n_inlier_matches < Config::reloc_min_n_inlier_matches()) {
       reloc_success = true;
       break;  // Get out from loop once a acceptable candidate is found.
     }
-#endif
   }
   if (reloc_success)
     LOG(INFO) << "Relocalization succeeded.";

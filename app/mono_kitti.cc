@@ -4,7 +4,7 @@
 
 using namespace mono_slam;
 
-DEFINE_string(c, "app/config_kitti.yaml", "Configuration file.");
+DEFINE_string(c, "app/config_parking.yaml", "Configuration file.");
 
 int main(int argc, char** argv) {
   GFLAGS_NAMESPACE::ParseCommandLineFlags(&argc, &argv, false);
@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
   google::LogToStderr();
   if (argc != 2) {
     LOG(INFO) << "Usage: mono_kitti -c=<config_file>";
-    LOG(WARNING) << "Use default configuration.";
+    LOG(WARNING) << "Use default configuration: " << FLAGS_c;
   }
   System::Ptr system = make_shared<System>(FLAGS_c);
   CHECK_EQ(system->init(), true);

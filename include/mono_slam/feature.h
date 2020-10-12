@@ -41,7 +41,7 @@ namespace feat_utils {
 
 // FIXME Would it be okay if these two utility functions being member methods?
 static inline sptr<MapPoint> getPoint(const sptr<Feature>& feat) {
-  if (!feat || feat->is_outlier_) return nullptr;
+  if (feat == nullptr || feat->is_outlier_) return nullptr;
   const sptr<MapPoint>& point = feat->point_.lock();
   // if (point->to_be_deleted_) return nullptr;
   return point;

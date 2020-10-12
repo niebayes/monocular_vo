@@ -15,7 +15,9 @@ struct Feature;
 class MapPoint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  // FIXME Change shared_ptr to unique_ptr.
+  //! Although in general a map point is uniquely owned by map, sometimes we
+  //! need to temporarily share it with scoped container to do stuff. Hence
+  //! shared_ptr.
   using Ptr = sptr<MapPoint>;
 
   static int point_cnt_;  // Global map point counter, starting from 0.

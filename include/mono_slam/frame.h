@@ -17,7 +17,9 @@ class MapPoint;
 class Frame : public std::enable_shared_from_this<Frame> {
  public:
   using Ptr = sptr<Frame>;
-  // FIXME Use unique_ptr for features since they're exclusively owned by frame.
+  //! Although features are uniquely owned by frame by our design, we sometimes
+  //! need to temporarily store them in a container for certain purpose. Hence
+  //! shared_ptr.
   using Features = vector<sptr<Feature>>;
 
   // FIXME Should frame has a member denoting self a frame to be deleted?
@@ -27,7 +29,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
   bool is_keyframe_;               // Is this frame a keyframe?
   bool is_datum_;                  // Is this frame fixed as datum?
   Features feats_;                 // Features extracted in this frame.
-  Camera::Ptr cam_{nullptr};      // Linked camera.
+  Camera::Ptr cam_{nullptr};       // Linked camera.
   DBoW3::BowVector bow_vec_;       // Bag of words vector.
   DBoW3::FeatureVector feat_vec_;  // Feature vector.
 

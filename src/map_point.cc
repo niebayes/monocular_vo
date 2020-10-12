@@ -82,7 +82,7 @@ void MapPoint::updateBestFeature() {
 
 void MapPoint::updateMedianViewDirAndScale() {
   const Vec3 pos = this->pos();
-  u_lock lock(mutex_);
+  lock_g lock(mutex_);
   Vec3 total_view_dir;  // Container for viewing directions.
   vector<int> levels;   // Container for viewing scales (aka. levels).
   int n = 0;

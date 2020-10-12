@@ -178,10 +178,17 @@ void Map::removeBadObservations(const Frame::Ptr& keyframe,
   if (feat->point_.expired()) return;
   {  // Lock since we're changing the state of map points.
     lock_g lock(mut_);
-    // If less than 3 frames observing this map point and the observations is
-    // marked bad, this map point is removed from map.
-    if (feat->point_.lock()->nObs() < 3)
-      feat->point_.lock()->to_be_deleted_ = true;
+    MapPoint::Ptr point = feat->point_.lock();
+    // If less than 3 frames observing this map point after the feature is
+    // erased and the observation is marked bad, this map point is removed from
+    // map.
+    if (point->nObs() - 1 < 3)
+      point->to_be_deleted_ = true;
+    else {
+      // If not goint to be deleted, update infos of the point.
+      point->updateBestFeature();
+      point->updateMedianViewDirAndScale();
+    }
   }
   // Erase observation.
   //! Since map point only "obseres" feature (through weak_ptr) and each feature
