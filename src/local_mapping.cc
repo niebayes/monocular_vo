@@ -78,6 +78,7 @@ void LocalMapping::processFrontKeyframe() {
   curr_keyframe_->updateCoInfo();
   // Insert to map the new keyframe.
   map_->insertKeyframe(curr_keyframe_);
+  LOG(INFO) << "Map now has " << map_->nKfs() << " keyframes.";
 }
 
 void LocalMapping::triangulateNewPoints() {
@@ -160,10 +161,13 @@ void LocalMapping::triangulateNewPoints() {
       // Update observation information.
       point->updateBestFeature();
       point->updateMedianViewDirAndScale();
+      // Add to map the new created map point.
+      map_->insertMapPoint(point);
       ++n_new_points;
     }
   }
   LOG(INFO) << "Triangulated " << n_new_points << " new map points.";
+  LOG(INFO) << "Map now has " << map_->nPoints() << " map points.";
 }
 
 void LocalMapping::removeRedundantKfs() {

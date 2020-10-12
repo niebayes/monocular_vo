@@ -152,6 +152,7 @@ void Map::insertKeyframe(Frame::Ptr keyframe) {
   max_kf_id_ = keyframe->id_;
   kfs_.push_back(keyframe);
   kf_db_->add(keyframe);  // Also add to keyframe database.
+  LOG(INFO) << "New keyframe inserted to map.";
 }
 
 void Map::insertMapPoint(MapPoint::Ptr point) {

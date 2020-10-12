@@ -416,14 +416,14 @@ void normalizePoints(const MatXX& pts, MatXX& normalized_pts, Mat33& T) {
 void triangulateLin(const Vec2& pt_1, const Vec2& pt_2, const Mat34& M_1,
                     const Mat34& M_2, Vec3& point) {
   //! A could be [6 x 4] or [4 x 4].
-  MatXX A(6, 4);
-  A.topRows(3) = geometry::to_skew(pt_1.homogeneous()) * M_1;
-  A.bottomRows(3) = geometry::to_skew(pt_2.homogeneous()) * M_2;
-  // MatXX A(4, 4);
-  // A.row(0) = pt_1.x() * M_1.row(2) - M_1.row(0);
-  // A.row(1) = pt_1.y() * M_1.row(2) - M_1.row(1);
-  // A.row(2) = pt_2.x() * M_2.row(2) - M_2.row(0);
-  // A.row(3) = pt_2.y() * M_2.row(2) - M_2.row(1);
+  // MatXX A(6, 4);
+  // A.topRows(3) = geometry::to_skew(pt_1.homogeneous()) * M_1;
+  // A.bottomRows(3) = geometry::to_skew(pt_2.homogeneous()) * M_2;
+  MatXX A(4, 4);
+  A.row(0) = pt_1.x() * M_1.row(2) - M_1.row(0);
+  A.row(1) = pt_1.y() * M_1.row(2) - M_1.row(1);
+  A.row(2) = pt_2.x() * M_2.row(2) - M_2.row(0);
+  A.row(3) = pt_2.y() * M_2.row(2) - M_2.row(1);
 
   // Compute 3D points using SVD.
   auto svd = A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);

@@ -39,15 +39,15 @@ namespace feat_utils {
 
 // FIXME static and forward declaration conflict with each other?
 
-// FIXME Would it be okay if these two utility functions being member methods?
-static inline sptr<MapPoint> getPoint(const sptr<Feature>& feat) {
-  if (feat == nullptr || feat->is_outlier_) return nullptr;
+inline sptr<MapPoint> getPoint(const sptr<Feature>& feat) {
+  if (!feat || feat->is_outlier_) return nullptr;
   const sptr<MapPoint>& point = feat->point_.lock();
+  // FIXME What fk causes this error?!
   // if (point->to_be_deleted_) return nullptr;
   return point;
 }
 
-static inline sptr<Frame> getKeyframe(const sptr<Feature>& feat) {
+inline sptr<Frame> getKeyframe(const sptr<Feature>& feat) {
   if (!feat || feat->is_outlier_) return nullptr;
   if (feat->frame_.expired()) return nullptr;
   const sptr<Frame>& keyframe = feat->frame_.lock();

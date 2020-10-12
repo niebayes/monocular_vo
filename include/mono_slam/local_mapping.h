@@ -49,9 +49,8 @@ class LocalMapping {
 
  protected:
   queue<Frame::Ptr> kfs_queue_;  // Keyframes queue waiting to be processed.
-  Frame::Ptr curr_keyframe_ =
-      nullptr;  // The keyframe currently under processing.
-
+  // The keyframe currently under processing.
+  Frame::Ptr curr_keyframe_ = nullptr;
   // Multi-threading stuff.
   std::thread thread_;
   std::condition_variable new_kf_cond_var_;

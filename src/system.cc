@@ -21,7 +21,10 @@ System::System(const string& config_file) : config_file_(config_file) {}
 bool System::init() {
   LOG(INFO) << "System is initializing ...";
   // Read settings from configuration file.
-  cv::FileStorage config(config_file_, cv::FileStorage::READ);
+  // cv::FileStorage config(config_file_, cv::FileStorage::READ);
+  cv::FileStorage config(
+      "/home/bayes/Documents/monocular_vo/app/config_parking.yaml",
+      cv::FileStorage::READ);
   if (!config.isOpened()) {
     config.release();
     LOG(FATAL) << "Unable to read configuration file.";
@@ -38,10 +41,18 @@ bool System::init() {
   // Load vocabulary.
   const string& voc_file = config["voc_file"];
   const steady_clock::time_point t1 = steady_clock::now();
-  sptr<Vocabulary> voc = make_shared<Vocabulary>(voc_file);
+  sptr<Vocabulary> voc = make_shared<Vocabulary>(
+      "/home/bayes/Documents/monocular_vo/data/vocabulary/orbvoc.dbow3");
   const steady_clock::time_point t2 = steady_clock::now();
   const double time_span = duration_cast<duration<double>>(t2 - t1).count();
   LOG(INFO) << "Loaded vocabulary in " << time_span << "seconds.";
+
+  // Load ground truth poses.
+  const string& pose_file = config["pose_file"];
+  if (pose_file.empty())
+    LOG(WARNING) << "No ground truth file.";
+  else
+    pose_ground_truths_.load(pose_file, arma::file_type::auto_detect, true);
 
   // Load timestamps.
   const string& timestamp_file = config["timestamp_file"];
@@ -51,6 +62,10 @@ bool System::init() {
   else
     timestamps_mat.load(timestamp_file, arma::file_type::auto_detect, true);
   timestamps_ = arma::conv_to<vector<double>>::from(timestamps_mat);
+
+  if ((int)pose_ground_truths_.n_rows != (int)timestamps_.size())
+    LOG(WARNING) << "Size of ground truth pose and that of timestamps are not "
+                    "consistent.";
 
   // Set camera parameters.
   const double& fx = config["fx"];
@@ -88,7 +103,7 @@ bool System::init() {
   local_mapper_->setTracker(tracker_);
   local_mapper_->setMap(map_);
 
-  viewer_->setSystem(shared_from_this());
+  viewer_->setTracker(tracker_);
   viewer_->setMap(map_);
 
   return true;

@@ -11,6 +11,7 @@ double Frame::x_min_, Frame::x_max_, Frame::y_min_, Frame::y_max_;
 
 Frame::Frame(const cv::Mat& img)
     : id_(frame_cnt_++), is_keyframe_(false), is_datum_(false) {
+  img.copyTo(img_);
   cam_.reset(new Camera());
   // TODO(bayes) Optimize when no distortion.
   // Compute image bounds (computed once in the first frame).
@@ -178,16 +179,6 @@ bool Frame::isObservable(const sptr<MapPoint>& point, const int level) const {
   point->level_ = level;
   point->cos_view_dir_ = cos_view_dir;
   return true;
-}
-
-int Frame::computeTrackedPoints(const int min_n_obs = 0) const {
-  int n_tracked_points = 0;
-  for (const Feature::Ptr& feat : feats_) {
-    const MapPoint::Ptr& point = feat_utils::getPoint(feat);
-    if (!point || point->nObs() < min_n_obs) continue;
-    ++n_tracked_points;
-  }
-  return n_tracked_points;
 }
 
 void Frame::erase() {

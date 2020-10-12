@@ -53,6 +53,8 @@ class Map {
   // Keyframe database used for relocalization.
   KeyframeDataBase::Ptr kf_db_{nullptr};
 
+  mutable std::mutex mut_;
+
   Map(sptr<Vocabulary> voc);
 
   void insertKeyframe(Frame::Ptr keyframe);
@@ -67,13 +69,18 @@ class Map {
   // trash and empty trash properly. And more function like svo.
   void removeBadObservations(const Frame::Ptr& keyframe, Feature::Ptr& feat);
 
-
   inline int nKfs() const {
     lock_g lock(mut_);
     return static_cast<int>(kfs_.size());
   }
 
+  inline int nPoints() const {
+    lock_g lock(mut_);
+    return static_cast<int>(points_.size());
+  }
+
   // FIXME Return copy or const reference?
+  // Return copy!
   inline const list<Frame::Ptr>& getAllKeyframes() const {
     lock_g lock(mut_);
     return kfs_;
@@ -92,8 +99,6 @@ class Map {
   int max_kf_id_;  // Maximum id of keyframes inserted so far. Used for
                    // checking for duplication as new keyframe is comming.
   sptr<Vocabulary> voc_{nullptr};
-
-  mutable std::mutex mut_;
 };
 
 }  // namespace mono_slam

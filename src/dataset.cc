@@ -1,10 +1,10 @@
 #include "mono_slam/dataset.h"
 
-#include "boost/format.hpp" // boost::format
+#include "boost/format.hpp"  // boost::format
+#include "glog/logging.h"
+#include "opencv2/core.hpp"
 #include "opencv2/imgcodecs.hpp"  // cv::imread
-#include "opencv2/imgproc.hpp"  // cv::INTER_AREA
-#include "glog/logging.h"  
-#include "opencv2/core.hpp"  
+#include "opencv2/imgproc.hpp"    // cv::INTER_AREA
 
 namespace mono_slam {
 
@@ -16,7 +16,8 @@ Dataset::Dataset(const string& dataset_path, const string& img_file_name_fmt,
       img_idx_(img_start_idx) {}
 
 cv::Mat Dataset::nextImage() {
-  boost::format fmt(dataset_path_ + img_file_name_fmt_);
+  boost::format fmt(
+      "/home/bayes/Documents/monocular_vo/data/dataset/parking/img_%05d.png");
   cv::Mat image = cv::imread((fmt % img_idx_).str(), cv::IMREAD_GRAYSCALE);
   CHECK_EQ(!image.empty(), true);
   cv::Mat resized_image;

@@ -16,7 +16,7 @@ Tracking::Tracking() : state_(State::NOT_INITIALIZED_YET) {
 void Tracking::addImage(const cv::Mat& img) {
   // Create a new frame and preprocess it.
   curr_frame_.reset(new Frame(img));
-  extractFeatures(img);
+  extractFeatures();
   computeBoW();
   trackCurrentFrame();
   // This could only happen when relocalization was failed just now.
@@ -31,6 +31,10 @@ void Tracking::addImage(const cv::Mat& img) {
   // Update constant velocity model, aka. relative motion.
   if (last_frame_)
     T_curr_last_ = curr_frame_->pose() * last_frame_->pose().inverse();
+  viewer_->informUpdate();  // Update viewer.
+  // Since viewer is racing the last_frame_ and curr_frame_, a lock is
+  // employed to protect the shared data.
+  lock_g lock(mut_);
   last_frame_ = curr_frame_;  // Update last frame.
   curr_frame_.reset();        // Reseat pointer making it ready for next frame.
   //! Decrease the reference counter once an object doesn't own it any more.
@@ -73,12 +77,8 @@ void Tracking::trackCurrentFrame() {
         local_mapper_->insertKeyframe(curr_frame_);
         local_mapper_->informUpdate();
         state_ = State::GOOD;
-      }
-#ifdef ENABLE_RESET
-      else {
+      } else
         system_->reset();
-      }
-#endif
       break;
   }
 }
@@ -191,6 +191,7 @@ void Tracking::updateLocalCoKfs() {
 }
 
 bool Tracking::needNewKf() {
+  return true;
   LOG(INFO) << "Need new keyframe?";
   bool need_new_kf = true;
   // TODO(bayes) Use a more complicated strategy.
@@ -257,10 +258,11 @@ void Tracking::reset() {
   // last_kf_id_ = 0;
 }
 
-void Tracking::extractFeatures(const cv::Mat& img) {
+void Tracking::extractFeatures() {
   vector<cv::KeyPoint> kpts;
   cv::Mat descriptors;
-  detector_->detectAndCompute(img, cv::noArray(), kpts, descriptors);
+  detector_->detectAndCompute(curr_frame_->img_, cv::noArray(), kpts,
+                              descriptors);
   if (curr_frame_->cam_->distCoeffs()(0) != 0)  // If having distortion.
     frame_utils::undistortKeypoints(curr_frame_->cam_->K(),
                                     curr_frame_->cam_->distCoeffs(), kpts);

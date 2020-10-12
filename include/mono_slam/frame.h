@@ -32,6 +32,7 @@ class Frame : public std::enable_shared_from_this<Frame> {
   Camera::Ptr cam_{nullptr};       // Linked camera.
   DBoW3::BowVector bow_vec_;       // Bag of words vector.
   DBoW3::FeatureVector feat_vec_;  // Feature vector.
+  cv::Mat img_;                    // Original image. Used for drawing.
 
   // Temporary variables used for relocalization.
   int query_frame_id_;     // Id of currently quering frame.

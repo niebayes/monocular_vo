@@ -12,6 +12,9 @@ img_resize_factor: 1.0
 ## Vocabulary file name.
 voc_file: "data/vocabulary/orbvoc.dbow3"
 
+## Ground truth pose file name.
+pose_file: "data/pose/KITTI_seq00_pose.txt"
+
 ## Timestamp file name.
 timestamp_file: ""  # KITTI dataset does not provide timestamps
 

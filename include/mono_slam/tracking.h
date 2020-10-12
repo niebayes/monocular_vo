@@ -1,6 +1,7 @@
 #ifndef MONO_SLAM_TRACKING_H_
 #define MONO_SLAM_TRACKING_H_
 
+#include "DBoW3/DBoW3.h"
 #include "mono_slam/common_include.h"
 #include "mono_slam/frame.h"
 #include "mono_slam/initialization.h"
@@ -8,7 +9,6 @@
 #include "mono_slam/map.h"
 #include "mono_slam/system.h"
 #include "mono_slam/viewer.h"
-#include "DBoW3/DBoW3.h"
 
 using DBoW3::Vocabulary;
 
@@ -27,10 +27,10 @@ enum class State { NOT_INITIALIZED_YET, GOOD, LOST };
 class Tracking : public std::enable_shared_from_this<Tracking> {
  public:
   // EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  State state_;                      // Tracking state.
+  State state_;                       // Tracking state.
   Frame::Ptr datum_frame_ = nullptr;  // The datum frame fixed as world frame.
-  Frame::Ptr last_frame_ = nullptr;  // Last frame.
-  Frame::Ptr curr_frame_ = nullptr;  // Current frame.
+  Frame::Ptr last_frame_ = nullptr;   // Last frame.
+  Frame::Ptr curr_frame_ = nullptr;   // Current frame.
   SE3 T_curr_last_;  // Rigid-body transformation from last_frame_ to
                      // curr_frame_ assuming constant velocity.
   // Local covisible keyframes having visual overlapping (i.e. some map points
@@ -41,8 +41,8 @@ class Tracking : public std::enable_shared_from_this<Tracking> {
                     // insertion is partly(all?) limited by this.
 
   sptr<Vocabulary> voc_ = nullptr;  // Vocabulary.
-
-  Map::Ptr map_ = nullptr;  // Map.
+  Map::Ptr map_ = nullptr;          // Map.
+  std::mutex mut_;  // Mutex to protect shared last_frame_ and curr_frame_.
 
   Tracking();
 
@@ -61,7 +61,7 @@ class Tracking : public std::enable_shared_from_this<Tracking> {
   // FIXME Due to errors involved with shared_from_this(), I have to move these
   // two methods from Frame to Tracking.
   // Extract features and compute corresponding descriptors.
-  void extractFeatures(const cv::Mat& img);
+  void extractFeatures();
 
   // Compute bag of words representation.
   void computeBoW();

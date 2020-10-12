@@ -3,26 +3,53 @@
 
 #include "mono_slam/common_include.h"
 #include "mono_slam/map.h"
-#include "mono_slam/system.h"
+#include "mono_slam/tracking.h"
 
 namespace mono_slam {
 
-class System;
+class Tracking;
 class Map;
 
 class Viewer {
  public:
   Viewer();
 
+  void startThread();
+
+  void stopThread();
+
+  void informUpdate();
+
   void reset();
+
+  void setTracker(sptr<Tracking> tracker);
 
   void setMap(sptr<Map> map);
 
-  void setSystem(sptr<System> system);
-
  private:
-  sptr<Map> map_ = nullptr;
-  sptr<System> system_ = nullptr;
+  void drawingLoop();
+
+  void updateMap();
+
+  void drawTrajectory();
+
+  void drawMapPoints();
+
+  Frame::Ptr last_frame_{nullptr};
+  Frame::Ptr curr_frame_{nullptr};
+  list<MapPoint::Ptr> points_;
+
+  // Multi-threading stuff.
+  std::thread thread_;
+  //! std::condition_variable_any generalizes std::condition_variable in that it
+  //! supports any lock that meets the BasicLocable requirement.
+  std::condition_variable_any update_cond_var_;
+  std::atomic<bool> is_running_;
+  mutable std::mutex mut_;
+
+  // FIXME Maybe weak_ptr is more suitable.
+  sptr<Tracking> tracker_{nullptr};
+  sptr<Map> map_{nullptr};
 };
 
 }  // namespace mono_slam

@@ -1,6 +1,7 @@
 #ifndef MONO_SLAM_SYSTEM_H_
 #define MONO_SLAM_SYSTEM_H_
 
+#include "armadillo"  // amra::mat
 #include "mono_slam/common_include.h"
 #include "mono_slam/dataset.h"
 #include "mono_slam/local_mapping.h"
@@ -17,6 +18,8 @@ class Viewer;
 class Dataset;
 
 class System : public std::enable_shared_from_this<System> {
+  friend Viewer;
+
  public:
   using Ptr = sptr<System>;
   System(const string& config_file);
@@ -39,6 +42,7 @@ class System : public std::enable_shared_from_this<System> {
 
   // User-specified objects.
   uptr<Dataset> dataset_ = nullptr;
+  arma::mat pose_ground_truths_;
   vector<double> timestamps_;
   const string config_file_;
 };
