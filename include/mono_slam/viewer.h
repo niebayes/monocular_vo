@@ -4,6 +4,9 @@
 #include "mono_slam/common_include.h"
 #include "mono_slam/map.h"
 #include "mono_slam/tracking.h"
+#include "utils/pcl_viewer_utils.h"
+
+class PclViewer;
 
 namespace mono_slam {
 
@@ -38,6 +41,8 @@ class Viewer {
   Frame::Ptr last_frame_{nullptr};
   Frame::Ptr curr_frame_{nullptr};
   list<MapPoint::Ptr> points_;
+
+  viewer_utils::PclViewer::Ptr pcl_viewer_{nullptr};  // Pcl viewer.
 
   // Multi-threading stuff.
   std::thread thread_;

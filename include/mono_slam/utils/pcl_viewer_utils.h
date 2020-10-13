@@ -2,6 +2,7 @@
 #define MONO_SLAM_UTILS_PCL_VIEWER_UTILS_H_
 
 #include <array>
+#include <memory>
 #include <vector>
 
 #include "pcl/visualization/pcl_visualizer.h"
@@ -28,13 +29,10 @@ static constexpr array<array<double, 3>, 3> RGB{
 
 class PclViewer {
  public:
+  using Ptr = std::unique_ptr<PclViewer>;
+
   PclViewer();
-
-  void setupPclVisualizer();
-
-  void addPoseToTrajectory(const SE3& pose, PointCloud* point_cloud,
-                           const Color& cloud_point_color,
-                           const Color& line_color, const int line_width);
+  ~PclViewer();
 
   void insertPoseEstimate(const SE3& pose, const bool is_keyframe = false);
 
@@ -44,7 +42,14 @@ class PclViewer {
 
   void insertMapPoint(const Vec3& pos);
 
-  void updateOnce();
+  void spinOnce();
+
+ private:
+  void setupPclVisualizer();
+
+  void addPoseToTrajectory(const SE3& pose, PointCloud* point_cloud,
+                           const Color& cloud_point_color,
+                           const Color& line_color, const int line_width);
 
  private:
   // Point cloud objects storing camera pose trajectory.
@@ -94,7 +99,6 @@ static inline void linkCloudPoints(CloudPoint* cloud_point_1,
 }
 
 }  // namespace pcl_utils
-
 }  // namespace viewer_utils
 
 #endif  // MONO_SLAM_UTILS_PCL_VIEWER_UTILS_H_

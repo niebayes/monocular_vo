@@ -4,6 +4,7 @@
 #define ARMA_ALLOW_FAKE_CLANG
 #include "armadillo"
 #include "mono_slam/camera.h"
+#include "mono_slam/utils/math_utils.h"
 
 using DBoW3::Vocabulary;
 
@@ -49,10 +50,17 @@ bool System::init() {
 
   // Load ground truth poses.
   const string& pose_file = config["pose_file"];
+  arma::mat pose_mat;
   if (pose_file.empty())
     LOG(WARNING) << "No ground truth file.";
   else
-    pose_ground_truths_.load(pose_file, arma::file_type::auto_detect, true);
+    pose_mat.load(pose_file, arma::file_type::auto_detect, true);
+  // Convert to vector<SE3>.
+  pose_ground_truths_.reserve(pose_mat.n_rows);
+  std::transform(
+      pose_mat.begin_row(), pose_mat.end_row(),
+      std::back_inserter(pose_ground_truths_),
+      [](const arma::rowvec& pose) { return math_utils::arma_to_SE3(pose); });
 
   // Load timestamps.
   const string& timestamp_file = config["timestamp_file"];

@@ -66,7 +66,7 @@ class MapPoint {
   MapPoint(const Vec3& pos, sptr<Feature> feat);
 
   inline const Vec3& pos() const {
-    u_lock lock(mutex_);
+    lock_g lock(mutex_);
     return pos_;
   }
 

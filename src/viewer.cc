@@ -2,7 +2,6 @@
 
 #include "mono_slam/initialization.h"
 #include "utils/opencv_drawer_utils.h"
-#include "utils/pcl_viewer_utils.h"
 
 // Our own scoped_lock class meeting BasicLockable requirement despite locking
 // only two mutexes at a time.
@@ -37,7 +36,10 @@ namespace mono_slam {
 
 class Initializer;
 
-Viewer::Viewer() { startThread(); }
+Viewer::Viewer() {
+  pcl_viewer_.reset(new viewer_utils::PclViewer());
+  startThread();
+}
 
 void Viewer::startThread() {
   is_running_.store(true);
@@ -90,14 +92,36 @@ void Viewer::updateMap() {
   lock_g lock(mut_);
   drawTrajectory();
   drawMapPoints();
+  pcl_viewer_->spinOnce();
 }
 
 void Viewer::drawTrajectory() {
-  //
+  const bool no_ground_truth = tracker_->system_->pose_ground_truths_.empty();
+  if (last_frame_->is_datum_) {
+    pcl_viewer_->insertPoseEstimate(last_frame_->pose(), true);
+    if (!no_ground_truth) {
+      pcl_viewer_->insertPoseGroundTruth(
+          tracker_->system_->pose_ground_truths_.at(last_frame_->id_));
+    }
+  }
+  pcl_viewer_->insertPoseEstimate(curr_frame_->pose(),
+                                  curr_frame_->isKeyframe());
+  if (!no_ground_truth) {
+    pcl_viewer_->insertPoseGroundTruth(
+        tracker_->system_->pose_ground_truths_.at(curr_frame_->id_));
+  }
 }
 
 void Viewer::drawMapPoints() {
-  //
+  for (const MapPoint::Ptr& point : points_) {
+    if (!point) continue;
+    // If the map point is first observed by curr_frame_, it's the new map point
+    // and will be rendered with a different color.
+    if (point->ref_frame_id_ == curr_frame_->id_)
+      pcl_viewer_->insertNewMapPoint(point->pos());
+    else
+      pcl_viewer_->insertMapPoint(point->pos());
+  }
 }
 
 void Viewer::reset() {
@@ -105,6 +129,7 @@ void Viewer::reset() {
   last_frame_.reset();
   curr_frame_.reset();
   points_.clear();
+  pcl_viewer_.reset(new viewer_utils::PclViewer());
 }
 
 void Viewer::setTracker(sptr<Tracking> tracker) { tracker_ = tracker; }

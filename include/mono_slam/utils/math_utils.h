@@ -7,10 +7,14 @@
 #include <iterator>
 #include <vector>
 
+#include "armadillo"
 #include "glog/logging.h"
 #include "mono_slam/config.h"
+#include "sophus/se3.hpp"
 
 using namespace mono_slam;
+
+using SE3 = Sophus::SE3d;
 
 namespace math_utils {
 
@@ -45,6 +49,10 @@ inline T get_median(std::vector<T>& data_vec) {
       data_vec.begin(), std::floor(static_cast<int>(data_vec.size()) / 2));
   std::nth_element(data_vec.begin(), it, data_vec.end());
   return *it;
+}
+
+inline SE3 arma_to_SE3(const arma::rowvec& pose) {
+  //
 }
 
 }  // namespace math_utils
