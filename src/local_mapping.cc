@@ -161,6 +161,9 @@ void LocalMapping::triangulateNewPoints() {
       // Update observation information.
       point->updateBestFeature();
       point->updateMedianViewDirAndScale();
+      // Store the id of the frame where the point is first observed by. Used
+      // only for drawing purpose.
+      point->ref_frame_id_ = curr_keyframe_->id_;
       // Add to map the new created map point.
       map_->insertMapPoint(point);
       ++n_new_points;

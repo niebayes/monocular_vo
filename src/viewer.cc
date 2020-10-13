@@ -1,5 +1,6 @@
 #include "mono_slam/viewer.h"
 
+#include "mono_slam/initialization.h"
 #include "utils/opencv_drawer_utils.h"
 #include "utils/pcl_viewer_utils.h"
 
@@ -34,6 +35,8 @@ class scoped_lock2 {
 
 namespace mono_slam {
 
+class Initializer;
+
 Viewer::Viewer() { startThread(); }
 
 void Viewer::startThread() {
@@ -55,8 +58,6 @@ void Viewer::informUpdate() {
 }
 
 void Viewer::drawingLoop() {
-  cv::String winname{};
-  cv::namedWindow(winname, cv::WINDOW_AUTOSIZE)
   while (is_running_.load()) {
     {
       scoped_lock2 lock(mut_, tracker_->mut_);
@@ -70,6 +71,16 @@ void Viewer::drawingLoop() {
       points_ = map_->getAllMapPoints();
     }
     LOG(INFO) << "Viewer is updating ...";
+    // Invoke OpenCV drawer.
+    cv::Mat img_show;
+    if (last_frame_->is_datum_)  // If system was just initialized.
+      viewer_utils::OpencvDrawer::drawMatches(
+          last_frame_, curr_frame_, tracker_->initializer_->inlier_matches_,
+          img_show);
+    else
+      viewer_utils::OpencvDrawer::drawKeyPoints(curr_frame, img_show);
+
+    // Invoke PCL viewer.
     updateMap();
     LOG(INFO) << "Updated viewer.";
   }

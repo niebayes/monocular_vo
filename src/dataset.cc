@@ -18,7 +18,8 @@ Dataset::Dataset(const string& dataset_path, const string& img_file_name_fmt,
 cv::Mat Dataset::nextImage() {
   boost::format fmt(
       "/home/bayes/Documents/monocular_vo/data/dataset/parking/img_%05d.png");
-  cv::Mat image = cv::imread((fmt % img_idx_).str(), cv::IMREAD_GRAYSCALE);
+  cv::Mat image = cv::imread((fmt % img_idx_).str(),
+                             cv::IMREAD_ANYDEPTH | cv::IMREAD_ANYCOLOR);
   CHECK_EQ(!image.empty(), true);
   cv::Mat resized_image;
   image.copyTo(resized_image);

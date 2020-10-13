@@ -105,6 +105,9 @@ bool Initializer::buildInitMap() {
     // Update map point characteristics.
     point->updateBestFeature();
     point->updateMedianViewDirAndScale();
+    // Store the id of the frame where the map point is first observed by. Used
+    // only for drawing purpose.
+    point->ref_frame_id_ = ref_frame_->id_;
     // Insert to map the new created point.
     tracker_->map_->insertMapPoint(point);
   }

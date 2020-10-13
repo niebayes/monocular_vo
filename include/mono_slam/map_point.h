@@ -58,6 +58,8 @@ class MapPoint {
 
   bool to_be_deleted_;  // When number of observations below certain threshold,
                         // this map point is going to be deleted soon.
+  int ref_frame_id_;  // The id of the frame where the point was first observed
+                      // by. Used only for drawing purpose.
 
   MapPoint(const Vec3& pos);
 

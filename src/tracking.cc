@@ -250,7 +250,7 @@ bool Tracking::relocalization() {
 
 void Tracking::reset() {
   state_ = State::NOT_INITIALIZED_YET;
-  initializer_.reset(new Initializer);
+  initializer_.reset(new Initializer());
   last_frame_.reset();
   curr_frame_.reset();
   T_curr_last_ = SE3();
@@ -260,9 +260,10 @@ void Tracking::reset() {
 
 void Tracking::extractFeatures() {
   vector<cv::KeyPoint> kpts;
+  cv::Mat img_gray;
+  cv::cvtColor(curr_frame_->img_, img_gray);
   cv::Mat descriptors;
-  detector_->detectAndCompute(curr_frame_->img_, cv::noArray(), kpts,
-                              descriptors);
+  detector_->detectAndCompute(img_gray, cv::noArray(), kpts, descriptors);
   if (curr_frame_->cam_->distCoeffs()(0) != 0)  // If having distortion.
     frame_utils::undistortKeypoints(curr_frame_->cam_->K(),
                                     curr_frame_->cam_->distCoeffs(), kpts);

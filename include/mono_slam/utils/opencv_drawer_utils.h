@@ -1,6 +1,10 @@
 #ifndef MONO_SLAM_UTILS_OPENCV_DRAWER_UTILS_H_
 #define MONO_SLAM_UTILS_OPENCV_DRAWER_UTILS_H_
 
+#include <utility>  // std:pair
+#include <vector>
+
+#include "mono_slam/frame.h"
 #include "opencv2/core.hpp"
 #include "opencv2/features2d.hpp"
 #include "opencv2/highgui.hpp"
@@ -8,15 +12,21 @@
 
 namespace viewer_utils {
 
+class Frame;
+
 class OpencvDrawer {
  public:
-  OpencvDrawer() {}
+  static void drawMatches(const Frame::Ptr& ref_frame,
+                          const Frame::Ptr& curr_frame,
+                          const vector<pair<int, int>>& inlier_matches,
+                          cv::Mat& img_show);
 
- private:
+  static void drawKeyPoints(const Frame::Ptr& frame, cv::Mat& img_show);
 };
 
-OpencvDrawer::OpencvDrawer() {}
-
+namespace opencv_utils {
+static void pts2kpts(const Frame::Ptr& frame, vector<cv::KeyPoint>& kpts);
+}  // namespace opencv_utils
 }  // namespace viewer_utils
 
 #endif  // MONO_SLAM_UTILS_OPENCV_DRAWER_UTILS_H_

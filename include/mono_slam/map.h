@@ -78,15 +78,13 @@ class Map {
     lock_g lock(mut_);
     return static_cast<int>(points_.size());
   }
-
-  // FIXME Return copy or const reference?
-  // Return copy!
-  inline const list<Frame::Ptr>& getAllKeyframes() const {
+  
+  inline list<Frame::Ptr> getAllKeyframes() const {
     lock_g lock(mut_);
     return kfs_;
   }
 
-  inline const list<MapPoint::Ptr>& getAllMapPoints() const {
+  inline list<MapPoint::Ptr> getAllMapPoints() const {
     lock_g lock(mut_);
     return points_;
   }
