@@ -81,10 +81,7 @@ bool Initializer::buildInitMap() {
   // Insert initial keyframes.
   ref_frame_->setKeyframe();
   curr_frame_->setKeyframe();
-  // FIXME Seems data racing issue. Sometimes only one keyframe is successfully
-  // inserted.
   tracker_->map_->insertKeyframe(ref_frame_);
-  std::this_thread::sleep_for(duration<double>(0.1));
   tracker_->map_->insertKeyframe(curr_frame_);
 
   // Insert initial map points.
@@ -118,7 +115,7 @@ bool Initializer::buildInitMap() {
   curr_frame_->updateCoInfo();
 
   // Global bundle adjustment to optimize poses and points' position jointly.
-  // Optimizer::globalBA(tracker_->map_);
+  Optimizer::globalBA(tracker_->map_);
 
   // FIXME What is the rescaling principle under the hood?
   // Rescale the map such that the mean scene depth is equal to 1.0

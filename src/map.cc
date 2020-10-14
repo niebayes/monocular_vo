@@ -138,7 +138,7 @@ void KeyframeDataBase::clear() {
 //##############################################################################
 // Map
 
-Map::Map(sptr<Vocabulary> voc) : voc_(voc), max_kf_id_(0) {
+Map::Map(sptr<Vocabulary> voc) : voc_(voc), max_kf_id_(-1) {
   kf_db_.reset(new KeyframeDataBase(voc_));
 }
 

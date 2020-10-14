@@ -26,6 +26,7 @@ namespace pcl_utils {
 template <typename CloudPointType>
 static inline void setCloudPointPos(CloudPointType* cloud_point,
                                     const Vec3& pos) {
+  if (cloud_point == nullptr) cout << "bad" << '\n';
   cloud_point->x = pos(0);
   cloud_point->y = pos(0);
   cloud_point->z = pos(0);
@@ -156,12 +157,17 @@ void PclViewer::spinOnce(const int frame_id, const double scale,
   else
     visualizer_->updateText(info, 20, 20, std::to_string(spin_cnt_++));
 
-  // Update visualizer window.
-  visualizer_->spinOnce(spin_time);
-
+  // Update visualizer window.new_map_points_
   // Clear cloud points cache making'em ready for the next update.
   new_map_points_->points.clear();
   all_map_points_->points.clear();
+}
+
+void PclViewer::reset() {
+  pose_estimate_traj_->clear();
+  pose_ground_truth_traj_->clear();
+  all_map_points_->clear();
+  new_map_points_->clear();
 }
 
 void PclViewer::setupPclVisualizer(const Eigen::Affine3f& viewer_pose) {
@@ -197,10 +203,11 @@ void PclViewer::addPoseToTrajectory(const SE3& pose, PointCloud* point_cloud,
                                     const Color& line_color,
                                     const double line_width) {
   // Create new pose cloud point.
-  CloudPointPtr curr_pose_cloud_point;
+  using std::make_unique;
+  CloudPointPtr curr_pose_cloud_point = make_unique<CloudPoint>();
   setCloudPointPos(curr_pose_cloud_point.get(), pose.translation());
   // Add a line linking previous pose cloud point and current pose cloud point.
-  CloudPointPtr prev_pose_cloud_point;
+  CloudPointPtr prev_pose_cloud_point = make_unique<CloudPoint>();
   if (spin_cnt_ > 0) {  // If not the first time the viewer is invoked.
     setCloudPointPos(prev_pose_cloud_point.get(),
                      prev_pose_estimate_.translation());
@@ -208,7 +215,7 @@ void PclViewer::addPoseToTrajectory(const SE3& pose, PointCloud* point_cloud,
                     line_color, line_width, visualizer_.get());
   }
   // Add to trajectory point cloud the new pose cloud point.
-  CloudPointRGBPtr pose_cloud_point_rgb;
+  CloudPointRGBPtr pose_cloud_point_rgb = make_unique<CloudPointRGB>();
   setCloudPointPos(pose_cloud_point_rgb.get(), pose.translation());
   setCloudPointColor(pose_cloud_point_rgb.get(), cloud_point_color);
   point_cloud->points.push_back(*pose_cloud_point_rgb);

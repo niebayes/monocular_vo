@@ -61,9 +61,43 @@ void Viewer::informUpdate() {
   update_cond_var_.notify_one();
 }
 
+// Don't parallel viewer and tracker. This method if for debugging purpose.
+void Viewer::updateOnce() {
+  lock_g lock(mut_);
+  if (tracker_->state_ != State::GOOD) return;
+  last_frame_ = tracker_->last_frame_;
+  curr_frame_ = tracker_->curr_frame_;
+  points_ = map_->getAllMapPoints();
+  LOG(INFO) << "Viewer is updating ...";
+  // Invoke OpenCV drawer.
+  // TODO(bayes) Spawn a new thread for opencv drawing.
+  cv::Mat img_show;
+  string winname;
+  if (last_frame_->is_datum_) {  // If system was just initialized.
+    viewer_utils::OpencvDrawer::drawMatches(
+        last_frame_, curr_frame_, tracker_->initializer_->inlier_matches_,
+        img_show);
+    winname = "Initialization succeeded; draw matches";
+  } else {
+    viewer_utils::OpencvDrawer::drawKeyPoints(curr_frame_, img_show);
+    winname = "Tracking; draw keypoints";
+  }
+  cv::putText(img_show,
+              string{"Frame id: "}.append(std::to_string(curr_frame_->id_)),
+              {30, 50}, cv::FONT_HERSHEY_PLAIN, 2, {0, 255, 0}, 3);
+  cv::imshow(winname, img_show);
+  const char key = cv::waitKey(fps_);  // key is not used currently.
+
+  // Invoke PCL viewer.
+  updateMap();
+  LOG(INFO) << "Updated viewer.";
+}
+
 void Viewer::drawingLoop() {
   while (is_running_.load()) {
     {
+      // FIXME Seems there's no need to use mutex since there's no concurrent
+      // modification of shared data ocurred.
       scoped_lock2 lock(mut_, tracker_->mut_);
       // Only perform drawing when the tracking is good.
       update_cond_var_.wait(lock,
@@ -76,6 +110,7 @@ void Viewer::drawingLoop() {
     }
     LOG(INFO) << "Viewer is updating ...";
     // Invoke OpenCV drawer.
+    // TODO(bayes) Spawn a new thread for opencv drawing.
     cv::Mat img_show;
     if (last_frame_->is_datum_)  // If system was just initialized.
       viewer_utils::OpencvDrawer::drawMatches(
@@ -83,6 +118,11 @@ void Viewer::drawingLoop() {
           img_show);
     else
       viewer_utils::OpencvDrawer::drawKeyPoints(curr_frame_, img_show);
+    cv::putText(img_show,
+                string{"Frame id: "}.append(std::to_string(curr_frame_->id_)),
+                {30, 30}, cv::FONT_HERSHEY_PLAIN, 5, {0, 255, 0}, 3);
+    cv::imshow("OpenCV drawer", img_show);
+    cv::waitKey(fps_);
 
     // Invoke PCL viewer.
     updateMap();
@@ -91,7 +131,7 @@ void Viewer::drawingLoop() {
 }
 
 void Viewer::updateMap() {
-  lock_g lock(mut_);
+  // lock_g lock(mut_);  // Don't race mutex if in linear with tracker.
   drawTrajectory();
   drawMapPoints();
   // Compute scale that aligns ground truth trajectory to pose estimate
@@ -143,7 +183,8 @@ void Viewer::reset() {
   last_frame_.reset();
   curr_frame_.reset();
   points_.clear();
-  pcl_viewer_.reset(new viewer_utils::PclViewer(viewer_pose_));
+  pcl_viewer_->reset();
+  // pcl_viewer_.reset(new viewer_utils::PclViewer(viewer_pose_));
 }
 
 void Viewer::setTracker(sptr<Tracking> tracker) { tracker_ = tracker; }

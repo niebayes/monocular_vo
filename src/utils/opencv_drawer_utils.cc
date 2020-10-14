@@ -14,10 +14,14 @@ void OpencvDrawer::drawMatches(const Frame::Ptr& ref_frame,
   // Inlier matches from ref_frame to curr_frame.
   vector<cv::DMatch> matches_ref_curr;
   matches_ref_curr.reserve(inlier_matches.size());
-  std::transform(inlier_matches.cbegin(), inlier_matches.cend(),
-                 matches_ref_curr.begin(), [](const pair<int, int>& match) {
-                   return cv::DMatch(match.first, match.second, 0.0f);
-                 });
+  // FIXME Why this does not work?
+  // std::transform(inlier_matches.cbegin(), inlier_matches.cend(),
+  //                matches_ref_curr.begin(), [](const pair<int, int>& match) {
+  //                  return cv::DMatch(match.first, match.second, 0.0f);
+  //                });
+  auto it = inlier_matches.cbegin(), it_end = inlier_matches.cend();
+  for (; it != it_end; ++it)
+    matches_ref_curr.push_back(cv::DMatch(it->first, it->second, 0.0f));
   cv::drawMatches(ref_frame->img_, ref_kpts, curr_frame->img_, curr_kpts,
                   matches_ref_curr, img_show, {255, 0, 0}, {0, 255, 0});
 }

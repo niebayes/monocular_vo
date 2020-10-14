@@ -49,6 +49,8 @@ class PclViewer {
 
   void spinOnce(const int frame_id, const double scale, const int spin_time);
 
+  void reset();
+
  private:
   void setupPclVisualizer(const Eigen::Affine3f& viewer_pose);
 

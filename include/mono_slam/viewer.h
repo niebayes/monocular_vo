@@ -25,6 +25,8 @@ class Viewer {
 
   void informUpdate();
 
+  void updateOnce();
+
   void reset();
 
   void setTracker(sptr<Tracking> tracker);

@@ -31,12 +31,14 @@ void Tracking::addImage(const cv::Mat& img) {
   // Update constant velocity model, aka. relative motion.
   if (last_frame_)
     T_curr_last_ = curr_frame_->pose() * last_frame_->pose().inverse();
-  viewer_->informUpdate();  // Update viewer.
+  // viewer_->informUpdate();  // Update viewer.
+  viewer_->updateOnce();  // Don't parallel viewer and tracker.
   // Since viewer is racing the last_frame_ and curr_frame_, a lock is
   // employed to protect the shared data.
   lock_g lock(mut_);
   last_frame_ = curr_frame_;  // Update last frame.
-  curr_frame_.reset();        // Reseat pointer making it ready for next frame.
+  // FIXME why calling this delete the keyframe? \see viewer.
+  // curr_frame_.reset();       // Reseat pointer making it ready for next frame.
   //! Decrease the reference counter once an object doesn't own it any more.
 }
 
