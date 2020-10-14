@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-project(BASIC_MONOCULAR_SLAM)
+set(PROJECT_NAME mono_vo)
+project({PROJECT_NAME})
 
 # Configure compile mode: Debug, Release, etc.
 # set(CMAKE_BUILD_TYPE Release)
@@ -30,33 +31,28 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
-# find_package(manif REQUIRED) 
 find_package(Sophus REQUIRED)
 find_package(CHOLMOD REQUIRED)
 find_package(G2O REQUIRED)
 find_package(DBoW3 REQUIRED)
 find_package(GLOG REQUIRED)
 find_package(GFLAGS REQUIRED)
-find_package(Pangolin REQUIRED)
-# find_package(PCL 1.11 REQUIRED COMPONENTS common io visualization)
-# if (PCL_FOUND)
-#     link_directories(${PCL_LIBRARY_DIRS})
-#     add_definitions(${PCL_DEFINITIONS})
-# endif()
+find_package(PCL 1.11 REQUIRED COMPONENTS common io visualization)
+if (PCL_FOUND)
+    link_directories(${PCL_LIBRARY_DIRS})
+    add_definitions(${PCL_DEFINITIONS})
+endif()
 
 # Add additional include path for header files
 include_directories(BEFORE
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/include/mono_slam
     ${OpenCV_INCLUDE_DIRS}
-    # ${manif_INCLUDE_DIRS}
     ${Sophus_INCLUDE_DIRS}
-    # ${PCL_INCLUDE_DIRS}
-    /usr/local/include/g2o/solvers/slam2d_linear/
+    ${PCL_INCLUDE_DIRS}
     ${CHOLMOD_INCLUDE_DIR}
     ${G2O_INCLUDE_DIR}
     ${DBoW3_INCLUDE_DIRS}
-    ${Pangolin_INCLUDE_DIRS}
     ${GLOG_INCLUDE_DIRS} 
     ${GFLAGS_INCLUDE_DIRS}
 ) # path relative to this CMakeLists.txt
@@ -68,15 +64,12 @@ list(APPEND LINK_LIBRARIES
     Sophus::Sophus
     ${PCL_LIBRARIES}
     ${DBoW3_LIBRARIES}
-    ${Pangolin_LIBRARIES}
     ${CHOLMOD_LIBRARIES}
     ${G2O_CORE_LIBRARY}
     ${G2O_STUFF_LIBRARY}
     ${G2O_SOLVER_CHOLMOD}
     ${G2O_TYPES_SBA} 
     cholmod 
-    # ${G2O_SOLVER_CSPARSE}
-    # csparse
     ${GLOG_LIBRARIES}
     ${GFLAGS_LIBRARIES}
 )
@@ -98,21 +91,31 @@ list(APPEND SOURCE_FILES
     src/config.cc 
     src/dataset.cc 
     src/viewer.cc 
+    src/utils/opencv_drawer_utils.cc
+    src/utils/pcl_viewer_utils.cc
 )
 
-add_library(my_slam SHARED ${SOURCE_FILES})
-target_compile_options(my_slam PRIVATE -O3)
-# target_compile_options(my_slam PRIVATE -O0)
-target_link_libraries(my_slam ${LINK_LIBRARIES})
+add_library(mono_vo_lib SHARED ${SOURCE_FILES})
+target_compile_options(mono_vo_lib PRIVATE -O3)
+# target_compile_options(mono_vo PRIVATE -O0)
+target_link_libraries(mono_vo_lib ${LINK_LIBRARIES})
 
-add_executable(mono_kitti app/mono_kitti.cc)
-target_compile_options(mono_kitti PRIVATE -O3)
-# target_compile_options(mono_kitti PRIVATE -O0)
-target_link_libraries(mono_kitti my_slam ${LINK_LIBRARIES})
+# add_executable(mono_kitti app/mono_kitti.cc)
+# target_compile_options(mono_kitti PRIVATE -O3)
+# # target_compile_options(mono_kitti PRIVATE -O0)
+# target_link_libraries(mono_kitti mono_vo_lib ${LINK_LIBRARIES})
 
-# add_executable(my_test src/my_test.cc)
-# target_compile_options(my_test PRIVATE -O3 -march=native)
-# target_link_libraries(my_test ${LINK_LIBRARIES})
+# add_executable(mono_malaga app/mono_malaga.cc)
+# target_compile_options(mono_malaga PRIVATE -O3)
+# # target_compile_options(mono_malaga PRIVATE -O0)
+# target_link_libraries(mono_malaga mono_vo_lib ${LINK_LIBRARIES})
 
+add_executable(mono_parking app/mono_parking.cc)
+target_compile_options(mono_parking PRIVATE -O3)
+# target_compile_options(mono_malaga PRIVATE -O0)
+target_link_libraries(mono_parking mono_vo_lib ${LINK_LIBRARIES})
 
-
+# add_executable(mono_tsukuba app/mono_tsukuba.cc)
+# target_compile_options(mono_tsukuba PRIVATE -O3)
+# # target_compile_options(mono_tsukuba PRIVATE -O0)
+# target_link_libraries(mono_tsukuba mono_vo_lib ${LINK_LIBRARIES})

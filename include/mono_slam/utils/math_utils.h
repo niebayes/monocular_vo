@@ -55,6 +55,14 @@ inline SE3 arma_to_SE3(const arma::rowvec& pose) {
   //
 }
 
+inline Eigen::Affine3f SE3_to_affine(const SE3& pose) {
+  Eigen::Affine3f T; 
+  // Affine part = linear part + scale.
+  T.linear() = pose.rotationMatrix();
+  T.translation() = pose.translation();
+  return T;
+}
+
 }  // namespace math_utils
 
 #endif  // MONO_SLAM_UTILS_MATH_UTILS_H_
