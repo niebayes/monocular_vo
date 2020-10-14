@@ -57,10 +57,8 @@ bool System::init() {
     pose_mat.load(pose_file, arma::file_type::auto_detect, true);
   // Convert to vector<SE3>.
   pose_ground_truths_.reserve(pose_mat.n_rows);
-  std::transform(
-      pose_mat.begin_row(), pose_mat.end_row(),
-      std::back_inserter(pose_ground_truths_),
-      [](const arma::rowvec& pose) { return math_utils::arma_to_SE3(pose); });
+  for (int i = 0; i < pose_mat.n_rows; ++i)
+    pose_ground_truths_.push_back(math_utils::arma_to_SE3(pose_mat.row(i)));
 
   // Load timestamps.
   const string& timestamp_file = config["timestamp_file"];
@@ -71,7 +69,7 @@ bool System::init() {
     timestamps_mat.load(timestamp_file, arma::file_type::auto_detect, true);
   timestamps_ = arma::conv_to<vector<double>>::from(timestamps_mat);
 
-  if ((int)pose_ground_truths_.n_rows != (int)timestamps_.size())
+  if (pose_ground_truths_.size() != timestamps_.size())
     LOG(WARNING) << "Size of ground truth pose and that of timestamps are not "
                     "consistent.";
 
@@ -92,6 +90,9 @@ bool System::init() {
   Camera::K_ = (Mat33() << fx, 0., cx, 0., fy, cy, 0., 0., 1.).finished();
   Camera::dist_coeffs_ = dist_coeffs;
 
+  // Get camera fps.
+  const double& fps = config["fps"];
+
   // Release the file as soon as possible.
   config.release();
 
@@ -99,7 +100,9 @@ bool System::init() {
   tracker_.reset(new Tracking());
   local_mapper_.reset(new LocalMapping());
   map_.reset(new Map(voc));
-  viewer_.reset(new Viewer());
+  // Set viewer pose.
+  Eigen::Affine3f viewer_pose;
+  viewer_.reset(new Viewer(viewer_pose, fps));
 
   tracker_->setSystem(shared_from_this());
   tracker_->setLocalMapper(local_mapper_);

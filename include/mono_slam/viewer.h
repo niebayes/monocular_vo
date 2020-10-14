@@ -15,7 +15,9 @@ class Map;
 
 class Viewer {
  public:
-  Viewer();
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  Viewer(const Eigen::Affine3f& viewer_pose, const int fps);
 
   void startThread();
 
@@ -37,6 +39,9 @@ class Viewer {
   void drawTrajectory();
 
   void drawMapPoints();
+
+  Eigen::Affine3f viewer_pose_;
+  const int fps_;  // Camera fps which affects the drawing fps.
 
   Frame::Ptr last_frame_{nullptr};
   Frame::Ptr curr_frame_{nullptr};

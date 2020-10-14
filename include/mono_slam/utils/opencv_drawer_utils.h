@@ -10,9 +10,10 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgcodecs.hpp"
 
-namespace viewer_utils {
+namespace mono_slam {
 
 class Frame;
+namespace viewer_utils {
 
 class OpencvDrawer {
  public:
@@ -28,5 +29,6 @@ namespace opencv_utils {
 static void pts2kpts(const Frame::Ptr& frame, vector<cv::KeyPoint>& kpts);
 }  // namespace opencv_utils
 }  // namespace viewer_utils
+}  // namespace mono_slam
 
 #endif  // MONO_SLAM_UTILS_OPENCV_DRAWER_UTILS_H_

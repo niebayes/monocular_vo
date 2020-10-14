@@ -1,5 +1,6 @@
 #include "mono_slam/utils/opencv_drawer_utils.h"
 
+namespace mono_slam {
 namespace viewer_utils {
 
 void OpencvDrawer::drawMatches(const Frame::Ptr& ref_frame,
@@ -15,7 +16,7 @@ void OpencvDrawer::drawMatches(const Frame::Ptr& ref_frame,
   matches_ref_curr.reserve(inlier_matches.size());
   std::transform(inlier_matches.cbegin(), inlier_matches.cend(),
                  matches_ref_curr.begin(), [](const pair<int, int>& match) {
-                   return cv::DMatch(match.fisrt, match.second, 0.0f);
+                   return cv::DMatch(match.first, match.second, 0.0f);
                  });
   cv::drawMatches(ref_frame->img_, ref_kpts, curr_frame->img_, curr_kpts,
                   matches_ref_curr, img_show, {255, 0, 0}, {0, 255, 0});
@@ -37,3 +38,4 @@ void pts2kpts(const Frame::Ptr& frame, vector<cv::KeyPoint>& kpts) {
 
 }  // namespace opencv_utils
 }  // namespace viewer_utils
+}  // namespace mono_slam

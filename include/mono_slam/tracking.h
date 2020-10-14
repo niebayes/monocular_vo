@@ -44,6 +44,9 @@ class Tracking : public std::enable_shared_from_this<Tracking> {
   Map::Ptr map_ = nullptr;          // Map.
   std::mutex mut_;  // Mutex to protect shared last_frame_ and curr_frame_.
 
+  sptr<System> system_ = nullptr;            // System.
+  uptr<Initializer> initializer_ = nullptr;  // Initializer.
+
   Tracking();
 
   // Entry function.
@@ -88,11 +91,8 @@ class Tracking : public std::enable_shared_from_this<Tracking> {
   bool relocalization();
 
  private:
-  sptr<System> system_ = nullptr;              // System.
-  sptr<LocalMapping> local_mapper_ = nullptr;  // Local mapper.
-  sptr<Viewer> viewer_ = nullptr;              // Viewer.
-
-  uptr<Initializer> initializer_ = nullptr;          // Initializer.
+  sptr<LocalMapping> local_mapper_ = nullptr;        // Local mapper.
+  sptr<Viewer> viewer_ = nullptr;                    // Viewer.
   cv::Ptr<cv::FeatureDetector> detector_ = nullptr;  // Feature detector.
 };
 

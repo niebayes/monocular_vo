@@ -7,14 +7,19 @@
 #include <iterator>
 #include <vector>
 
+#include "Eigen/Core"
 #include "armadillo"
 #include "glog/logging.h"
 #include "mono_slam/config.h"
 #include "sophus/se3.hpp"
 
-using namespace mono_slam;
+using Vec3 = Eigen::Vector3d;
+using Mat33 = Eigen::Matrix3d;
+using Mat34 = Eigen::Matrix<double, 3, 4>;
 
 using SE3 = Sophus::SE3d;
+
+using namespace mono_slam;
 
 namespace math_utils {
 
@@ -52,14 +57,15 @@ inline T get_median(std::vector<T>& data_vec) {
 }
 
 inline SE3 arma_to_SE3(const arma::rowvec& pose) {
-  //
+  SE3 pose_SE3;
+  return pose_SE3;
 }
 
 inline Eigen::Affine3f SE3_to_affine(const SE3& pose) {
-  Eigen::Affine3f T; 
+  Eigen::Affine3f T;
   // Affine part = linear part + scale.
-  T.linear() = pose.rotationMatrix();
-  T.translation() = pose.translation();
+  T.linear() = pose.rotationMatrix().cast<float>();
+  T.translation() = pose.translation().cast<float>();
   return T;
 }
 

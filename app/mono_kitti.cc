@@ -4,7 +4,7 @@
 
 using namespace mono_slam;
 
-DEFINE_string(c, "app/config_parking.yaml", "Configuration file.");
+DEFINE_string(c, "app/config_kitti.yaml", "Configuration file.");
 
 int main(int argc, char** argv) {
   GFLAGS_NAMESPACE::ParseCommandLineFlags(&argc, &argv, false);

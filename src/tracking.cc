@@ -261,7 +261,7 @@ void Tracking::reset() {
 void Tracking::extractFeatures() {
   vector<cv::KeyPoint> kpts;
   cv::Mat img_gray;
-  cv::cvtColor(curr_frame_->img_, img_gray);
+  cv::cvtColor(curr_frame_->img_, img_gray, cv::COLOR_BGR2GRAY);
   cv::Mat descriptors;
   detector_->detectAndCompute(img_gray, cv::noArray(), kpts, descriptors);
   if (curr_frame_->cam_->distCoeffs()(0) != 0)  // If having distortion.

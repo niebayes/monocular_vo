@@ -36,8 +36,9 @@ namespace mono_slam {
 
 class Initializer;
 
-Viewer::Viewer() {
-  pcl_viewer_.reset(new viewer_utils::PclViewer());
+Viewer::Viewer(const Eigen::Affine3f& viewer_pose, const int fps)
+    : viewer_pose_(viewer_pose), fps_(fps) {
+  pcl_viewer_.reset(new viewer_utils::PclViewer(viewer_pose_));
   startThread();
 }
 
@@ -80,7 +81,7 @@ void Viewer::drawingLoop() {
           last_frame_, curr_frame_, tracker_->initializer_->inlier_matches_,
           img_show);
     else
-      viewer_utils::OpencvDrawer::drawKeyPoints(curr_frame, img_show);
+      viewer_utils::OpencvDrawer::drawKeyPoints(curr_frame_, img_show);
 
     // Invoke PCL viewer.
     updateMap();
@@ -92,10 +93,22 @@ void Viewer::updateMap() {
   lock_g lock(mut_);
   drawTrajectory();
   drawMapPoints();
-  pcl_viewer_->spinOnce();
+  // Compute scale that aligns ground truth trajectory to pose estimate
+  // trajectory.
+  const bool no_ground_truth = tracker_->system_->pose_ground_truths_.empty();
+  double scale = 1.0;
+  if (!no_ground_truth) {
+    const SE3& pose_ground_truth =
+        tracker_->system_->pose_ground_truths_.at(curr_frame_->id_);
+    const SE3& pose_estimate = curr_frame_->pose();
+    scale = pose_ground_truth.translation().norm() /
+            pose_estimate.translation().norm();
+  }
+  pcl_viewer_->spinOnce(curr_frame_->id_, scale, fps_);
 }
 
 void Viewer::drawTrajectory() {
+  // FIXME Maybe we can optimize not to check it twice.
   const bool no_ground_truth = tracker_->system_->pose_ground_truths_.empty();
   if (last_frame_->is_datum_) {
     pcl_viewer_->insertPoseEstimate(last_frame_->pose(), true);
@@ -129,7 +142,7 @@ void Viewer::reset() {
   last_frame_.reset();
   curr_frame_.reset();
   points_.clear();
-  pcl_viewer_.reset(new viewer_utils::PclViewer());
+  pcl_viewer_.reset(new viewer_utils::PclViewer(viewer_pose_));
 }
 
 void Viewer::setTracker(sptr<Tracking> tracker) { tracker_ = tracker; }

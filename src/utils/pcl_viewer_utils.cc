@@ -2,23 +2,22 @@
 
 #include "mono_slam/utils/math_utils.h"
 
-using pcl::visualization;
+using namespace pcl::visualization;
 
+namespace mono_slam {
 namespace viewer_utils {
 
-// Color enums.
-enum class Color : int { BLUE, GREEN, RED };
-
 // Color RGB values.
-static constexpr array<array<double, 3>, 3> RGB{
+//! One more curly braces to construct the array struct.
+static const vector<array<double, 3>> RGB{
     {255., 0., 0.}, {0., 255., 0.}, {0., 0., 255.}};
 
 // Coordinate ids.
-static constexpr string pose_estimate_coord{"pose_estimate_coord"},
+static const string pose_estimate_coord{"pose_estimate_coord"},
     pose_ground_truth_coord{"pose_ground_truth_coord"};
 
 // Point cloud ids.
-static constexpr string pose_estimate{"pose_estimate"},
+static const string pose_estimate{"pose_estimate"},
     pose_ground_truth{"pose_ground_truth"}, all_map_points{"all_map_points"},
     new_map_points{"new_map_points"};
 
@@ -34,22 +33,23 @@ static inline void setCloudPointPos(CloudPointType* cloud_point,
 
 static inline void setCloudPointColor(CloudPointRGB* cloud_point,
                                       const Color& color) {
-  const array<double, 3>& color = RGB.at(color);
-  cloud_point->r = color[0];
-  cloud_point->g = color[1];
-  cloud_point->b = color[2];
+  const array<double, 3>& color_value = RGB.at(color);
+  cloud_point->r = color_value[0];
+  cloud_point->g = color_value[1];
+  cloud_point->b = color_value[2];
 }
 
 static inline void linkCloudPoints(CloudPoint* cloud_point_1,
                                    CloudPoint* cloud_point_2,
                                    const Color& line_color,
-                                   const int line_width,
+                                   const double line_width,
                                    Visualizer* visualizer) {
-  const array<double, 3>& color = RGB.at(color);
-  visualizer->addLine<CloudPoint>(*cloud_point_1, *cloud_point_2, color[0],
-                                  color[1], color[2]);
-  visualizer->setShapeRenderingProperties(PCL_VISUALIZER_LINE_WIDTH,
-                                          line_width);
+  const array<double, 3>& color_value = RGB.at(line_color);
+  visualizer->addLine<CloudPoint>(*cloud_point_1, *cloud_point_2,
+                                  color_value[0], color_value[1],
+                                  color_value[2]);
+  visualizer->setShapeRenderingProperties(PCL_VISUALIZER_LINE_WIDTH, line_width,
+                                          "line");
 }
 
 static inline void addPointCloud(const Visualizer::Ptr& visualizer,
@@ -76,13 +76,15 @@ static inline void setViewerPose(const Visualizer::Ptr& visualizer,
   // Set camera position and orientation at which the viewer is observing the
   // point cloud world.
   //! Refer to vtk's camera model for more detail.
-  visualizer.setCameraPosition(pos_vector[0], pos_vector[1], pos_vector[2],
-                               look_at_vector[0], look_at_vector[1],
-                               look_at_vector[2], up_vector[0], up_vector[1],
-                               up_vector[2]);
+  visualizer->setCameraPosition(pos_vector[0], pos_vector[1], pos_vector[2],
+                                look_at_vector[0], look_at_vector[1],
+                                look_at_vector[2], up_vector[0], up_vector[1],
+                                up_vector[2]);
 }
 
 }  // namespace pcl_utils
+
+using namespace pcl_utils;
 
 PclViewer::PclViewer(const Eigen::Affine3f& viewer_pose) : spin_cnt_(0) {
   pose_estimate_traj_.reset(new PointCloud());
@@ -93,18 +95,19 @@ PclViewer::PclViewer(const Eigen::Affine3f& viewer_pose) : spin_cnt_(0) {
 }
 
 PclViewer::~PclViewer() {
-  if (visualizer) visualizer->close();
+  if (visualizer_) visualizer_->close();
 }
 
 void PclViewer::insertPoseEstimate(const SE3& pose, const bool is_keyframe) {
-  const Color color = is_keyframe ? BLUE : GREEN;
+  const Color color = is_keyframe ? Color::BLUE : Color::GREEN;
   addPoseToTrajectory(pose, pose_estimate_traj_.get(), color, color, 3.0);
   // Update previous pose estimate.
   prev_pose_estimate_ = pose;
 }
 
 void PclViewer::insertPoseGroundTruth(const SE3& pose) {
-  addPoseToTrajectory(pose, pose_ground_truth_traj_.get(), RED, RED, 1.0);
+  addPoseToTrajectory(pose, pose_ground_truth_traj_.get(), Color::RED,
+                      Color::RED, 1.0);
   // Update previous pose ground truth.
   prev_pose_ground_truth_ = pose;
 }
@@ -112,14 +115,14 @@ void PclViewer::insertPoseGroundTruth(const SE3& pose) {
 void PclViewer::insertNewMapPoint(const Vec3& pos) {
   CloudPointRGB cloud_point;
   setCloudPointPos(&cloud_point, pos);
-  setCloudPointColor(&cloud_point, RED);
+  setCloudPointColor(&cloud_point, Color::RED);
   new_map_points_->points.push_back(cloud_point);
 }
 
 void PclViewer::insertMapPoint(const Vec3& pos) {
   CloudPointRGB cloud_point;
   setCloudPointPos(&cloud_point, pos);
-  setCloudPointColor(&cloud_point, GREEN);
+  setCloudPointColor(&cloud_point, Color::GREEN);
   all_map_points_->points.push_back(cloud_point);
 }
 
@@ -146,18 +149,19 @@ void PclViewer::spinOnce(const int frame_id, const double scale,
   visualizer_->updatePointCloud(new_map_points_, new_map_points);
 
   // Update text
-  const string info{"frame id: " + string{frame_id}};
+  const string info{"frame id: " + std::to_string(frame_id)};
   if (spin_cnt_ == 0)
-    visualizer_->addText(info, 20, 20, 20, 1.0, 1.0, 1.0, string{spin_cnt_++});
+    visualizer_->addText(info, 20, 20, 20, 1.0, 1.0, 1.0,
+                         std::to_string(spin_cnt_++));
   else
-    visualizer_->updateText(info, 20, 20, string{spin_cnt_++});
+    visualizer_->updateText(info, 20, 20, std::to_string(spin_cnt_++));
 
   // Update visualizer window.
   visualizer_->spinOnce(spin_time);
 
   // Clear cloud points cache making'em ready for the next update.
   new_map_points_->points.clear();
-  all_map_points_->points.clear()
+  all_map_points_->points.clear();
 }
 
 void PclViewer::setupPclVisualizer(const Eigen::Affine3f& viewer_pose) {
@@ -190,23 +194,24 @@ void PclViewer::setupPclVisualizer(const Eigen::Affine3f& viewer_pose) {
 void PclViewer::addPoseToTrajectory(const SE3& pose, PointCloud* point_cloud,
                                     const Color& cloud_point_color,
                                     const Color& line_color,
-                                    const int line_width) {
+                                    const double line_width) {
   // Create new pose cloud point.
-  CloudPoint::Ptr curr_pose_cloud_point;
+  CloudPointPtr curr_pose_cloud_point;
   setCloudPointPos(curr_pose_cloud_point.get(), pose.translation());
   // Add a line linking previous pose cloud point and current pose cloud point.
-  CloudPoint::Ptr prev_pose_cloud_point;
+  CloudPointPtr prev_pose_cloud_point;
   if (spin_cnt_ > 0) {  // If not the first time the viewer is invoked.
     setCloudPointPos(prev_pose_cloud_point.get(),
                      prev_pose_estimate_.translation());
-    linkCloudPoints(prev_pose_estimate_.get(), pose_cloud_point.get(),
+    linkCloudPoints(prev_pose_cloud_point.get(), curr_pose_cloud_point.get(),
                     line_color, line_width, visualizer_.get());
   }
   // Add to trajectory point cloud the new pose cloud point.
-  CloudPointRGB::Ptr pose_cloud_point_rgb;
+  CloudPointRGBPtr pose_cloud_point_rgb;
   setCloudPointPos(pose_cloud_point_rgb.get(), pose.translation());
   setCloudPointColor(pose_cloud_point_rgb.get(), cloud_point_color);
   point_cloud->points.push_back(*pose_cloud_point_rgb);
 }
 
 }  // namespace viewer_utils
+}  // namespace mono_slam

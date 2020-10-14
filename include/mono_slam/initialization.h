@@ -19,10 +19,10 @@ class Initializer {
   Stage stage_;                      // Initialization stage.
   Frame::Ptr ref_frame_ = nullptr;   // Reference frame.
   Frame::Ptr curr_frame_ = nullptr;  // Current frame.
+  vector<pair<int, int>> inlier_matches_;  // Inlier matches.
 
  private:
   SE3 T_curr_ref_;  // Relative pose from reference frame to current frame.
-  vector<pair<int, int>> inlier_matches_;  // Inlier matches.
   //! points_ and triangulate_mask_ are one-to-one correspondent.
   // Triangulated points in world frame.
   vector<Vec3, Eigen::aligned_allocator<Vec3>> points_;
