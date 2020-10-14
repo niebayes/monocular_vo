@@ -7,9 +7,10 @@
 
 namespace mono_slam {
 
-LocalMapping::LocalMapping() : is_idle_(true) { startThread(); }
+LocalMapping::LocalMapping() : is_idle_(true) {}
 
 void LocalMapping::startThread() {
+  LOG(INFO) << "Local mapper is running ...";
   is_running_.store(true);
   // Spawn a new thread for local mapping.
   thread_ = std::thread(std::bind(&LocalMapping::LocalMappingLoop, this));

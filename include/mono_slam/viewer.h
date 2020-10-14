@@ -55,7 +55,7 @@ class Viewer {
   //! supports any lock that meets the BasicLocable requirement.
   std::condition_variable_any update_cond_var_;
   std::atomic<bool> is_running_;
-  mutable std::mutex mut_;
+  std::mutex mut_;
 
   // FIXME Maybe weak_ptr is more suitable.
   sptr<Tracking> tracker_{nullptr};

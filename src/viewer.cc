@@ -25,6 +25,7 @@ class scoped_lock2 {
   //! assign instances.
   scoped_lock2(const scoped_lock2&) = delete;
   scoped_lock2& operator=(const scoped_lock2&) = delete;
+  // void try_lock() {};
   void lock() { std::lock(mut_1_, mut_2_); }
   void unlock() {
     mut_1_.unlock();
@@ -39,10 +40,10 @@ class Initializer;
 Viewer::Viewer(const Eigen::Affine3f& viewer_pose, const int fps)
     : viewer_pose_(viewer_pose), fps_(fps) {
   pcl_viewer_.reset(new viewer_utils::PclViewer(viewer_pose_));
-  startThread();
 }
 
 void Viewer::startThread() {
+  LOG(INFO) << "Viewer is running ...";
   is_running_.store(true);
   thread_ = std::thread(std::bind(&Viewer::drawingLoop, this));
 }

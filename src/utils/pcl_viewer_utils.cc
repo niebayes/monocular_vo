@@ -166,6 +166,7 @@ void PclViewer::spinOnce(const int frame_id, const double scale,
 
 void PclViewer::setupPclVisualizer(const Eigen::Affine3f& viewer_pose) {
   // Init visualizer.
+  visualizer_.reset(new Visualizer());
   visualizer_->setWindowName(
       "Trajectory: {White: pose estimate, Red: pose ground truth, Blue: "
       "keyframe}, Points: {Green: map point, Red: new map point}");

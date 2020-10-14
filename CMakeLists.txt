@@ -95,6 +95,8 @@ list(APPEND SOURCE_FILES
     src/utils/pcl_viewer_utils.cc
 )
 
+#! Careful using -march=native, coz g2o and eigen may conflict with each other.
+
 add_library(mono_vo_lib SHARED ${SOURCE_FILES})
 target_compile_options(mono_vo_lib PRIVATE -O3)
 # target_compile_options(mono_vo PRIVATE -O0)

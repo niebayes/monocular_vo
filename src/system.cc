@@ -49,7 +49,9 @@ bool System::init() {
   LOG(INFO) << "Loaded vocabulary in " << time_span << "seconds.";
 
   // Load ground truth poses.
-  const string& pose_file = config["pose_file"];
+  // const string& pose_file = config["pose_file"];
+  const string& pose_file{
+      "/home/bayes/Documents/monocular_vo/data/pose/parking_pose.txt"};
   arma::mat pose_mat;
   if (pose_file.empty())
     LOG(WARNING) << "No ground truth file.";
@@ -58,7 +60,7 @@ bool System::init() {
   // Convert to vector<SE3>.
   pose_ground_truths_.reserve(pose_mat.n_rows);
   for (int i = 0; i < pose_mat.n_rows; ++i)
-    pose_ground_truths_.push_back(math_utils::arma_to_SE3(pose_mat.row(i)));
+    pose_ground_truths_.push_back(math_utils::read_pose(pose_mat.row(i)));
 
   // Load timestamps.
   const string& timestamp_file = config["timestamp_file"];
@@ -96,12 +98,22 @@ bool System::init() {
   // Release the file as soon as possible.
   config.release();
 
+  // Set viewer pose.
+  const double view_point_dist = 0.3;
+  const Vec3f t{0.5 * view_point_dist, -1. * view_point_dist,
+                -1 * view_point_dist};
+  const Vec3f rotation_vec{-0.5, 0., 0.};  // Look downward.
+  const Mat33f R =
+      Eigen::AngleAxisf(rotation_vec.norm(), rotation_vec.normalized())
+          .toRotationMatrix();
+  Eigen::Affine3f viewer_pose;
+  viewer_pose.linear() = R;
+  viewer_pose.translation() = t;
+
   // Prepare and link system components.
   tracker_.reset(new Tracking());
   local_mapper_.reset(new LocalMapping());
   map_.reset(new Map(voc));
-  // Set viewer pose.
-  Eigen::Affine3f viewer_pose;
   viewer_.reset(new Viewer(viewer_pose, fps));
 
   tracker_->setSystem(shared_from_this());
@@ -121,10 +133,15 @@ bool System::init() {
 }
 
 void System::run() {
-  LOG(INFO) << "System is running ...";
-  // If timestamp file is not provided, the tracking is performed as soon as
-  // possible.
-  // FIXME Catch empty image exception and exit system.
+  local_mapper_->startThread();
+  viewer_->startThread();
+  // Hold on 1 seconds to make the threads ready.
+  //! It's just my wishful thinking though.
+  std::this_thread::sleep_for(duration<double>(1.0));
+  LOG(INFO) << "Tracker is running ...";
+  // If timestamp file is not provided, the tracking is performed without any
+  // delay.
+  // TODO(bayes) Catch empty image exception and exit system.
   if (timestamps_.empty())
     for (;;) tracker_->addImage(dataset_->nextImage());
   else {  // Otherwise, necessary time delay is adopted.

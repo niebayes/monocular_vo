@@ -56,9 +56,18 @@ inline T get_median(std::vector<T>& data_vec) {
   return *it;
 }
 
-inline SE3 arma_to_SE3(const arma::rowvec& pose) {
-  SE3 pose_SE3;
-  return pose_SE3;
+inline Eigen::MatrixXd arma2eigen(arma::mat arma_mat) {
+  const Eigen::MatrixXd eigen_mat = Eigen::Map<Eigen::MatrixXd>(
+      arma_mat.memptr(), arma_mat.n_rows, arma_mat.n_cols);
+  return eigen_mat;
+}
+
+inline SE3 read_pose(const arma::rowvec& pose) {
+  const Mat33 R = (Mat33() << pose(0), pose(1), pose(2), pose(4), pose(5),
+                   pose(6), pose(8), pose(9), pose(10))
+                      .finished();
+  const Vec3 t{pose(3), pose(7), pose(11)};
+  return SE3(R, t);
 }
 
 inline Eigen::Affine3f SE3_to_affine(const SE3& pose) {
