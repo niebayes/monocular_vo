@@ -24,13 +24,12 @@ namespace g2o_types {
 using BlockSolver = g2o::BlockSolver_6_3;
 using LinearSolver = g2o::LinearSolverCholmod<BlockSolver::PoseMatrixType>;
 
-// Edge and vertex typedefs.
+// typedefs for edges and vertices.
 using EdgeObs = g2o::EdgeSE3ProjectXYZ;
 using EdgePoseOnly = g2o::EdgeSE3ProjectXYZOnlyPose;
 using VertexFrame = g2o::VertexSE3Expmap;
 using VertexPoint = g2o::VertexSBAPointXYZ;
 
-// FIXME unique_ptr incurs error here.
 struct EdgeContainer {
   //! No memeory leak since it's freed as g2o::OptimizableGraph is cleared.
   EdgeObs* e_obs_{nullptr};

@@ -95,7 +95,13 @@ list(APPEND SOURCE_FILES
     src/utils/pcl_viewer_utils.cc
 )
 
-#! Careful using -march=native, coz g2o and eigen may conflict with each other.
+#! Careful using -march=native, coz g2o, pcl and other libs 
+#! which have dependencies including Eigen may conflict with each other.
+#! If you encounter any issue relating memory access, it's recommended to 
+#! first check the build option of each libs you've built for this project. 
+#! If the build option for one is with BUILD_WITH_MARCH_NATIVE on while another 
+#! is with that off, conflict is raised and the solution is to rebuild both 
+#! of'em with the same option.
 
 add_library(mono_vo_lib SHARED ${SOURCE_FILES})
 target_compile_options(mono_vo_lib PRIVATE -O3)

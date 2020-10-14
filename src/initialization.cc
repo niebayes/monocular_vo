@@ -118,7 +118,7 @@ bool Initializer::buildInitMap() {
   curr_frame_->updateCoInfo();
 
   // Global bundle adjustment to optimize poses and points' position jointly.
-  Optimizer::globalBA(tracker_->map_);
+  // Optimizer::globalBA(tracker_->map_);
 
   // FIXME What is the rescaling principle under the hood?
   // Rescale the map such that the mean scene depth is equal to 1.0

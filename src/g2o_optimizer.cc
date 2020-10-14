@@ -34,7 +34,7 @@ void Optimizer::globalBA(const Map::Ptr& map, const int n_iters) {
   // Edge container used for post-processing.
   list<g2o_types::EdgeContainer> edge_container;
   // Get keyframes whose poses are going to be optimized.
-  const list<Frame::Ptr>& kfs = map->getAllKeyframes();
+  const list<Frame::Ptr> kfs = map->getAllKeyframes();
 
   // Iterate all keyframes in the map.
   int v_id = 0;  // Vertex id.
@@ -209,7 +209,7 @@ void Optimizer::localBA(const Frame::Ptr& keyframe, const Map::Ptr& map,
   // Store the keyframes involved in optimization while fixed.
   list<Frame::Ptr> fixed_kfs;
   // Obtain covisible keyframes which are then going to be optimized.
-  const forward_list<Frame::Ptr>& co_kfs = keyframe->getCoKfs();
+  const forward_list<Frame::Ptr> co_kfs = keyframe->getCoKfs();
 
   // Iterate all covisible keyframes.
   //! The covisible information was updated before.
