@@ -22,10 +22,10 @@ System::System(const string& config_file) : config_file_(config_file) {}
 bool System::init() {
   LOG(INFO) << "System is initializing ...";
   // Read settings from configuration file.
-  // cv::FileStorage config(config_file_, cv::FileStorage::READ);
-  cv::FileStorage config(
-      "/home/bayes/Documents/monocular_vo/app/config_kitti.yaml",
-      cv::FileStorage::READ);
+  cv::FileStorage config(config_file_, cv::FileStorage::READ);
+  // cv::FileStorage config(
+  //     "/home/bayes/Documents/monocular_vo/app/config_kitti.yaml",
+  //     cv::FileStorage::READ);
   if (!config.isOpened()) {
     config.release();
     LOG(FATAL) << "Unable to read configuration file.";
@@ -42,17 +42,17 @@ bool System::init() {
   // Load vocabulary.
   const string& voc_file = config["voc_file"];
   const steady_clock::time_point t1 = steady_clock::now();
-  // sptr<Vocabulary> voc = make_shared<Vocabulary>(voc_file);
-  sptr<Vocabulary> voc = make_shared<Vocabulary>(
-      "/home/bayes/Documents/monocular_vo/data/vocabulary/orbvoc.dbow3");
+  sptr<Vocabulary> voc = make_shared<Vocabulary>(voc_file);
+  // sptr<Vocabulary> voc = make_shared<Vocabulary>(
+  //     "/home/bayes/Documents/monocular_vo/data/vocabulary/orbvoc.dbow3");
   const steady_clock::time_point t2 = steady_clock::now();
   const double time_span = duration_cast<duration<double>>(t2 - t1).count();
   LOG(INFO) << "Loaded vocabulary in " << time_span << "seconds.";
 
   // Load ground truth poses.
-  // const string& pose_file = config["pose_file"];
-  const string& pose_file{
-      "/home/bayes/Documents/monocular_vo/data/pose/parking_pose.txt"};
+  const string& pose_file = config["pose_file"];
+  // const string& pose_file{
+  //     "/home/bayes/Documents/monocular_vo/data/pose/parking_pose.txt"};
   arma::mat pose_mat;
   if (pose_file.empty())
     LOG(WARNING) << "No ground truth file.";

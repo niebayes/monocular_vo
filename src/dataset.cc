@@ -16,9 +16,9 @@ Dataset::Dataset(const string& dataset_path, const string& img_file_name_fmt,
       img_idx_(img_start_idx) {}
 
 cv::Mat Dataset::nextImage() {
-  // boost::format fmt(dataset_path_ + img_file_name_fmt_);
-  boost::format fmt(
-      "/home/bayes/Documents/monocular_vo/data/dataset/KITTI/seq00/%06d.png");
+  boost::format fmt(dataset_path_ + img_file_name_fmt_);
+  // boost::format fmt(
+  //     "/home/bayes/Documents/monocular_vo/data/dataset/KITTI/seq00/%06d.png");
   cv::Mat image = cv::imread((fmt % img_idx_).str(),
                              cv::IMREAD_ANYDEPTH | cv::IMREAD_ANYCOLOR);
   CHECK_EQ(!image.empty(), true);
