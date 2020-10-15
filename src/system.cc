@@ -24,7 +24,7 @@ bool System::init() {
   // Read settings from configuration file.
   // cv::FileStorage config(config_file_, cv::FileStorage::READ);
   cv::FileStorage config(
-      "/home/bayes/Documents/monocular_vo/app/config_parking.yaml",
+      "/home/bayes/Documents/monocular_vo/app/config_kitti.yaml",
       cv::FileStorage::READ);
   if (!config.isOpened()) {
     config.release();
@@ -42,6 +42,7 @@ bool System::init() {
   // Load vocabulary.
   const string& voc_file = config["voc_file"];
   const steady_clock::time_point t1 = steady_clock::now();
+  // sptr<Vocabulary> voc = make_shared<Vocabulary>(voc_file);
   sptr<Vocabulary> voc = make_shared<Vocabulary>(
       "/home/bayes/Documents/monocular_vo/data/vocabulary/orbvoc.dbow3");
   const steady_clock::time_point t2 = steady_clock::now();

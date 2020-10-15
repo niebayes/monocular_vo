@@ -29,7 +29,7 @@ using CloudPointPtr = std::shared_ptr<CloudPoint>;
 using CloudPointRGBPtr = std::shared_ptr<CloudPointRGB>;
 
 // Color enums.
-enum Color : int { BLUE = 0, GREEN = 1, RED = 2 };
+enum Color : int { BLUE = 0, GREEN = 1, RED = 2, WHITE = 3 };
 
 class PclViewer {
  public:

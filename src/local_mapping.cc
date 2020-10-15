@@ -122,8 +122,8 @@ void LocalMapping::triangulateNewPoints() {
 
       // Triangulate new point.
       const Mat33 &K_1 = kf->cam_->K(), &K_2 = curr_keyframe_->cam_->K();
-      const Mat34 M_1 = K_1.inverse() * kf->pose().matrix3x4(),
-                  M_2 = K_2.inverse() * curr_keyframe_->pose().matrix3x4();
+      const Mat34 M_1 = K_1 * kf->pose().matrix3x4(),
+                  M_2 = K_2 * curr_keyframe_->pose().matrix3x4();
       Vec3 point_1;  // Point in camera frame.
       geometry::triangulateLin(pt_1, pt_2, M_1, M_2, point_1);
 

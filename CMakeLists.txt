@@ -104,8 +104,8 @@ list(APPEND SOURCE_FILES
 #! of'em with the same option.
 
 add_library(mono_vo_lib SHARED ${SOURCE_FILES})
-target_compile_options(mono_vo_lib PRIVATE -O3)
-# target_compile_options(mono_vo PRIVATE -O0)
+# target_compile_options(mono_vo_lib PRIVATE -O3)
+target_compile_options(mono_vo_lib PRIVATE -O0)
 target_link_libraries(mono_vo_lib ${LINK_LIBRARIES})
 
 add_executable(mono_kitti app/mono_kitti.cc)
@@ -119,8 +119,8 @@ target_compile_options(mono_malaga PRIVATE -O3)
 target_link_libraries(mono_malaga mono_vo_lib ${LINK_LIBRARIES})
 
 add_executable(mono_parking app/mono_parking.cc)
-target_compile_options(mono_parking PRIVATE -O3)
-# target_compile_options(mono_malaga PRIVATE -O0)
+# target_compile_options(mono_parking PRIVATE -O3)
+target_compile_options(mono_malaga PRIVATE -O0)
 target_link_libraries(mono_parking mono_vo_lib ${LINK_LIBRARIES})
 
 add_executable(mono_tsukuba app/mono_tsukuba.cc)

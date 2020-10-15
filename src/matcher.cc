@@ -246,7 +246,7 @@ int Matcher::searchForTriangulation(const Frame::Ptr& keyframe_1,
           const int dist = matcher_utils::computeDescDist(feat_1->descriptor_,
                                                           feat_2->descriptor_);
           if (dist < min_dist) {
-            second_min_dist = dist;
+            second_min_dist = min_dist;
             min_dist = dist;
             best_idx_2 = idx_2;
           } else if (dist < second_min_dist)
