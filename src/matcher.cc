@@ -118,7 +118,6 @@ int Matcher::searchByProjection(const unordered_set<Frame::Ptr>& local_co_kfs,
         continue;
 
       // Update linked map point.
-      // FIXME Does weak_ptr incurs issues here?
       //! Currently the point is associated with the feature and the frame but
       //! the observation information of the point is not updated yet. (It will
       //! be updated by the local mapper).
