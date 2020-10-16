@@ -1,7 +1,7 @@
 UZH Robot Perception Course Project
 ---
 ## Outline 
-This project is the course project of UZH (University of Zurich) Robot Perception Course 2019 Fall. The instructions of the course projection can be found at [vo_project_statement.pdf](./vo_project_statement.pdf)
+This project is the course project of UZH (University of Zurich) Robot Perception Course 2019 Fall. The instructions of the course project can be found at [vo_project_statement.pdf](./vo_project_statement.pdf)
 
 ### Course overview
 > For a robot to be autonomous, it has to perceive and understand the world around it. This course introduces you to the key computer vision algorithms used in mobile robotics, such as image formation, filtering, feature extraction, multiple view geometry, dense reconstruction, tracking, image retrieval, event-based vision, visual-inertial odometry, Simultaneous Localization And Mapping (SLAM), and some basics of deep learning.
